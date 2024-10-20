@@ -5,209 +5,158 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>Lit WIN Tap</title>
-    <link rel="stylesheet" href="main.css">
-    <link rel="stylesheet" href="friends.css">
-    <link rel="stylesheet" href="task.css">
-    <link rel="stylesheet" href="collection.css">
+    <link href="/dist/output.css" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const tg = window.Telegram.WebApp;
-            tg.expand();
-
-            const tutorialShown = localStorage.getItem('tutorialShown');
-            if (!tutorialShown) {
-                window.location.href = 'tutorial.html';
-            }
-        });
-    </script>
 </head>
 <body>
-    <div id="main-page" class="page">
-    
-        <div class="container">
-            <div class="top-info">
-                <div class="profile">
-                    <img id="profilePic" src="assets/profile-pic.png" alt="Профиль" class="profile-pic">
-                    <div class="profile-info">
-                        <div id="profileName" class="profile-name">Пользователь</div>
-                        <div id="profileUsername" class="profile-username">@username</div>
-                    </div>
-                </div>
-                <div class="profit-info">
-                    <div class="profit-item">
-                        <span class="profit-label">Прибыль за тап</span>
-                        <span class="profit-value"><img src="assets/litcoin.png" alt="LIT" class="lit-coin-small">+<span id="tapProfit">1</span></span>
-                    </div>
-                    <div class="profit-divider"></div>
-                    <div class="profit-item">
-                        <span class="profit-label">Прибыль в час</span>
-                        <span class="profit-value"><img src="assets/litcoin.png" alt="LIT" class="lit-coin-small">+<span id="hourlyProfit">0</span></span>
-                    </div>
+    <div id="main-page" class="page bg-black text-white min-h-screen p-4">
+        <div class="container mx-auto">
+            <div class="bg-yellow-400 rounded-lg p-4 mb-4 flex items-center">
+                <img src="assets/dino.png" alt="Динозавр" class="w-16 h-16 mr-4">
+                <div>
+                    <div class="text-2xl font-bold text-black">1,100 DPS</div>
+                    <div class="text-sm text-black">Your Total Score</div>
                 </div>
             </div>
             
-            <div class="balance">
-                <img src="assets/litcoin.png" alt="LIT coin" class="lit-coin">
-                <span id="balance">0</span>
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <div class="bg-yellow-400 rounded-lg p-2 text-center">
+                    <div class="text-sm text-black">Tasks</div>
+                    <div class="text-lg font-bold text-black">+450 DPS</div>
+                </div>
+                <div class="bg-yellow-400 rounded-lg p-2 text-center">
+                    <div class="text-sm text-black">Invites</div>
+                    <div class="text-lg font-bold text-black">+400 DPS</div>
+                </div>
+                <div class="bg-yellow-400 rounded-lg p-2 text-center">
+                    <div class="text-sm text-black">Game</div>
+                    <div class="text-lg font-bold text-black">+250 DPS</div>
+                </div>
             </div>
             
-            <div id="levelDisplay">Кондиции Уровень - 1</div>
-            <div class="progress-container">
-                <div class="progress-bar">
-                    <div class="progress" id="progressBar">
-                        <span class="lightning">⚡️</span>
+            <h2 class="text-xl font-bold mb-2">Tasks</h2>
+            <div class="flex mb-2 space-x-2">
+                <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold">Daily</button>
+                <button class="bg-gray-700 text-white px-4 py-2 rounded-full text-sm">Social</button>
+                <button class="bg-gray-700 text-white px-4 py-2 rounded-full text-sm">Media</button>
+                <button class="bg-gray-700 text-white px-4 py-2 rounded-full text-sm">Refs</button>
+            </div>
+            <div class="space-y-2">
+                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <div class="text-sm">Name Daily Task</div>
+                        <div class="text-xs text-yellow-400">+150 DPS</div>
                     </div>
+                    <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">Start</button>
                 </div>
-                <span id="canType" class="can-type">Classic</span>
-            </div>
-            <div class="can-container">
-                <div class="can-background"></div>
-                <img src="assets/bankaClassic.png" alt="Энергетический напиток" class="can" id="can">
-                <div class="bubbles"></div>
-            </div>
-            <div class="energy">
-                <img src="assets/enegry.png" alt="" class="energy-icon">
-                <span id="energy">100/100</span>
-            </div>
-            <button id="watchAdButton" onclick="watchAd()">
-                🚀
-            </button>
+                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <div class="text-sm">Name Daily Task</div>
+                        <div class="text-xs text-yellow-400">+150 DPS</div>
+                    </div>
+                    <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">Start</button>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <div class="text-sm">Name Daily Task</div>
+                        <div class="text-xs text-yellow-400">+150 DPS</div>
+                    </div>
+                    <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">Start</button>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <div class="text-sm">Name Daily Task</div>
+                        <div class="text-xs text-yellow-400">+150 DPS</div>
+                    </div>
+                    <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">Start</button>
+                </div>
             </div>
         </div>
     </div>
     
-    <div id="collection-page" class="page" style="display: none;">
-        <div class="container">
-            <h1>Твоя коллекция</h1>
-            <div id="collection-grid"></div>
-            <hr class="divider">
-            <h2>Маркет</h2>
-            <div id="market-items">
-                <!-- Вкладки и группы улучшений будут добавлены сюда динамически -->
-            </div>
+    <div id="game-page" class="page bg-black text-white min-h-screen p-4" style="display: none;">
+        <div class="container mx-auto text-center">
+            <h1 class="text-2xl font-bold mb-4 text-yellow-400">GAME</h1>
+            <div id="gameContainer"></div>
+            <div id="lives" class="text-2xl mb-4"></div>
+            <button id="startButton" class="bg-yellow-400 text-black px-8 py-3 rounded-full text-lg font-bold">Start</button>
         </div>
     </div>
-    
-    <div id="tasks-page" class="page" style="display: none;">
-        <div class="container tasks-page">
-            <h1>Забери ежедневный бонус</h1>
-            <div class="daily-bonus">
-                <div class="bonus-grid">
-                    <button class="bonus-item unlocked" type="button" id="bonus0">
-                        <img src="assets/litcoin.png" alt="LitCoin" class="bonus-coin">
-                        <span class="bonus-value">+500</span>
-                    </button>
-                    <button class="bonus-item locked" type="button" id="bonus1">
-                        <img src="assets/litcoin.png" alt="LitCoin" class="locked-coin">
-                        <span class="bonus-value">1000</span>
-                    </button>
-                    <button class="bonus-item locked" type="button" id="bonus2">
-                        <img src="assets/litcoin.png" alt="LitCoin" class="locked-coin">
-                        <span class="bonus-value">7000</span>
-                    </button>
-                    <button class="bonus-item locked" type="button" id="bonus3">
-                        <img src="assets/litcoin.png" alt="LitCoin" class="locked-coin">
-                        <span class="bonus-value">15000</span>
-                    </button>
+    <div id="friends-page" class="page bg-black text-white min-h-screen p-4" style="display: none;">
+        <div class="container mx-auto">
+            <h1 class="text-2xl font-bold mb-2">Invite your Friends</h1>
+            <p class="text-sm text-gray-400 mb-4">Get 20% bonuses from your refs and 10% from their tasks</p>
+            
+            <div class="bg-gray-800 rounded-lg p-4 mb-4 flex items-center justify-between">
+                <div class="flex items-center">
+                    <img src="assets/dino.png" alt="Динозавр" class="w-10 h-10 mr-3">
+                    <div>
+                        <div class="text-sm">Today</div>
+                        <div class="text-lg font-bold text-yellow-400">+45 DPS</div>
+                    </div>
                 </div>
-                <div class="bonus-grid">
-                    <button class="bonus-item locked" type="button" id="bonus4">
-                        <img src="assets/litcoin.png" alt="LitCoin" class="locked-coin">
-                        <span class="bonus-value">45000</span>
-                    </button>
-                    <button class="bonus-item locked" type="button" id="bonus5">
-                        <img src="assets/litcoin.png" alt="LitCoin" class="locked-coin">
-                        <span class="bonus-value">75000</span>
-                    </button>
-                    <button class="bonus-item locked" type="button" id="bonus6">
-                        <img src="assets/litcoin.png" alt="LitCoin" class="locked-coin">
-                        <span class="bonus-value">125000</span>
-                    </button>
-                </div>
+                <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold">Get a reward</button>
             </div>
-            <h2>Задания</h2>
-            <div id="tasks-list">
-                <div class="task-item" id="task1">
-                    <div class="task-info">
-                        <div class="task-circle"></div>
-                        <span class="task-name">Подпишись на группу LIT⚡️WIN </span>
-                    </div>
-                    <button class="task-reward-button" id="task1Button" onclick="handleTask1Click()">
-                        <span class="reward-value">1000</span>
-                        <img src="assets/litcoin.png" alt="LitCoin" class="reward-coin">
-                    </button>
-                </div>
-                <div class="task-item">
-                    <div class="task-info">
-                        <div class="task-circle"></div>
-                        <span class="task-name">Смотреть видео</span>
-                    </div>
-                    <div class="task-reward">
-                        <span class="reward-value">+100 </span>
-                        <img src="assets/litcoin.png" alt="LitCoin" class="reward-coin">
-                    </div>
-                </div>
-                <div class="task-item">
-                    <div class="task-info">
-                        <div class="task-circle"></div>
-                        <span class="task-name">Задание 3</span>
-                    </div>
-                    <div class="task-reward">
-                        <span class="reward-value">100</span>
-                        <img src="assets/litcoin.png" alt="LitCoin" class="reward-coin">
-                    </div>
-                </div>
-                <div class="task-item">
-                    <div class="task-info">
-                        <div class="task-circle"></div>
-                        <span class="task-name">Задание 4</span>
-                    </div>
-                    <div class="task-reward">
-                        <span class="reward-value">100</span>
-                        <img src="assets/litcoin.png" alt="LitCoin" class="reward-coin">
-                    </div>
-                </div>
+            
+            <button id="inviteButton" class="w-full bg-yellow-400 text-black py-3 rounded-lg text-lg font-bold mb-4">Invite</button>
+            
+            <div class="flex mb-4">
+                <button class="flex-1 bg-yellow-400 text-black py-2 rounded-l-lg text-sm font-bold">Friends</button>
+                <button class="flex-1 bg-gray-700 text-white py-2 rounded-r-lg text-sm">Leaders</button>
             </div>
-        </div>   
-    </div>
-    
-    <div id="friends-page" class="page" style="display: none;">
-        <div class="friends-container">
-            <img src="assets/twobanka.png" alt="Две банки" class="cans-image" id="cansImage">
-            <button class="invite-button" id="inviteButton">⚡Пригласить друга!</button>
-            <button class="invite-button" id="shareLinkButton">🚀Поделиться ссылкой!</button>
-            <div class="friends-list" id="friendsList">
-                <!-- Список друзей будет добавлен динамически -->
+            
+            <div class="space-y-3">
+                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <div class="text-sm">Name Friend</div>
+                        <div class="text-xs text-yellow-400">+15 DPS</div>
+                    </div>
+                    <div class="text-xs text-gray-400">16 Tasks</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <div class="text-sm">Name Friend</div>
+                        <div class="text-xs text-yellow-400">+15 DPS</div>
+                    </div>
+                    <div class="text-xs text-gray-400">16 Tasks</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                        <div class="text-sm">Name Friend</div>
+                        <div class="text-xs text-yellow-400">+15 DPS</div>
+                    </div>
+                    <div class="text-xs text-gray-400">16 Tasks</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <footer class="footer">
-        <nav>
-            <ul>
-                <li><button class="footer-btn active" data-page="main">
-                    <img src="assets/icon.svg" alt="Главная" class="footer-icon">
-                    <span>Главная</span>
-                </button></li>
-                <li><button class="footer-btn" data-page="collection">
-                    <img src="assets/koll.png" alt="Коллекция" class="footer-icon">
-                    <span>Коллекция</span>
-                </button></li>
-                <li><button class="footer-btn" data-page="tasks">
-                    <img src="assets/diamond-sharp.svg" alt="Задания" class="footer-icon">
-                    <span>Задания</span>
-                </button></li>
-                <li><button class="footer-btn" data-page="friends">
-                    <img src="assets/users.svg" alt="Друзья" class="footer-icon">
-                    <span>Друзья</span>
-                </button></li>
+    <footer class="fixed bottom-0 left-0 right-0 bg-black">
+        <nav class="max-w-screen-xl mx-auto">
+            <ul class="flex justify-around items-center py-2">
+                <li>
+                    <button class="flex flex-col items-center text-yellow-400" data-page="main">
+                        <img src="assets/icon.svg" alt="Главная" class="w-6 h-6 mb-1">
+                        <span class="text-xs">Главная</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="flex flex-col items-center text-gray-500" data-page="game">
+                        <img src="assets/koll.png" alt="Game" class="w-6 h-6 mb-1">
+                        <span class="text-xs">Game</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="flex flex-col items-center text-gray-500" data-page="friends">
+                        <img src="assets/users.svg" alt="Invite" class="w-6 h-6 mb-1">
+                        <span class="text-xs">Invite</span>
+                    </button>
+                </li>
             </ul>
         </nav>
     </footer>
     <script src="main.js"></script>
     <script src="friends.js"></script>
-    <script src="task.js"></script>
-    <script src="collection.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>

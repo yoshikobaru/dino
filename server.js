@@ -69,7 +69,7 @@ sequelize.sync({ alter: true });
 // Создаем экземпляр бота с вашим токеном
 const bot = new Telegraf(process.env.BOT_TOKEN);
 // WebApp URL
-const webAppUrl = 'https://litwin-tap.ru';
+const webAppUrl = 'https://dino-app.ru';
 
 // Обработчик команды /start
 bot.command('start', async (ctx) => {
@@ -128,7 +128,7 @@ const routes = {
         console.log('Поиск пользователя с telegramId:', telegramId);
         const user = await User.findOne({ where: { telegramId } });
         if (user) {
-          const inviteLink = `https://t.me/LITWIN_TAP_BOT?start=${user.referralCode}`;
+          const inviteLink = `https://t.me/Dinosaur_Gamebot?start=${user.referralCode}`;
           console.log('Сгенерирована ссылка:', inviteLink);
           return { status: 200, body: { inviteLink } };
         } else {
@@ -168,30 +168,6 @@ const routes = {
         }
       } catch (error) {
         console.error('Ошибка при обработке запроса:', error);
-        return { status: 500, body: { error: 'Internal server error' } };
-      }
-    },
-    '/get-user-data': async (req, res, query) => {
-      const telegramId = query.telegramId;
-      
-      if (!telegramId) {
-        return { status: 400, body: { error: 'Missing telegramId parameter' } };
-      }
-
-      try {
-        const user = await User.findOne({ where: { telegramId } });
-        if (user) {
-          return { status: 200, body: { 
-            balance: user.balance, 
-            tapProfit: user.tapProfit, 
-            hourlyProfit: user.hourlyProfit,
-            totalEarnedCoins: user.totalEarnedCoins
-          }};
-        } else {
-          return { status: 404, body: { error: 'User not found' } };
-        }
-      } catch (error) {
-        console.error('Error in get-user-data:', error);
         return { status: 500, body: { error: 'Internal server error' } };
       }
     },
@@ -248,68 +224,7 @@ const routes = {
       }
     }
   },
-  POST: {
-    '/sync-user-data': async (req, res) => {
-    return new Promise((resolve, reject) => {
-        let body = '';
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-        req.on('end', async () => {
-            try {
-                const data = JSON.parse(body);
-                const { telegramId, username, balance, tapProfit, hourlyProfit, totalEarnedCoins } = data;
-                
-                if (!telegramId) {
-                    resolve({ status: 400, body: { error: 'Telegram ID is required' } });
-                    return;
-                }
-
-                let user = await User.findOne({ where: { telegramId: telegramId.toString() } });
-
-                if (!user) {
-                    // Если пользователь не найден, создаем нового с полученными значениями
-                    user = await User.create({
-                        telegramId: telegramId.toString(),
-                        username,
-                        balance,
-                        tapProfit,
-                        hourlyProfit,
-                        totalEarnedCoins,
-                        referralCode: crypto.randomBytes(4).toString('hex')
-                    });
-                } else {
-                    // Если пользователь существует, обновляем его данные
-                    await user.update({
-                        username,
-                        balance,
-                        tapProfit,
-                        hourlyProfit,
-                        totalEarnedCoins
-                    });
-                }
-
-                // Возвращаем обновленные данные пользователя
-                resolve({ 
-                    status: 200, 
-                    body: { 
-                        message: user ? 'User data updated successfully' : 'New user created',
-                        user: {
-                            balance: user.balance,
-                            tapProfit: user.tapProfit,
-                            hourlyProfit: user.hourlyProfit,
-                            totalEarnedCoins: user.totalEarnedCoins
-                        }
-                    } 
-                });
-            } catch (error) {
-                console.error('Error in sync-user-data:', error);
-                resolve({ status: 500, body: { error: 'Internal server error', details: error.message } });
-            }
-        });
-    });
-    }
-  }
+  POST: {}
 };
 
 // Функция для обработки статических файлов
@@ -350,8 +265,8 @@ const serveStaticFile = (filePath, res) => {
 };
 
 const options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/litwin-tap.ru/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/litwin-tap.ru/fullchain.pem')
+    key: fs.readFileSync('/etc/letsencrypt/live/dino-app.ru/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/dino-app.ru/fullchain.pem')
 };
 
 const server = https.createServer(options, async (req, res) => {
@@ -365,27 +280,28 @@ const server = https.createServer(options, async (req, res) => {
     res.writeHead(result.status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(result.body));
   } else {
-    let filePath = path.join(__dirname, '..', 'litwin-server', req.url === '/' ? 'main.html' : req.url);
+    let filePath = path.join(__dirname, '..', 'dino', req.url === '/' ? 'main.html' : req.url);
     serveStaticFile(filePath, res);
   }
 });
 
-const httpsPort = 3000;
-const httpPort = 3001;
+const httpsPort = 5000;
+const httpPort = 5001;
 
 server.listen(httpsPort, () => {
   console.log(`HTTPS Сервер запущен на порту ${httpsPort}`);
   console.log('Telegram бот запущен');
-  console.log(`HTTPS Сервер запущен на https://litwin-tap.ru`);
+  console.log(`HTTPS Сервер запущен на https://dino-app.ru`);
 });
 
 // HTTP to HTTPS redirect
 http.createServer((req, res) => {
   res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
   res.end();
-}).listen(httpPort, 'localhost', () => {
+}).listen(httpPort, () => {
   console.log(`HTTP сервер запущен на порту ${httpPort} для перенаправления на HTTPS`);
 });
+
 // Graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
