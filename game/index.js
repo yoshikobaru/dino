@@ -15,12 +15,13 @@ if (screen.width < COLUMNS) {
 
 const DINO_INITIAL_TRUST = new Velocity(-11, 0);
 const ENVIRONMENT_GRAVITY = new Velocity(-0.6, 0);
+const MOBILE_ENVIRONMENT_GRAVITY = new Velocity(-0.5, 0); // Немного увеличили гравитацию для мобильных устройств
 const DINO_FLOOR_INITIAL_POSITION = new Position(200, 10);
 let dino_current_trust = new Velocity(0, 0);
 let dino_ready_to_jump = true;
 let game_over = null;
 let is_first_time = true;
-let game_score = null;
+let game_score = 0;
 let game_score_step = 0;
 let game_hi_score = null;
 let step_velocity = new Velocity(0, -0.05);
@@ -81,12 +82,21 @@ let harmfull_character_allocator = [
     )
 ]
 
+function updateScore() {
+    const currentScoreElement = document.getElementById('current-score');
+    const highScoreElement = document.getElementById('high-score');
+    
+    currentScoreElement.textContent = Math.floor(game_score);
+    highScoreElement.textContent = Math.floor(game_hi_score);
+}
+
 function initialize() {
     current_theme = themes.classic;
     cumulative_velocity = new Velocity(0, 0);
     game_over = false;
     game_score = 0;
-    game_hi_score = localStorage.getItem("project.github.chrome_dino.high_score") || 0;
+    game_hi_score = parseInt(localStorage.getItem("project.github.chrome_dino.high_score")) || 0;
+    updateScore(); // Инициализируем отображение счета
     canvas.height = ROWS;
     canvas.width = COLUMNS;
 
@@ -94,6 +104,12 @@ function initialize() {
     harmfull_characters_pool = [
         new Character(new CharacterMeta(dino_layout.run, 4, DINO_FLOOR_INITIAL_POSITION.clone(), new Velocity(0, 0)))
     ];
+
+    // Определяем, является ли устройство мобильным
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Выбираем соответствующую гравитацию
+    const gravity = isMobile ? MOBILE_ENVIRONMENT_GRAVITY : ENVIRONMENT_GRAVITY;
 
     document.ontouchstart = () => {
         if (game_over && (Date.now() - game_over) > 1000) {
@@ -119,6 +135,10 @@ function initialize() {
             document.ontouchstart();
         }
     };
+
+    hideGameOver();
+
+    return { gravity }; // Возвращаем выбранную гравитацию
 }
 
 function paint_layout(character_layout, character_position) {
@@ -135,7 +155,20 @@ function paint_layout(character_layout, character_position) {
     }
 }
 
-function event_loop() {
+function showGameOver(score) {
+    const gameOverScreen = document.getElementById('game-over');
+    const finalScoreElement = document.getElementById('final-score');
+    
+    finalScoreElement.textContent = `+${Math.floor(score)} DPS`;
+    gameOverScreen.style.display = 'block';
+}
+
+function hideGameOver() {
+    const gameOverScreen = document.getElementById('game-over');
+    gameOverScreen.style.display = 'none';
+}
+
+function event_loop(gravity) {
     game_score_step += 0.1;
 
     if (game_score_step > 1) {
@@ -163,10 +196,8 @@ function event_loop() {
         canvas_ctx.fillRect(0, 232, canvas.width, CELL_SIZE * 0.2);
     }
 
-    // score card update
-    canvas_ctx.font = "20px Arcade";
-    canvas_ctx.fillStyle = current_theme.score_text;
-    canvas_ctx.fillText(`H I     ${Math.floor(game_hi_score).toString().padStart(4, '0').split('').join(" ")}     ${game_score.toString().padStart(4, '0').split('').join(" ")}`, canvas.width - 200, 20);
+    // Вместо этого, обновляем счет:
+    updateScore();
 
     // first time
     if (is_first_time) {
@@ -247,7 +278,8 @@ function event_loop() {
                 localStorage.setItem("project.github.chrome_dino.high_score", game_score);
             }
             
-            window.parent.postMessage('gameOver', '*');
+            showGameOver(game_score);
+            window.parent.postMessage({type: 'gameOver', score: game_score}, '*');
             return;
         }
     }
@@ -260,16 +292,36 @@ function event_loop() {
         dino_ready_to_jump = true;
     }
 
-    dino_current_trust.sub(ENVIRONMENT_GRAVITY);
+    dino_current_trust.sub(gravity); // Используем ыбранную гравитацию
 
-    requestAnimationFrame(event_loop);
+    if (game_score > game_hi_score) {
+        game_hi_score = game_score;
+        localStorage.setItem("project.github.chrome_dino.high_score", Math.floor(game_hi_score));
+    }
+
+    requestAnimationFrame(() => event_loop(gravity));
 }
 
 function main() {
-    initialize();
-    event_loop();
+    const { gravity } = initialize();
+    event_loop(gravity);
 }
 
 document.fonts.load('1rem "Arcade"').then(() => {
     main();
+});
+
+// Добавьте эту функцию для получения текущего счета
+window.getScore = function() {
+    return game_score;
+};
+
+document.getElementById('watch-ad-button').addEventListener('click', () => {
+    // Здесь добавьте логику для показа рекламы
+    console.log('Watch ad button clicked');
+    // После просмотра рекламы можно утроить счет:
+    // game_score *= 3;
+    // updateScore();
+    // hideGameOver();
+    // main(); // Перезапуск игры
 });

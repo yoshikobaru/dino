@@ -7,6 +7,13 @@
     <title>Lit WIN Tap</title>
     <link href="/dist/output.css" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        #timer {
+            font-size: 14px;
+            margin-top: 5px;
+            color: #888;
+        }
+    </style>
 </head>
 <body>
     <div id="main-page" class="page bg-black text-white min-h-screen p-4">
@@ -17,7 +24,7 @@
                         <div class="bg-yellow-400 rounded-lg p-4 col-span-2 flex items-center">
                             <img src="assets/main.png" alt="Динозавр" class="w-16 h-16 mr-4">
                             <div>
-                                <div class="text-3xl font-bold text-black">1,100 DPS</div>
+                                <div class="text-3xl font-bold text-black">0 DPS</div>
                                 <div class="text-sm text-black">Your Total Score</div>
                             </div>
                         </div>
@@ -47,37 +54,7 @@
                 <button class="bg-gray-700 text-white px-4 py-2 rounded-full text-sm flex-shrink-0">Refs</button>
             </div>
             <div class="space-y-2">
-                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
-                    <div>
-                        <div class="text-sm">Name Daily Task</div>
-                        <div class="text-xs text-yellow-400">+150 DPS</div>
-                    </div>
-                    <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">Start</button>
-                </div>
-                <img src="assets/Line.png" alt="Разделитель" class="w-full">
-                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
-                    <div>
-                        <div class="text-sm">Name Daily Task</div>
-                        <div class="text-xs text-yellow-400">+150 DPS</div>
-                    </div>
-                    <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">Start</button>
-                </div>
-                <img src="assets/Line.png" alt="Разделитель" class="w-full">
-                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
-                    <div>
-                        <div class="text-sm">Name Daily Task</div>
-                        <div class="text-xs text-yellow-400">+150 DPS</div>
-                    </div>
-                    <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">Start</button>
-                </div>
-                <img src="assets/Line.png" alt="Разделитель" class="w-full">
-                <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
-                    <div>
-                        <div class="text-sm">Name Daily Task</div>
-                        <div class="text-xs text-yellow-400">+150 DPS</div>
-                    </div>
-                    <button class="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">Start</button>
-                </div>
+                <!-- Задачи будут добавляться сюда динамически -->
             </div>
         </div>
     </div>

@@ -7,8 +7,21 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="container">
+    <div id="game-container">
+        <div id="score-container">
+            <span id="high-score">0</span>/<span id="current-score">0</span>
+        </div>
         <canvas id="board"></canvas>
+        <div id="game-over" style="display: none;">
+            <h2>GAME OVER</h2>
+            <div class="score-box">
+                <p>Score</p>
+                <p id="final-score" class="yellow-text">+35 DPS</p>
+            </div>
+            <button id="watch-ad-button">
+                <span>Watch <span class="yellow-text">ads</span> for x 3 DPS</span>
+            </button>
+        </div>
     </div>
     <script src="physics.js"></script>
     <script src="character.js"></script>
