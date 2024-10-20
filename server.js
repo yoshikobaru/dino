@@ -9,7 +9,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
 
 // Создаем подключение к базе данных
-const sequelize = new Sequelize('litwin_tap', 'litwin_user', 'Negxtic007', {
+const sequelize = new Sequelize('dino_db', 'dino_user', 'Negxtic007', {
   host: 'localhost',
   dialect: 'postgres'
 });
@@ -36,18 +36,6 @@ const User = sequelize.define('User', {
   },
   balance: {
     type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  tapProfit: {
-    type: DataTypes.INTEGER,
-    defaultValue: 1
-  },
-  hourlyProfit: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  totalEarnedCoins: {
-    type: DataTypes.DECIMAL(30, 0),
     defaultValue: 0
   },
   adWatchCount: {
