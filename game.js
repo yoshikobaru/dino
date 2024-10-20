@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameIframe = document.createElement('iframe');
             gameIframe.src = 'game/index.html';
             gameIframe.style.width = '100%';
-            gameIframe.style.height = '400px';
+            gameIframe.style.height = '300px';
             gameIframe.style.border = 'none';
             gameContainer.appendChild(gameIframe);
         }

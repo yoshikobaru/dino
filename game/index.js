@@ -4,13 +4,13 @@ const canvas_ctx = canvas.getContext('2d');
 const CELL_SIZE = 2;
 const ROWS = 300;
 let COLUMNS = 1000;
-const FLOOR_VELOCITY = new Velocity(0, -7);
-let CACTUS_MIN_GAP = 20;
+const FLOOR_VELOCITY = new Velocity(0, -3.5);
+let CACTUS_MIN_GAP = 40;
 
 if (screen.width < COLUMNS) {
     COLUMNS = screen.width;
     FLOOR_VELOCITY.add(new Velocity(0, 2));
-    CACTUS_MIN_GAP = 50;
+    CACTUS_MIN_GAP = 70;
 }
 
 const DINO_INITIAL_TRUST = new Velocity(-11, 0);
@@ -23,7 +23,7 @@ let is_first_time = true;
 let game_score = null;
 let game_score_step = 0;
 let game_hi_score = null;
-let step_velocity = new Velocity(0, -0.1);
+let step_velocity = new Velocity(0, -0.05);
 let cumulative_velocity = null;
 let current_theme = null;
 
@@ -136,7 +136,7 @@ function paint_layout(character_layout, character_position) {
 }
 
 function event_loop() {
-    game_score_step += 0.15;
+    game_score_step += 0.1;
 
     if (game_score_step > 1) {
         game_score_step -= 1;
@@ -197,7 +197,7 @@ function event_loop() {
     });
 
     // increase velocity
-    if (game_score % 100 == 0) {
+    if (game_score % 200 == 0) {
         cumulative_velocity.add(step_velocity);
     }
 
@@ -207,7 +207,7 @@ function event_loop() {
         for (let i = characters_pool.length - 1; i >= 0; i--) {
 
             // Increase velocity on each cycle
-            if ((!(index == 1 && i == 0)) && (game_score % 100 == 0)) {
+            if ((!(index == 1 && i == 0)) && (game_score % 200 == 0)) {
                 characters_pool[i].get_velocity().add(step_velocity);
             }
 

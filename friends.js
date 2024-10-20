@@ -27,7 +27,7 @@ function getReferredFriends() {
         return;
     }
 
-    fetch(`https://litwin-tap.ru/get-referred-friends?telegramId=${telegramId}`)
+    fetch(`https://dino-app.ru/get-referred-friends?telegramId=${telegramId}`)
     .then(response => response.json())
     .then(data => {
         if (data.referredFriends) {
@@ -136,7 +136,7 @@ function displayReferredFriends(friends) {
             return;
         }
     
-        fetch(`https://litwin-tap.ru/get-referral-link?telegramId=${telegramId}`)
+        fetch(`https://dino-app.ru/get-referral-link?telegramId=${telegramId}`)
         .then(response => {
             console.log('Ответ получен:', response);
             return response.json();
@@ -209,11 +209,11 @@ function displayReferredFriends(friends) {
             return;
         }
     
-        fetch(`https://litwin-tap.ru/get-referral-link?telegramId=${telegramId}`)
+        fetch(`https://dino-app.ru/get-referral-link?telegramId=${telegramId}`)
         .then(response => response.json())
         .then(data => {
             if (data.inviteLink) {
-                const message = "Присоединяйся к LITWIN вместе со мной!";
+                const message = "Присоединяйся к Dino вместе со мной!";
                 const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(message)}&url=${encodeURIComponent(data.inviteLink)}`;
                 
                 if (window.Telegram && window.Telegram.WebApp) {
