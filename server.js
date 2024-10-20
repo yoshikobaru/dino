@@ -55,7 +55,7 @@ const User = sequelize.define('User', {
 // Синхронизируем модель с базой данных
 sequelize.sync({ alter: true });
 // Создаем экземпляр бота с вашим токеном
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new Telegraf(process.env.DINO_BOT_TOKEN);
 // WebApp URL
 const webAppUrl = 'https://dino-app.ru';
 
