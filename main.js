@@ -32,7 +32,7 @@ function showPage(pageName) {
         activeButton.classList.add('text-yellow-400');
     }
 }
-//
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeMainPage();
     showPage('main');
