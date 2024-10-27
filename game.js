@@ -21,6 +21,11 @@ let tasks = JSON.parse(localStorage.getItem('dailyTasks')) || { daily: [] };
 // Добавьте в начало файла:
 let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
 
+// Добавляем новые переменные для отслеживания прогресса
+let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+let gameTaskTimer = null;
+let gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
+
 // Функция для обновления таймера
 function updateTimer() {
     const now = Date.now();
@@ -108,25 +113,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startGame() {
         if (availableGames > 0) {
+            const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
+            const currentTime = Date.now();
+            
             availableGames--;
             heartTimers.push(Date.now());
             if (heartTimers.length === 1) {
                 lastHeartRecoveryTime = Date.now();
             }
+            
+            // Обновляем прогресс только если нет активного кулдауна
+            if (taskCooldown <= currentTime) {
+                gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+                
+                if (gameProgress === 0) {
+                    gameTaskStartTime = Date.now();
+                    localStorage.setItem('gameTaskStartTime', gameTaskStartTime);
+                    startGameTaskTimer();
+                }
+                
+                if (gameProgress < 5) {
+                    gameProgress++;
+                    localStorage.setItem('gameProgress', gameProgress.toString());
+                }
+            }
+            
             saveGameState();
             updateAvailableGamesDisplay();
             startButton.style.display = 'none';
             
             if (gameIframe && gameIframe.contentWindow) {
-                // Отправляем сообщение для замедления игры
                 gameIframe.contentWindow.postMessage({ type: 'slowDown' }, '*');
-                // Запускаем игру
                 gameIframe.contentWindow.main();
             }
             
-            updateGameTaskProgress();
-            
-            // Обновляем счетчик сыгранных игр
             playedCount++;
             localStorage.setItem('playedCount', playedCount.toString());
             updatePlayedCountTask();
@@ -259,7 +279,7 @@ function loadGameState() {
     if (savedAvailableGames !== null) {
         availableGames = parseInt(savedAvailableGames);
     } else {
-        availableGames = 5; // Устанавливаем 5 сердец только если нет сохраненного значения
+        availableGames = 5; // Устанавливаем 5 сердец только если нет сораненного значения
     }
     if (savedHeartTimers !== null) {
         heartTimers = JSON.parse(savedHeartTimers);
@@ -304,28 +324,79 @@ function updateGameTaskProgress() {
 // Измените функцию startGame
 function startGame() {
     if (availableGames > 0) {
+        const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
+        const currentTime = Date.now();
+        
         availableGames--;
         heartTimers.push(Date.now());
         if (heartTimers.length === 1) {
             lastHeartRecoveryTime = Date.now();
         }
+        
+        // Обновляем прогресс только если нет активного кулдауна
+        if (taskCooldown <= currentTime) {
+            gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+            
+            if (gameProgress === 0) {
+                gameTaskStartTime = Date.now();
+                localStorage.setItem('gameTaskStartTime', gameTaskStartTime);
+                startGameTaskTimer();
+            }
+            
+            if (gameProgress < 5) {
+                gameProgress++;
+                localStorage.setItem('gameProgress', gameProgress.toString());
+            }
+        }
+        
         saveGameState();
         updateAvailableGamesDisplay();
         startButton.style.display = 'none';
         
         if (gameIframe && gameIframe.contentWindow) {
-            // Отправляем сообщение для замедления игры
             gameIframe.contentWindow.postMessage({ type: 'slowDown' }, '*');
-            // Запускаем игру
             gameIframe.contentWindow.main();
         }
         
-        updateGameTaskProgress();
-        
-        // Обновляем счетчик сыгранных игр
         playedCount++;
         localStorage.setItem('playedCount', playedCount.toString());
         updatePlayedCountTask();
+    }
+}
+
+// Добавляем функцию для запуска таймера задания
+function startGameTaskTimer() {
+    if (gameTaskTimer) {
+        clearTimeout(gameTaskTimer);
+    }
+    
+    gameTaskTimer = setTimeout(() => {
+        // Сбрасываем прогресс после истечения минуты
+        gameProgress = 0;
+        localStorage.setItem('gameProgress', gameProgress);
+        gameTaskStartTime = 0;
+        localStorage.setItem('gameTaskStartTime', gameTaskStartTime);
+        
+        // Обновляем отображение
+        renderTasks('daily');
+    }, 60000); // 1 минута
+}
+
+// Добавляем функцию для проверки времени
+function checkGameTaskTime() {
+    if (gameTaskStartTime > 0) {
+        const now = Date.now();
+        const timeElapsed = now - gameTaskStartTime;
+        
+        if (timeElapsed >= 60000) { // Прошла минута
+            gameProgress = 0;
+            localStorage.setItem('gameProgress', gameProgress);
+            gameTaskStartTime = 0;
+            localStorage.setItem('gameTaskStartTime', gameTaskStartTime);
+            if (gameTaskTimer) {
+                clearTimeout(gameTaskTimer);
+            }
+        }
     }
 }
 
@@ -362,7 +433,7 @@ function updatePlayedCountTask() {
         if (playedCount >= 25) {
             playedCountTask.isCompleted = true;
         }
-        renderTasks('daily');
+        renderTasks('daily');!
         saveDailyTasks();
     }
 }
@@ -413,3 +484,4 @@ function checkAndCompleteRecordTask(taskName) {
     
     alert(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания "${taskName}"!`);
 }
+

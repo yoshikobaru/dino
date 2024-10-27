@@ -271,16 +271,50 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (task.name === "Сыграть 5 раз") {
-                statusText = `${task.progress}/${task.maxProgress}`;
-                if (task.isTimerRunning) {
-                    buttonText = 'В процессе';
+                let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+                const gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
+                const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
+                
+                // Проверяем, не истекла ли минута
+                if (gameTaskStartTime > 0) {
+                    const now = Date.now();
+                    const timeElapsed = now - gameTaskStartTime;
+                    
+                    // Если прошла минута, сбрасываем прогресс
+                    if (timeElapsed >= 60000) {
+                        gameProgress = 0;
+                        localStorage.setItem('gameProgress', '0');
+                        localStorage.setItem('gameTaskStartTime', '0');
+                    }
+                }
+                
+                // Проверяем кулдаун
+                if (taskCooldown > Date.now()) {
+                    const cooldownLeft = Math.ceil((taskCooldown - Date.now()) / 1000);
+                    statusText = `Кулдаун: ${cooldownLeft}с`;
+                    buttonText = 'Подождите';
                     buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-                } else if (task.progress === task.maxProgress) {
-                    buttonText = 'Получить награду';
-                    buttonClass = 'bg-yellow-400 text-black';
                 } else {
-                    buttonText = 'Начать';
-                    buttonClass = 'bg-yellow-400 text-black';
+                    let timeLeft = '';
+                    if (gameTaskStartTime > 0) {
+                        const now = Date.now();
+                        const timeElapsed = now - gameTaskStartTime;
+                        const remainingTime = Math.max(0, Math.ceil((60000 - timeElapsed) / 1000));
+                        timeLeft = ` (${remainingTime}с)`;
+                    }
+                    
+                    statusText = `${gameProgress}/5${timeLeft}`;
+                    
+                    if (gameProgress >= 5) {
+                        buttonText = 'Получить награду';
+                        buttonClass = 'bg-yellow-400 text-black';
+                    } else if (gameTaskStartTime > 0) {
+                        buttonText = 'В процессе';
+                        buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
+                    } else {
+                        buttonText = 'Начать';
+                        buttonClass = 'bg-yellow-400 text-black';
+                    }
                 }
             }
             
@@ -476,103 +510,157 @@ document.addEventListener('DOMContentLoaded', function() {
     function completeTask(category, index) {
         const task = tasks[category][index];
         
-        if ((task.name === "Сыграть в LITWIN" || task.name === "Сыграть в Method") && !task.isCompleted) {
-            // Пробуем открыть через протокол Telegram
-            window.location.href = task.link;
+        if (category === 'social') {
+            // Открываем ссылку
+            const isTelegramWebApp = window.Telegram && window.Telegram.WebApp;
+            const linkToUse = isTelegramWebApp ? task.link : task.webLink;
             
-            // Если через 1 секунду страница не изменилась, открываем веб-ерсию
-            setTimeout(() => {
-                if (document.hidden) {
-                    // Telegram открылся, отмечаем задание как выполненное
-                    completeLinkedTask(task, category);
-                } else {
-                    // Открываем веб-версию
-                    window.open(task.webLink, '_blank');
-                    completeLinkedTask(task, category);
-                }
-            }, 1000);
-        } else {
-            if (task.cooldown > 0) return;
-
-            if (task.name === "Сыграть 5 раз") {
-                if (task.progress === task.maxProgress) {
-                    totalDPS += task.dps;
-                    totalTaskEarnings += task.dps;
-                    task.cooldown = 20;
-                    task.progress = 0;
-                    task.isTimerRunning = false;
-                    clearTimeout(task.timer);
-                    
-                    // Запускаем кулдаун
-                    startCooldown(category, index);
-                }
-            } else if (task.name === "Сыграть 25 раз") {
-                completePlayedCountTask(index);
-            } else if (task.name === "Набрать 500 DPS за игру" && !task.isCompleted) {
-                const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
-                if (highScore >= 500) {
-                    task.isCompleted = true;
-                    localStorage.setItem('record500DPSCompleted', 'true');
-                    totalDPS += task.dps;
-                    totalTaskEarnings += task.dps;
-                    
-                    localStorage.setItem('totalDPS', totalDPS.toString());
-                    localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
-                    
-                    updateTotalScore();
-                    updateTaskEarningsDisplay();
-                    renderTasks(category);
-                    saveTasks();
-                    
-                    alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
-                } else {
-                    alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 500 DPS!`);
-                }
-            } else if (task.name === "Набрать 1000 DPS за игру" && !task.isCompleted) {
-                const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
-                if (highScore >= 1000) {
-                    task.isCompleted = true;
-                    localStorage.setItem('record1000DPSCompleted', 'true');
-                    totalDPS += task.dps;
-                    totalTaskEarnings += task.dps;
-                    
-                    localStorage.setItem('totalDPS', totalDPS.toString());
-                    localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
-                    
-                    updateTotalScore();
-                    updateTaskEarningsDisplay();
-                    renderTasks(category);
-                    saveTasks();
-                    
-                    alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
-                } else {
-                    alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 1000 DPS!`);
-                }
-            } else {
-                const earnedDPS = task.dps;
-                totalDPS += earnedDPS;
-                totalTaskEarnings += earnedDPS;
-                task.progress++;
-                if (task.progress > task.maxProgress) {
-                    task.progress = 1;
-                    task.dps = 150;
-                } else {
-                    task.dps += 150;
-                }
-
-                task.cooldown = 20;
+            // Начисляем DPS и сохраняем статус
+            if (task.name.includes('Litwin')) {
+                totalDPS += task.dps;
+                totalTaskEarnings += task.dps;
+                localStorage.setItem('totalDPS', totalDPS.toString());
+                localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                localStorage.setItem('litwinTaskCompleted', 'true');
+            } else if (task.name.includes('Method')) {
+                totalDPS += task.dps;
+                totalTaskEarnings += task.dps;
+                localStorage.setItem('totalDPS', totalDPS.toString());
+                localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                localStorage.setItem('methodTaskCompleted', 'true');
+            }
+            
+            // Обновляем отображение
+            updateTotalScore();
+            updateTaskEarningsDisplay();
+            
+            // Открываем ссылку
+            window.open(linkToUse, '_blank');
+            
+            // Обновляем внешний вид кнопки
+            const taskButton = document.querySelector(`[data-category="${category}"][data-index="${index}"]`);
+            if (taskButton) {
+                taskButton.textContent = 'Выполнено';
+                taskButton.disabled = true;
+                taskButton.style.backgroundColor = '#gray';
+                taskButton.style.cursor = 'not-allowed';
+                taskButton.style.opacity = '0.5';
+            }
+            
+            return;
+        }
+        
+        if (task.name === "Сыграть 5 раз") {
+            const gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+            const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
+            
+            // Проверяем, не на кулдауне ли задача
+            if (taskCooldown > Date.now()) {
+                return;
+            }
+            
+            if (gameProgress >= 5) {
+                totalDPS += task.dps;
+                totalTaskEarnings += task.dps;
+                
+                // Сбрасываем прогресс и время
+                localStorage.setItem('gameProgress', '0');
+                localStorage.setItem('gameTaskStartTime', '0');
+                
+                // Устанавливаем кулдаун и сразу сбрасываем прогресс
+                localStorage.setItem('gameTaskCooldown', (Date.now() + 10000).toString());
+                localStorage.setItem('gameProgress', '0'); // Важно: сбрасываем прогресс при начале кулдауна
+                
                 localStorage.setItem('totalDPS', totalDPS.toString());
                 localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
                 
-                // Используем setTimeout для гарантированного бновления после изменения данных
-                setTimeout(() => {
-                    updateTotalScore();
-                    updateTaskEarningsDisplay();
-                    renderTasks(category);
-                }, 0);
+                updateAllBalances();
+                renderTasks(category);
                 
-                saveDailyTask();
+                alert(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
             }
+        } else if (task.name === "Сыграть 25 раз") {
+            let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
+            if (playedCount >= task.maxProgress && !task.isCompleted) {
+                totalDPS += task.dps;
+                totalTaskEarnings += task.dps;
+                
+                localStorage.setItem('totalDPS', totalDPS.toString());
+                localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                
+                task.isCompleted = true;
+                localStorage.setItem('playedCount', '0');
+                
+                updateTotalScore();
+                updateTaskEarningsDisplay();
+                renderTasks(category);
+                
+                alert(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
+            }
+        } else if (task.name === "Набрать 500 DPS за игру" && !task.isCompleted) {
+            const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+            if (highScore >= 500) {
+                task.isCompleted = true;
+                localStorage.setItem('record500DPSCompleted', 'true');
+                totalDPS += task.dps;
+                totalTaskEarnings += task.dps;
+                
+                localStorage.setItem('totalDPS', totalDPS.toString());
+                localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                
+                updateTotalScore();
+                updateTaskEarningsDisplay();
+                renderTasks(category);
+                saveTasks();
+                
+                alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
+            } else {
+                alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 500 DPS!`);
+            }
+        } else if (task.name === "Набрать 1000 DPS за игру" && !task.isCompleted) {
+            const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+            if (highScore >= 1000) {
+                task.isCompleted = true;
+                localStorage.setItem('record1000DPSCompleted', 'true');
+                totalDPS += task.dps;
+                totalTaskEarnings += task.dps;
+                
+                localStorage.setItem('totalDPS', totalDPS.toString());
+                localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                
+                updateTotalScore();
+                updateTaskEarningsDisplay();
+                renderTasks(category);
+                saveTasks();
+                
+                alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
+            } else {
+                alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 1000 DPS!`);
+            }
+        } else {
+            const earnedDPS = task.dps;
+            totalDPS += earnedDPS;
+            totalTaskEarnings += earnedDPS;
+            task.progress++;
+            if (task.progress > task.maxProgress) {
+                task.progress = 1;
+                task.dps = 150;
+            } else {
+                task.dps += 150;
+            }
+
+            task.cooldown = 20;
+            localStorage.setItem('totalDPS', totalDPS.toString());
+            localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+            
+            // Используем setTimeout для гарантированного бновления после изменения данных
+            setTimeout(() => {
+                updateTotalScore();
+                updateTaskEarningsDisplay();
+                renderTasks(category);
+            }, 0);
+            
+            saveDailyTask();
         }
     }
 
@@ -642,7 +730,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTaskEarningsDisplay();
     });
 
-    // бновям интервал для обновления таймеров
+    // бновям интервал для обнвления таймеров
     setInterval(() => {
         if (currentCategory === 'daily') {
             updateDailyTask();
@@ -688,9 +776,9 @@ function updateInviteEarningsDisplay() {
     }
 }
 
-// Вызов функций для обновления отображения при загрузке страницы
+// Вызов функций для обновления отображения при згрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-   // Обновляем отображение зараотанных денег за игры
+   // Обновляем отображние зараотанных денег за игры
     updateTaskEarningsDisplay();
     updateInviteEarningsDisplay(); // Вызывайте эту функцию, когда ользователь зарабатывает деньги за задания
 });
@@ -752,7 +840,7 @@ function updateAllBalances() {
     updateGameScoreDisplay(); // Если эта функция существует
 }
 
-// Обноте обаботчик для кнопки "Home"
+// Обноте обаботчик для кнопк "Home"
 document.querySelector('button[data-page="main"]').addEventListener('click', () => {
     totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
     totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
@@ -803,52 +891,69 @@ function startGameTaskTimer() {
 
 // Обновляем функцию renderTasks для отображения новой задчи
 function renderTasks(category) {
-    // ... существующий код ...
-
     tasks[category].forEach((task, index) => {
-        // ... существующий код ...
-
         if (task.name === "Сыграть 5 раз") {
-            statusText = `${task.progress}/${task.maxProgress}`;
-            if (task.cooldown > 0) {
-                buttonText = `Кулдаун: ${task.cooldown}с`;
-                buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-            } else if (task.isTimerRunning) {
-                buttonText = 'В процессе';
-                buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-            } else if (task.progress === task.maxProgress) {
-                buttonText = 'Получить награду';
-                buttonClass = 'bg-yellow-400 text-black';
-            } else {
-                buttonText = 'Нчать';
-                buttonClass = 'bg-yellow-400 text-black';
+            let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+            const gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
+            const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
+            
+            // Проверяем, не истекла ли минута
+            if (gameTaskStartTime > 0) {
+                const now = Date.now();
+                const timeElapsed = now - gameTaskStartTime;
+                
+                // Если прошла минута, сбрасываем прогресс
+                if (timeElapsed >= 60000) {
+                    gameProgress = 0;
+                    localStorage.setItem('gameProgress', '0');
+                    localStorage.setItem('gameTaskStartTime', '0');
+                }
             }
-        }
-
-        if (task.name === "Сыграть 25 раз") {
-            let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
-            statusText = `${playedCount}/${task.maxProgress}`;
-            if (playedCount < task.maxProgress) {
-                buttonText = 'В процессе';
+            
+            // Проверяем окончание кулдауна
+            if (taskCooldown > 0 && Date.now() > taskCooldown) {
+                // Кулдаун закончился, сбрасываем прогресс
+                localStorage.setItem('gameProgress', '0');
+                localStorage.setItem('gameTaskStartTime', '0');
+                localStorage.setItem('gameTaskCooldown', '0');
+            }
+            
+            let statusText = '';
+            let buttonText = '';
+            let buttonClass = '';
+            
+            // Проверяем кулдаун
+            if (taskCooldown > Date.now()) {
+                const cooldownLeft = Math.ceil((taskCooldown - Date.now()) / 1000);
+                statusText = `Кулдаун: ${cooldownLeft}с`;
+                buttonText = 'Подождите';
                 buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
             } else {
-                buttonText = 'Получить награду';
-                buttonClass = 'bg-yellow-400 text-black';
+                let timeLeft = '';
+                if (gameTaskStartTime > 0) {
+                    const now = Date.now();
+                    const timeElapsed = now - gameTaskStartTime;
+                    const remainingTime = Math.max(0, Math.ceil((60000 - timeElapsed) / 1000));
+                    timeLeft = ` (${remainingTime}с)`;
+                }
+                
+                statusText = `${gameProgress}/5${timeLeft}`;
+                
+                if (gameProgress >= 5) {
+                    buttonText = 'Получить награду';
+                    buttonClass = 'bg-yellow-400 text-black';
+                } else if (gameTaskStartTime > 0) {
+                    buttonText = 'В процессе';
+                    buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
+                } else {
+                    buttonText = 'Начать';
+                    buttonClass = 'bg-yellow-400 text-black';
+                }
             }
+            
+            // ... остальной код отрисовки ...
         }
-
-        if (task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") {
-            const requiredScore = task.name === "Набрать 500 DPS за игру" ? 500 : 1000;
-            const isCompleted = localStorage.getItem(`record${requiredScore}DPSCompleted`) === 'true';
-            buttonText = isCompleted ? 'Выполнено' : 'Получить награду';
-            buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
-            task.isCompleted = isCompleted;
-        }
-
-        // ... существующий код ...
     });
-
-    // ... существущий код ...
 }
 
 // Функция для загрузки задач из localStorage
@@ -857,7 +962,7 @@ function loadDailyTasks() {
     if (savedTasks) {
         tasks.daily = savedTasks;
     } else {
-        addGameTask(); // Добавляем новую задачу только если нет сохраненных задач
+        addGameTask(); // Добавляем новую задачу толко если нет сохраненных задач
     }
     loadPlayedCount(); // Загружаем playedCount и обновляем задачу
     renderTasks('daily');
@@ -1032,3 +1137,57 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTasks('daily');
     // ... остальной код инициализации ...
 });
+
+// Добавим функцию проверки кулдауна
+function isTaskOnCooldown() {
+    const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
+    return taskCooldown > Date.now();
+}
+
+// В game.js добавьте эту проверку перед увеличением gameProgress
+function incrementGameProgress() {
+    if (!isTaskOnCooldown()) {
+        const currentProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+        if (currentProgress < 5) { // Увеличиваем только если меньше 5
+            localStorage.setItem('gameProgress', (currentProgress + 1).toString());
+            if (currentProgress === 0) {
+                localStorage.setItem('gameTaskStartTime', Date.now().toString());
+            }
+        }
+    }
+}
+
+// Добавим функцию для безопасного увеличения прогресса
+function incrementGameProgress() {
+    const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
+    const currentTime = Date.now();
+
+    // Если кулдаун только что закончился, сбрасываем ��рогресс
+    if (taskCooldown > 0 && currentTime > taskCooldown) {
+        localStorage.setItem('gameProgress', '0');
+        localStorage.setItem('gameTaskStartTime', '0');
+        localStorage.setItem('gameTaskCooldown', '0');
+        return; // Прерываем выполнение функции, чтобы не увеличивать прогресс сразу
+    }
+
+    // Проверяем, нет ли активного кулдауна
+    if (taskCooldown > currentTime) {
+        return; // Если кулдаун активен, не увеличиваем прогресс
+    }
+
+    const currentProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+    if (currentProgress < 5) {
+        localStorage.setItem('gameProgress', Math.min(currentProgress + 1, 5).toString());
+        if (currentProgress === 0) {
+            localStorage.setItem('gameTaskStartTime', Date.now().toString());
+        }
+    }
+}
+
+// Используйте эту функцию вместо прямого увеличения gameProgress
+
+
+
+
+
+
