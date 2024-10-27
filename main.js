@@ -516,36 +516,29 @@ document.addEventListener('DOMContentLoaded', function() {
             const linkToUse = isTelegramWebApp ? task.link : task.webLink;
             
             // Начисляем DPS и сохраняем статус
-            if (task.name.includes('Litwin')) {
+            if (task.name === "Сыграть в LITWIN") { // Изменено с includes на строгое сравнение
                 totalDPS += task.dps;
                 totalTaskEarnings += task.dps;
                 localStorage.setItem('totalDPS', totalDPS.toString());
                 localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
-                localStorage.setItem('litwinTaskCompleted', 'true');
-            } else if (task.name.includes('Method')) {
+                localStorage.setItem('litwinTaskCompleted', 'true'); // Убедимся, что это выполняется
+                task.isCompleted = true; // Добавляем установку флага в объекте задания
+            } else if (task.name === "Сыграть в Method") { // Изменено с includes на строгое сравнение
                 totalDPS += task.dps;
                 totalTaskEarnings += task.dps;
                 localStorage.setItem('totalDPS', totalDPS.toString());
                 localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
                 localStorage.setItem('methodTaskCompleted', 'true');
+                task.isCompleted = true; // Добавляем установку флага в объекте задания
             }
             
             // Обновляем отображение
             updateTotalScore();
             updateTaskEarningsDisplay();
+            renderTasks(category); // Добавляем обновление отображения задач
             
             // Открываем ссылку
             window.open(linkToUse, '_blank');
-            
-            // Обновляем внешний вид кнопки
-            const taskButton = document.querySelector(`[data-category="${category}"][data-index="${index}"]`);
-            if (taskButton) {
-                taskButton.textContent = 'Выполнено';
-                taskButton.disabled = true;
-                taskButton.style.backgroundColor = '#gray';
-                taskButton.style.cursor = 'not-allowed';
-                taskButton.style.opacity = '0.5';
-            }
             
             return;
         }
@@ -1162,7 +1155,7 @@ function incrementGameProgress() {
     const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
     const currentTime = Date.now();
 
-    // Если кулдаун только что закончился, сбрасываем ��рогресс
+    // Если кулдаун только что закончился, сбрасываем рогресс
     if (taskCooldown > 0 && currentTime > taskCooldown) {
         localStorage.setItem('gameProgress', '0');
         localStorage.setItem('gameTaskStartTime', '0');
@@ -1185,6 +1178,7 @@ function incrementGameProgress() {
 }
 
 // Используйте эту функцию вместо прямого увеличения gameProgress
+
 
 
 
