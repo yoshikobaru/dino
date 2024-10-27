@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { name: "Сыграть 5 раз", dps: 350, progress: 0, maxProgress: 5, cooldown: 0, timer: 0, isTimerRunning: false },
             { name: "Сыграть 25 раз", dps: 750, playedCount: 0, maxProgress: 25, isCompleted: false },
             { name: "Набрать 500 DPS за игру", dps: 550, isCompleted: false },
-            { name: "Набрать 1000 DPS за игру", dps: 1750, isCompleted: false } // Изменен�� с 1100 на 1750
+            { name: "Набрать 1000 DPS за игру", dps: 1750, isCompleted: false } // Изменен с 1100 на 1750
         ],
         social: [
             
@@ -528,6 +528,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 500 DPS!`);
                 }
+            } else if (task.name === "Набрать 1000 DPS за игру" && !task.isCompleted) {
+                const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+                if (highScore >= 1000) {
+                    task.isCompleted = true;
+                    localStorage.setItem('record1000DPSCompleted', 'true');
+                    totalDPS += task.dps;
+                    totalTaskEarnings += task.dps;
+                    
+                    localStorage.setItem('totalDPS', totalDPS.toString());
+                    localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                    
+                    updateTotalScore();
+                    updateTaskEarningsDisplay();
+                    renderTasks(category);
+                    saveTasks();
+                    
+                    alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
+                } else {
+                    alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 1000 DPS!`);
+                }
             } else {
                 const earnedDPS = task.dps;
                 totalDPS += earnedDPS;
@@ -698,7 +718,7 @@ function updateGameScoreDisplay() {
     const gameScoreElement = document.getElementById('gameScore');
     const totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0; // Поучаем из localStorage
     if (gameScoreElement) {
-        gameScoreElement.textContent = `+${totalGameEarnings} DPS`; // Обнов��яем отображение
+        gameScoreElement.textContent = `+${totalGameEarnings} DPS`; // Обновяем отображение
     }
 }
 function saveAllData() {
@@ -781,7 +801,7 @@ function startGameTaskTimer() {
     }
 }
 
-// Обновляем функцию renderTasks для отображения новой задачи
+// Обновляем функцию renderTasks для отображения новой задчи
 function renderTasks(category) {
     // ... существующий код ...
 
@@ -1012,34 +1032,3 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTasks('daily');
     // ... остальной код инициализации ...
 });
-
-// Новая функция для проверки и выполнения заданий на рекорд DPS
-function checkAndCompleteRecordTask(taskName) {
-    const task = tasks.daily.find(t => t.name === taskName);
-    if (!task || task.isCompleted) return;
-
-    const requiredScore = taskName === "Набрать 500 DPS за игру" ? 500 : 1000;
-    const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
-
-    if (highScore >= requiredScore) {
-        task.isCompleted = true;
-        localStorage.setItem(`record${requiredScore}DPSCompleted`, 'true');
-        totalDPS += task.dps;
-        totalTaskEarnings += task.dps;
-        
-        localStorage.setItem('totalDPS', totalDPS.toString());
-        localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
-        
-        updateTotalScore();
-        updateTaskEarningsDisplay();
-        renderTasks('daily');
-        saveTasks();
-        
-        alert(`Вы получили ${task.dps} DPS за выполнение задания "${taskName}"!`);
-    } else {
-        alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь ${requiredScore} DPS!`);
-    }
-}
-
-
-

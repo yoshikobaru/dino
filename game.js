@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateAvailableGames() {
-        const availableGamesElement = document.querySelector('#lives'); // Исправл��: добавлен id 'lives'
+        const availableGamesElement = document.querySelector('#lives'); // Исправл: добавлен id 'lives'
         
         if (availableGamesElement) {
             availableGamesElement.innerHTML = '❤️'.repeat(availableGames) + '🖤'.repeat(5 - availableGames);
@@ -117,7 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
             updateAvailableGamesDisplay();
             startButton.style.display = 'none';
             
-            if (gameIframe && gameIframe.contentWindow.main) {
+            if (gameIframe && gameIframe.contentWindow) {
+                // Отправляем сообщение для замедления игры
+                gameIframe.contentWindow.postMessage({ type: 'slowDown' }, '*');
+                // Запускаем игру
                 gameIframe.contentWindow.main();
             }
             
@@ -310,7 +313,10 @@ function startGame() {
         updateAvailableGamesDisplay();
         startButton.style.display = 'none';
         
-        if (gameIframe && gameIframe.contentWindow.main) {
+        if (gameIframe && gameIframe.contentWindow) {
+            // Отправляем сообщение для замедления игры
+            gameIframe.contentWindow.postMessage({ type: 'slowDown' }, '*');
+            // Запускаем игру
             gameIframe.contentWindow.main();
         }
         
@@ -361,3 +367,49 @@ function updatePlayedCountTask() {
     }
 }
 
+// Исправленная функция для проверки и выполнения заданий на рекорд DPS
+function checkAndCompleteRecordTask(taskName) {
+    const task = tasks.daily.find(t => t.name === taskName);
+    if (!task || task.isCompleted) return;
+
+    const requiredScore = taskName === "Набрать 500 DPS за игру" ? 500 : 1000;
+    const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+    const taskCompletedKey = `record${requiredScore}DPSCompleted`;
+
+    // Проверяем, не было ли уже выполнено задание
+    if (localStorage.getItem(taskCompletedKey) === 'true') {
+        alert('Это задание уже выполнено!');
+        return;
+    }
+
+    // Строгая проверка рекорда
+    if (highScore < requiredScore) {
+        alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь ${requiredScore} DPS!`);
+        return;
+    }
+
+    // Дополнительная проверка для задачи на 1000 DPS
+    if (requiredScore === 1000) {
+        // Проверяем, выполнена ли предыдущая задача на 500 DPS
+        if (localStorage.getItem('record500DPSCompleted') !== 'true') {
+            alert('Сначала выполните задание "Набрать 500 DPS за игру"!');
+            return;
+        }
+    }
+
+    // Если все проверки пройдены - начисляем награду
+    task.isCompleted = true;
+    localStorage.setItem(taskCompletedKey, 'true');
+    totalDPS += task.dps;
+    totalTaskEarnings += task.dps;
+    
+    localStorage.setItem('totalDPS', totalDPS.toString());
+    localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+    
+    updateTotalScore();
+    updateTaskEarningsDisplay();
+    renderTasks('daily');
+    saveTasks();
+    
+    alert(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания "${taskName}"!`);
+}
