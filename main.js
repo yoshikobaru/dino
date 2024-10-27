@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            if (task.name === "Сыгрть 25 раз") {
+            if (task.name === "Сыграть 25 раз") {
                 let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
                 statusText = `${playedCount}/${task.maxProgress}`;
                 if (playedCount < task.maxProgress) {
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") {
-                const requiredScore = task.name === "Набрат 500 DPS за игру" ? 500 : 1000;
+                const requiredScore = task.name === "Набрать 500 DPS за игру" ? 500 : 1000;
                 const isCompleted = localStorage.getItem(`record${requiredScore}DPSCompleted`) === 'true';
                 buttonText = isCompleted ? 'Выполнено' : 'Получить награду';
                 buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             taskElement.innerHTML = `
                 <div>
-                    <div class="text-sm">${task.name}${task.progress ? ` ${task.progress}/${task.maxProgress}` : ''}</div>
+                    <div class="text-sm">${task.name}</div>
                     <div class="text-xs text-yellow-400">+${task.dps} DPS</div>
                     <div class="text-xs text-white">${statusText}</div>
                 </div>
@@ -698,7 +698,7 @@ function updateGameScoreDisplay() {
     const gameScoreElement = document.getElementById('gameScore');
     const totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0; // Поучаем из localStorage
     if (gameScoreElement) {
-        gameScoreElement.textContent = `+${totalGameEarnings} DPS`; // Обновляем отображение
+        gameScoreElement.textContent = `+${totalGameEarnings} DPS`; // Обнов��яем отображение
     }
 }
 function saveAllData() {
@@ -949,20 +949,21 @@ function loseLife() {
 // Добавьте новую функцию:
 function completePlayedCountTask(index) {
     const task = tasks.daily[index];
-    if (task.name === "Сыграть 25 раз" && task.playedCount >= task.maxProgress) {
-        totalDPS += task.dps;
-        totalTaskEarnings += task.dps;
-        playedCount = 0; // Сбрасываем playedCount
-        task.playedCount = 0; // Сбрасываем playedCount в задании
-        task.isCompleted = false;
-        
-        localStorage.setItem('totalDPS', totalDPS.toString());
-        localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
-        localStorage.setItem('playedCount', '0');
-        
-        updateAllBalances();
-        renderTasks('daily');
-        saveDailyTasks();
+    if (task.name === "Сыграть 25 раз") {
+        let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
+        if (playedCount >= task.maxProgress) {
+            totalDPS += task.dps;
+            totalTaskEarnings += task.dps;
+            playedCount = 0; // Сбрасываем playedCount
+            
+            localStorage.setItem('totalDPS', totalDPS.toString());
+            localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+            localStorage.setItem('playedCount', '0');
+            
+            updateAllBalances();
+            renderTasks('daily');
+            saveDailyTasks();
+        }
     }
 }
 
@@ -1040,81 +1041,5 @@ function checkAndCompleteRecordTask(taskName) {
     }
 }
 
-// В начале файла добавьте:
-let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
 
-// Обновите функцию renderTasks
-function renderTasks(category) {
-    const taskContainer = document.getElementById(`${category}-tasks`);
-    if (!taskContainer) return;
 
-    taskContainer.innerHTML = '';
-
-    tasks[category].forEach((task, index) => {
-        const taskElement = document.createElement('div');
-        taskElement.className = 'task';
-
-        let progressText = '';
-        let buttonText = 'Выполнить';
-        let buttonClass = 'bg-yellow-400 text-black';
-
-        if (task.name === "Сыграть 25 раз") {
-            progressText = `${playedCount}/${task.maxProgress}`;
-            buttonText = playedCount >= task.maxProgress ? 'Получить награду' : 'В процессе';
-            buttonClass = playedCount >= task.maxProgress ? 'bg-yellow-400 text-black' : 'bg-gray-400 text-white cursor-not-allowed';
-        }
-
-        // ... остальной код рендеринга задания ...
-
-        taskElement.innerHTML = `
-            <div class="task-info">
-                <span class="task-name">${task.name}</span>
-                <span class="task-progress">${progressText}</span>
-            </div>
-            <button class="${buttonClass}" ${buttonClass.includes('cursor-not-allowed') ? 'disabled' : ''}>${buttonText}</button>
-        `;
-
-        const taskButton = taskElement.querySelector('button');
-        taskButton.addEventListener('click', () => completeTask(category, index));
-
-        taskContainer.appendChild(taskElement);
-    });
-}
-
-// Обновите функцию completeTask для задания "Сыграть 25 раз"
-function completeTask(category, index) {
-    const task = tasks[category][index];
-
-    if (task.name === "Сыграть 25 раз" && playedCount >= task.maxProgress) {
-        totalDPS += task.dps;
-        totalTaskEarnings += task.dps;
-        playedCount = 0; // Сбрасываем playedCount
-        
-        localStorage.setItem('totalDPS', totalDPS.toString());
-        localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
-        localStorage.setItem('playedCount', '0');
-        
-        updateAllBalances();
-        renderTasks(category);
-        
-        alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
-    } else {
-        // Существующая логика для других заданий
-        // ... (оставляем без изменений)
-    }
-}
-
-// Добавьте функцию для обновления playedCount
-function updatePlayedCount() {
-    playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
-    renderTasks('daily');
-}
-
-// Вызывайте updatePlayedCount при загрузке страницы и при переходе на вкладку с заданиями
-document.addEventListener('DOMContentLoaded', () => {
-    updatePlayedCount();
-    // ... остальной код инициализации ...
-});
-
-// Добавьте обработчик для кнопки перехода на страницу с заданиями
-document.querySelector('button[data-page="tasks"]').addEventListener('click', updatePlayedCount);
