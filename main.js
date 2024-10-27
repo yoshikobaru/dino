@@ -216,7 +216,9 @@ document.addEventListener('DOMContentLoaded', function() {
         daily: [
             { name: "Ежедневный бонус", dps: 150, progress: 1, maxProgress: 7, cooldown: 0, bonusTime: 0 },
             { name: "Сыграть 5 раз", dps: 350, progress: 0, maxProgress: 5, cooldown: 0, timer: 0, isTimerRunning: false },
-            { name: "Сыграть 25 раз", dps: 750, playedCount: 0, maxProgress: 25, isCompleted: false }
+            { name: "Сыграть 25 раз", dps: 750, playedCount: 0, maxProgress: 25, isCompleted: false },
+            { name: "Набрать 500 DPS за игру", dps: 550, isCompleted: false },
+            { name: "Набрать 1000 DPS за игру", dps: 1750, isCompleted: false } // Изменен�� с 1100 на 1750
         ],
         social: [
             
@@ -282,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            if (task.name === "Сыграть 25 раз") {
+            if (task.name === "Сыгрть 25 раз") {
                 let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
                 statusText = `${playedCount}/${task.maxProgress}`;
                 if (playedCount < task.maxProgress) {
@@ -298,6 +300,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const taskKey = task.name === "Сыграть в LITWIN" ? 'litwinTaskCompleted' : 'methodTaskCompleted';
                 const isCompleted = localStorage.getItem(taskKey) === 'true';
                 buttonText = isCompleted ? 'Выполнено' : 'Играть';
+                buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
+                task.isCompleted = isCompleted;
+            }
+            
+            if (task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") {
+                const requiredScore = task.name === "Набрат 500 DPS за игру" ? 500 : 1000;
+                const isCompleted = localStorage.getItem(`record${requiredScore}DPSCompleted`) === 'true';
+                buttonText = isCompleted ? 'Выполнено' : 'Получить награду';
                 buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
                 task.isCompleted = isCompleted;
             }
@@ -328,6 +338,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             taskContainer.appendChild(taskElement);
             taskContainer.appendChild(createSeparator());
+
+            // Добавляем обработчик для новых заданий
+            if (task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") {
+                taskButton.addEventListener('click', () => checkAndCompleteRecordTask(task.name));
+            }
         });
     }
 
@@ -465,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Пробуем открыть через протокол Telegram
             window.location.href = task.link;
             
-            // Если через 1 секунду страница не изменилась, открываем веб-версию
+            // Если через 1 секунду страница не изменилась, открываем веб-ерсию
             setTimeout(() => {
                 if (document.hidden) {
                     // Telegram открылся, отмечаем задание как выполненное
@@ -493,6 +508,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else if (task.name === "Сыграть 25 раз") {
                 completePlayedCountTask(index);
+            } else if (task.name === "Набрать 500 DPS за игру" && !task.isCompleted) {
+                const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+                if (highScore >= 500) {
+                    task.isCompleted = true;
+                    localStorage.setItem('record500DPSCompleted', 'true');
+                    totalDPS += task.dps;
+                    totalTaskEarnings += task.dps;
+                    
+                    localStorage.setItem('totalDPS', totalDPS.toString());
+                    localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                    
+                    updateTotalScore();
+                    updateTaskEarningsDisplay();
+                    renderTasks(category);
+                    saveTasks();
+                    
+                    alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
+                } else {
+                    alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 500 DPS!`);
+                }
             } else {
                 const earnedDPS = task.dps;
                 totalDPS += earnedDPS;
@@ -661,7 +696,7 @@ function updateTotalScore() {
 // Функция для обновления отображения очков за игру
 function updateGameScoreDisplay() {
     const gameScoreElement = document.getElementById('gameScore');
-    const totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0; // Получаем из localStorage
+    const totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0; // Поучаем из localStorage
     if (gameScoreElement) {
         gameScoreElement.textContent = `+${totalGameEarnings} DPS`; // Обновляем отображение
     }
@@ -677,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGameScoreDisplay(); // Обновляем отображение очков за игру
     updateTaskScoreDisplay();
     updateTaskEarningsDisplay();
-    updateInviteEarningsDisplay(); // Вызывайте эту функцию, когда пользователь зарабатывает деньги за задания
+    updateInviteEarningsDisplay(); // Вызывайте эту функцию, когда пользователь зарабатывает деньги а задания
 });
 
 // Добавляем обработчик для обновления счета при возвращении на главую страницу
@@ -765,7 +800,7 @@ function renderTasks(category) {
                 buttonText = 'Получить награду';
                 buttonClass = 'bg-yellow-400 text-black';
             } else {
-                buttonText = 'Н��чать';
+                buttonText = 'Нчать';
                 buttonClass = 'bg-yellow-400 text-black';
             }
         }
@@ -782,10 +817,18 @@ function renderTasks(category) {
             }
         }
 
+        if (task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") {
+            const requiredScore = task.name === "Набрать 500 DPS за игру" ? 500 : 1000;
+            const isCompleted = localStorage.getItem(`record${requiredScore}DPSCompleted`) === 'true';
+            buttonText = isCompleted ? 'Выполнено' : 'Получить награду';
+            buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
+            task.isCompleted = isCompleted;
+        }
+
         // ... существующий код ...
     });
 
-    // ... существующий код ...
+    // ... существущий код ...
 }
 
 // Функция для загрузки задач из localStorage
@@ -901,7 +944,7 @@ function loseLife() {
     updateGameTaskProgress();
 }
 
-// ... существующий код ...
+// ... существущий код ...
 
 // Добавьте новую функцию:
 function completePlayedCountTask(index) {
@@ -952,6 +995,14 @@ function loadTaskState() {
     if (methodTask) {
         methodTask.isCompleted = localStorage.getItem('methodTaskCompleted') === 'true';
     }
+    const record500DPSTask = tasks.daily.find(task => task.name === "Набрать 500 DPS за игру");
+    const record1000DPSTask = tasks.daily.find(task => task.name === "Набрать 1000 DPS за игру");
+    if (record500DPSTask) {
+        record500DPSTask.isCompleted = localStorage.getItem('record500DPSCompleted') === 'true';
+    }
+    if (record1000DPSTask) {
+        record1000DPSTask.isCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -961,3 +1012,109 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... остальной код инициализации ...
 });
 
+// Новая функция для проверки и выполнения заданий на рекорд DPS
+function checkAndCompleteRecordTask(taskName) {
+    const task = tasks.daily.find(t => t.name === taskName);
+    if (!task || task.isCompleted) return;
+
+    const requiredScore = taskName === "Набрать 500 DPS за игру" ? 500 : 1000;
+    const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+
+    if (highScore >= requiredScore) {
+        task.isCompleted = true;
+        localStorage.setItem(`record${requiredScore}DPSCompleted`, 'true');
+        totalDPS += task.dps;
+        totalTaskEarnings += task.dps;
+        
+        localStorage.setItem('totalDPS', totalDPS.toString());
+        localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+        
+        updateTotalScore();
+        updateTaskEarningsDisplay();
+        renderTasks('daily');
+        saveTasks();
+        
+        alert(`Вы получили ${task.dps} DPS за выполнение задания "${taskName}"!`);
+    } else {
+        alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь ${requiredScore} DPS!`);
+    }
+}
+
+// В начале файла добавьте:
+let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
+
+// Обновите функцию renderTasks
+function renderTasks(category) {
+    const taskContainer = document.getElementById(`${category}-tasks`);
+    if (!taskContainer) return;
+
+    taskContainer.innerHTML = '';
+
+    tasks[category].forEach((task, index) => {
+        const taskElement = document.createElement('div');
+        taskElement.className = 'task';
+
+        let progressText = '';
+        let buttonText = 'Выполнить';
+        let buttonClass = 'bg-yellow-400 text-black';
+
+        if (task.name === "Сыграть 25 раз") {
+            progressText = `${playedCount}/${task.maxProgress}`;
+            buttonText = playedCount >= task.maxProgress ? 'Получить награду' : 'В процессе';
+            buttonClass = playedCount >= task.maxProgress ? 'bg-yellow-400 text-black' : 'bg-gray-400 text-white cursor-not-allowed';
+        }
+
+        // ... остальной код рендеринга задания ...
+
+        taskElement.innerHTML = `
+            <div class="task-info">
+                <span class="task-name">${task.name}</span>
+                <span class="task-progress">${progressText}</span>
+            </div>
+            <button class="${buttonClass}" ${buttonClass.includes('cursor-not-allowed') ? 'disabled' : ''}>${buttonText}</button>
+        `;
+
+        const taskButton = taskElement.querySelector('button');
+        taskButton.addEventListener('click', () => completeTask(category, index));
+
+        taskContainer.appendChild(taskElement);
+    });
+}
+
+// Обновите функцию completeTask для задания "Сыграть 25 раз"
+function completeTask(category, index) {
+    const task = tasks[category][index];
+
+    if (task.name === "Сыграть 25 раз" && playedCount >= task.maxProgress) {
+        totalDPS += task.dps;
+        totalTaskEarnings += task.dps;
+        playedCount = 0; // Сбрасываем playedCount
+        
+        localStorage.setItem('totalDPS', totalDPS.toString());
+        localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+        localStorage.setItem('playedCount', '0');
+        
+        updateAllBalances();
+        renderTasks(category);
+        
+        alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
+    } else {
+        // Существующая логика для других заданий
+        // ... (оставляем без изменений)
+    }
+}
+
+// Добавьте функцию для обновления playedCount
+function updatePlayedCount() {
+    playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
+    renderTasks('daily');
+}
+
+// Вызывайте updatePlayedCount при загрузке страницы и при переходе на вкладку с заданиями
+document.addEventListener('DOMContentLoaded', () => {
+    updatePlayedCount();
+    // ... остальной код инициализации ...
+});
+
+// Добавьте обработчик для кнопки перехода на страницу с заданиями
+document.querySelector('button[data-page="tasks"]').addEventListener('click', updatePlayedCount);

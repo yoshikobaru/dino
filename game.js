@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateAvailableGames() {
-        const availableGamesElement = document.querySelector('#lives'); // Исправлно: добавлен id 'lives'
+        const availableGamesElement = document.querySelector('#lives'); // Исправл��: добавлен id 'lives'
         
         if (availableGamesElement) {
             availableGamesElement.innerHTML = '❤️'.repeat(availableGames) + '🖤'.repeat(5 - availableGames);
@@ -158,6 +158,24 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`Вы заработали ${gameScore} DPS! Ваш новый баланс: ${totalDPS} DPS`);
             
             updatePlayedCountTask();
+
+            // Проверяем, не установлен ли новый рекорд
+            const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+            if (gameScore > highScore) {
+                localStorage.setItem('project.github.chrome_dino.high_score', gameScore.toString());
+                // Проверяем достижение 500 и 1000 DPS
+                if (gameScore >= 1000) {
+                    const record1000DPSCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
+                    if (!record1000DPSCompleted) {
+                        alert('Поздравляем! Вы набрали 1000 DPS за игру. Получите награду в заданиях!');
+                    }
+                } else if (gameScore >= 500) {
+                    const record500DPSCompleted = localStorage.getItem('record500DPSCompleted') === 'true';
+                    if (!record500DPSCompleted) {
+                        alert('Поздравляем! Вы набрали 500 DPS за игру. Получите награду в заданиях!');
+                    }
+                }
+            }
         }
     });
 
@@ -205,7 +223,7 @@ function updateTotalScore() {
 window.updateTotalScore = updateTotalScore;
 window.updateGameEarningsDisplay = updateGameEarningsDisplay;
 
-// Функця для обновления отображения очков за игру
+// Функця для обновления отобржения очков за игру
 function updateGameScoreDisplay() {
     const gameScoreElement = document.getElementById('gameScore');
     const totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0; // Получаем из localStorage
