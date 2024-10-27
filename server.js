@@ -62,17 +62,18 @@ const webAppUrl = 'https://dino-app.ru';
 // Обработчик команды /start
 bot.command('start', async (ctx) => {
   const telegramId = ctx.from.id.toString();
+  const username = ctx.from.username;
   const referralCode = ctx.message.text.split(' ')[1];
 
   try {
     let user = await User.findOne({ where: { telegramId } });
 
     if (!user) {
-      // Генерируем уникальный реферальный код для нового пользователя
       const newReferralCode = crypto.randomBytes(4).toString('hex');
       
       user = await User.create({
         telegramId,
+        username, // Сохраняем username
         referralCode: newReferralCode,
         referredBy: referralCode || null
       });
@@ -129,36 +130,41 @@ const routes = {
       }
     },
     '/get-referred-friends': async (req, res, query) => {
-      console.log('Получен запрос на /get-referred-friends');
-      const telegramId = query.telegramId;
-      
-      if (!telegramId) {
-        console.log('Отсутствует telegramId');
-        return { status: 400, body: { error: 'Missing telegramId parameter' } };
-      }
+  console.log('Получен запрос на /get-referred-friends');
+  const telegramId = query.telegramId;
+  
+  if (!telegramId) {
+    console.log('Отсутствует telegramId');
+    return { status: 400, body: { error: 'Missing telegramId parameter' } };
+  }
 
-      try {
-        console.log('Поиск рефералов для пользователя с telegramId:', telegramId);
-        const user = await User.findOne({ where: { telegramId } });
-        if (user) {
-          const referredFriends = await User.findAll({
-            where: { referredBy: user.referralCode },
-            attributes: ['telegramId', 'username']
-          });
-          console.log('Найдено рефералов:', referredFriends.length);
-          return { status: 200, body: { referredFriends: referredFriends.map(friend => ({
+  try {
+    console.log('Поиск рефералов для пользователя с telegramId:', telegramId);
+    const user = await User.findOne({ where: { telegramId } });
+    if (user) {
+      const referredFriends = await User.findAll({
+        where: { referredBy: user.referralCode },
+        attributes: ['telegramId', 'username']
+      });
+      console.log('Найдено рефералов:', referredFriends.length);
+      return { 
+        status: 200, 
+        body: { 
+          referredFriends: referredFriends.map(friend => ({
             id: friend.telegramId,
-            username: friend.username || `User${friend.telegramId}`
-          })) } };
-        } else {
-          console.log('Пользователь не найден');
-          return { status: 404, body: { error: 'User not found' } };
-        }
-      } catch (error) {
-        console.error('Ошибка при обработке запроса:', error);
-        return { status: 500, body: { error: 'Internal server error' } };
-      }
-    },
+            username: friend.username || null // Возвращаем null, если username не установлен
+          })) 
+        } 
+      };
+    } else {
+      console.log('Пользователь не найден');
+      return { status: 404, body: { error: 'User not found' } };
+    }
+  } catch (error) {
+    console.error('Ошибка при обработке запроса:', error);
+    return { status: 500, body: { error: 'Internal server error' } };
+  }
+},
     '/watch-ad': async (req, res, query) => {
       const telegramId = query.telegramId;
       const uniqueId = query.uniqueId;

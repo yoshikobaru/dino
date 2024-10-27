@@ -5,17 +5,14 @@ const CELL_SIZE = 2;
 const ROWS = 300;
 let COLUMNS = 1000;
 const FLOOR_VELOCITY = new Velocity(0, -3.5);
-let CACTUS_MIN_GAP = 40;
+let CACTUS_MIN_GAP = 80;
 
 if (screen.width < COLUMNS) {
     COLUMNS = screen.width;
-    FLOOR_VELOCITY.add(new Velocity(0, 2));
-    CACTUS_MIN_GAP = 70;
 }
 
 const DINO_INITIAL_TRUST = new Velocity(-11, 0);
 const ENVIRONMENT_GRAVITY = new Velocity(-0.6, 0);
-const MOBILE_ENVIRONMENT_GRAVITY = new Velocity(-0.5, 0); // Немного увеличили гравитацию для мобильных устройств
 const DINO_FLOOR_INITIAL_POSITION = new Position(200, 10);
 let dino_current_trust = new Velocity(0, 0);
 let dino_ready_to_jump = true;
@@ -72,7 +69,7 @@ let harmfull_character_allocator = [
             .add_character(new CharacterMeta([cactus_layout.medium_s1], 0, new Position(193, COLUMNS), FLOOR_VELOCITY), 0.4)
             .add_character(new CharacterMeta([cactus_layout.medium_s2], 0, new Position(193, COLUMNS), FLOOR_VELOCITY), 0.3)
 
-        , CACTUS_MIN_GAP, 100
+        , CACTUS_MIN_GAP, 150
     ),
     new CharacterAllocator(
         new AllocatorCharacterArray()
@@ -105,40 +102,28 @@ function initialize() {
         new Character(new CharacterMeta(dino_layout.run, 4, DINO_FLOOR_INITIAL_POSITION.clone(), new Velocity(0, 0)))
     ];
 
-    // Определяем, является ли устройство мобильным
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // Выбираем соответствующую гравитацию
-    const gravity = isMobile ? MOBILE_ENVIRONMENT_GRAVITY : ENVIRONMENT_GRAVITY;
+    const gravity = ENVIRONMENT_GRAVITY;
 
-    document.ontouchstart = () => {
-        if (game_over && (Date.now() - game_over) > 1000) {
-            main();
-            return;
-        }
-
-        if (dino_ready_to_jump) {
+    // Изменим обработчики событий
+    const handleJump = () => {
+        if (!game_over && dino_ready_to_jump) {
             dino_ready_to_jump = false;
             dino_current_trust = DINO_INITIAL_TRUST.clone();
         }
     };
 
-    document.body.onclick = () => {
-        if (game_over) {
-            document.ontouchstart();
-        }
-    };
-
+    document.ontouchstart = handleJump;
+    document.body.onclick = handleJump;
     document.body.onkeydown = event => {
-        // keyCode is depricated
-        if (event.keyCode === 32 || event.key === ' ') {
-            document.ontouchstart();
+        if (event.code === 'Space' || event.key === ' ') {
+            handleJump();
         }
     };
 
     hideGameOver();
 
-    return { gravity }; // Возвращаем выбранную гравитацию
+    return { gravity };
 }
 
 function paint_layout(character_layout, character_position) {
@@ -209,7 +194,7 @@ function event_loop(gravity) {
         canvas_ctx.textAlign = 'center';
         canvas_ctx.font = "25px Arcade";
         canvas_ctx.fillStyle = current_theme.info_text;
-        canvas_ctx.fillText("J     U     M     P             T     O             S     T     A     R     T", canvas.width / 2, (canvas.height / 2) - 50);
+        canvas_ctx.fillText("ARE             YOU            READY?", canvas.width / 2, (canvas.height / 2) - 50);
         return;
     }
 
