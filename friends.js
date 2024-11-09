@@ -32,7 +32,14 @@ function getReferredFriends() {
     .then(data => {
         if (data.referredFriends) {
             displayReferredFriends(data.referredFriends);
-            localStorage.setItem('referredFriendsCount', data.referredFriends.length.toString());
+            // Обновляем количество друзей в localStorage и прогресс задания
+            const friendsCount = data.referredFriends.length;
+            localStorage.setItem('referredFriendsCount', friendsCount.toString());
+            
+            // Если открыта вкладка с заданиями refs, обновляем отображение
+            if (currentCategory === 'refs') {
+                renderTasks('refs');
+            }
         } else {
             console.error('Не удалось получить список рефералов:', data.error);
             displayReferredFriends([]);
@@ -67,8 +74,6 @@ function displayReferredFriends(friends) {
                 friendsList.appendChild(friendItem);
             });
         }
-        
-        updateInviteFriendsTask(friends.length);
     }
 }
 
@@ -235,7 +240,7 @@ function showPopup(title, message) {
         });
     }
 
-// Добавьте эту функцию в конец ��айла
+// Добавьте эту функцию в конец айла
 document.addEventListener('DOMContentLoaded', initializeFriendsPage);
 
 
