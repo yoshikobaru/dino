@@ -15,9 +15,9 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-b from-[#121212] to-[#1E3A8A]">
-    <div id="main-page" class="page bg-black text-white min-h-screen p-4">
-        <div class="container mx-auto">
+<body class="fixed w-full h-full overflow-hidden bg-gradient-to-b from-[#121212] to-[#1E3A8A]">
+    <div id="main-page" class="page fixed inset-0 bg-black text-white min-h-screen p-4 pb-24 overflow-y-auto overscroll-contain">
+        <div class="container mx-auto space-y-4">
             <div class="rounded-lg p-0.5" style="background: linear-gradient(to bottom right, #FFD700, #FFA500);">
                 <div class="bg-black rounded-lg p-2">
                     <div class="grid grid-cols-3 gap-2">
@@ -59,16 +59,16 @@
         </div>
     </div>
     
-    <div id="game-page" class="page bg-black text-white min-h-screen p-4" style="display: none;">
-        <div class="container mx-auto text-center">
+    <div id="game-page" class="page fixed inset-0 bg-black text-white min-h-screen p-4 pb-24 overflow-y-auto overscroll-contain" style="display: none;">
+        <div class="container mx-auto space-y-4">
             <h1 class="text-2xl font-bold mb-4 text-yellow-400">GAME</h1>
             <div id="gameContainer"></div>
             <div id="lives" class="text-2xl mb-4"></div>
             <button id="startButton" class="bg-yellow-400 text-black px-8 py-3 rounded-full text-lg font-bold">Start</button>
         </div>
     </div>
-    <div id="friends-page" class="page bg-black text-white min-h-screen p-4" style="display: none;">
-        <div class="container mx-auto">
+    <div id="friends-page" class="page fixed inset-0 bg-black text-white min-h-screen p-4 pb-24 overflow-y-auto overscroll-contain" style="display: none;">
+        <div class="container mx-auto space-y-4">
             <h1 class="text-2xl font-bold mb-2">Invite your Friends</h1>
             <p class="text-sm text-gray-400 mb-4">Get 20% bonuses from your refs and 10% from their tasks</p>
             
@@ -116,13 +116,15 @@
         </div>
     </div>
 
-    <div id="market-page" class="page min-h-screen p-4">
-        <div id="market-container" class="container mx-auto max-w-md">
-            <!-- Контент будет добавлен через JavaScript -->
+    <div id="market-page" class="page fixed inset-0 bg-black text-white min-h-screen p-4 pb-24 overflow-y-auto overscroll-contain">
+        <div class="container mx-auto space-y-4">
+            <div id="market-container" class="container mx-auto max-w-md">
+                <!-- Контент будет добавлен через JavaScript -->
+            </div>
         </div>
     </div>
 
-    <footer class="fixed bottom-0 left-0 right-0 bg-black">
+    <footer class="fixed bottom-0 left-0 right-0 bg-black z-50">
         <nav class="max-w-screen-xl mx-auto">
             <ul class="flex justify-around items-center py-2">
                 <li>
