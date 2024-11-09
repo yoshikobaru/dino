@@ -15,7 +15,7 @@
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen bg-gradient-to-b from-[#121212] to-[#1E3A8A]">
     <div id="main-page" class="page bg-black text-white min-h-screen p-4">
         <div class="container mx-auto">
             <div class="rounded-lg p-0.5" style="background: linear-gradient(to bottom right, #FFD700, #FFA500);">
@@ -116,6 +116,12 @@
         </div>
     </div>
 
+    <div id="market-page" class="page min-h-screen p-4">
+        <div id="market-container" class="container mx-auto max-w-md">
+            <!-- Контент будет добавлен через JavaScript -->
+        </div>
+    </div>
+
     <footer class="fixed bottom-0 left-0 right-0 bg-black">
         <nav class="max-w-screen-xl mx-auto">
             <ul class="flex justify-around items-center py-2">
@@ -125,6 +131,7 @@
                         <span class="text-xs">Home</span>
                     </button>
                 </li>
+               
                 <li>
                     <button class="flex flex-col items-center text-gray-500" data-page="game">
                         <img src="assets/game.svg" alt="Game" class="w-6 h-6 mb-1">
@@ -143,5 +150,6 @@
     <script src="main.js"></script>
     <script src="friends.js"></script>
     <script src="game.js"></script>
+    <script src="market.js"></script>
 </body>
 </html>

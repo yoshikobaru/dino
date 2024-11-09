@@ -244,6 +244,13 @@ document.addEventListener('DOMContentLoaded', function() {
             { name: "Fourth Media Task", dps: 200 }
         ],
         refs: [
+            { 
+                name: "Пригласить 3 друзей", 
+                dps: 500,
+                progress: 0,
+                maxProgress: 3,
+                isCompleted: false
+            },
             { name: "Name Refs Task", dps: 300 },
             { name: "Another Refs Task", dps: 300 },
             { name: "Third Refs Task", dps: 300 },
@@ -281,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const timeElapsed = now - gameTaskStartTime;
                     
                     // Если прошла минута, сбрасываем прогресс
-                    if (timeElapsed >= 60000) {
+                    if (timeElapsed >= 43200000) {
                         gameProgress = 0;
                         localStorage.setItem('gameProgress', '0');
                         localStorage.setItem('gameTaskStartTime', '0');
@@ -290,8 +297,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Проверяем кулдаун
                 if (taskCooldown > Date.now()) {
-                    const cooldownLeft = Math.ceil((taskCooldown - Date.now()) / 1000);
-                    statusText = `Кулдаун: ${cooldownLeft}с`;
+                    const cooldownLeft = Math.ceil((taskCooldown - Date.now()) / 3600000);
+                    statusText = `Кулдаун: ${cooldownLeft}ч`;
                     buttonText = 'Подождите';
                     buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
                 } else {
@@ -299,8 +306,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (gameTaskStartTime > 0) {
                         const now = Date.now();
                         const timeElapsed = now - gameTaskStartTime;
-                        const remainingTime = Math.max(0, Math.ceil((60000 - timeElapsed) / 1000));
-                        timeLeft = ` (${remainingTime}с)`;
+                        const remainingTime = Math.max(0, Math.ceil((43200000 - timeElapsed) / 3600000));
+                        timeLeft = ` (${remainingTime}ч)`;
                     }
                     
                     statusText = `${gameProgress}/5${timeLeft}`;
@@ -443,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (task.cooldown > 0) {
             task.cooldown--;
             if (task.cooldown === 0) {
-                task.bonusTime = 20;
+                task.bonusTime = 86400; // 24 часа * 60 минут * 60 секунд
             }
         } else if (task.bonusTime > 0) {
             task.bonusTime--;
@@ -493,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Д авляем перемнную для отслеживания заработанных денег за задачи
     let totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
 
-    // ункция для обновлния заработанных денег за задачи
+    // ункция для обновния заработанных денег за задачи
    
 
     // Функция для обновления отображения заработанных денег за задачи
@@ -509,6 +516,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // Именяем функцию completeTask
     function completeTask(category, index) {
         const task = tasks[category][index];
+        
+        // Специальная обработка для ежедневного бонуса
+        if (task.name === "Ежедневный бонус") {
+            const earnedDPS = task.dps;
+            totalDPS += earnedDPS;
+            totalTaskEarnings += earnedDPS;
+            
+            // Обновляем состояние задания
+            task.progress++;
+            if (task.progress > task.maxProgress) {
+                task.progress = 1;
+                task.dps = 150;
+            } else {
+                task.dps += 150;
+            }
+
+            // Изменяем кулдаун на 24 часа (в секундах)
+            task.cooldown = 86400; // 24 часа * 60 минут * 60 секунд
+            
+            // Сохраняем все изменения одним блоком
+            localStorage.setItem('totalDPS', totalDPS.toString());
+            localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+            
+            // Делаем одно обновление интерфейса
+            requestAnimationFrame(() => {
+                updateTotalScore();
+                updateTaskEarningsDisplay();
+                renderTasks(category);
+                saveDailyTask();
+            });
+            
+            return;
+        }
         
         if (category === 'social') {
             // Открываем ссылку
@@ -896,7 +936,7 @@ function renderTasks(category) {
                 const timeElapsed = now - gameTaskStartTime;
                 
                 // Если прошла минута, сбрасываем прогресс
-                if (timeElapsed >= 60000) {
+                if (timeElapsed >= 43200000) {
                     gameProgress = 0;
                     localStorage.setItem('gameProgress', '0');
                     localStorage.setItem('gameTaskStartTime', '0');
@@ -917,8 +957,8 @@ function renderTasks(category) {
             
             // Проверяем кулдаун
             if (taskCooldown > Date.now()) {
-                const cooldownLeft = Math.ceil((taskCooldown - Date.now()) / 1000);
-                statusText = `Кулдаун: ${cooldownLeft}с`;
+                const cooldownLeft = Math.ceil((taskCooldown - Date.now()) / 3600000);
+                statusText = `Кулдаун: ${cooldownLeft}ч`;
                 buttonText = 'Подождите';
                 buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
             } else {
@@ -926,8 +966,8 @@ function renderTasks(category) {
                 if (gameTaskStartTime > 0) {
                     const now = Date.now();
                     const timeElapsed = now - gameTaskStartTime;
-                    const remainingTime = Math.max(0, Math.ceil((60000 - timeElapsed) / 1000));
-                    timeLeft = ` (${remainingTime}с)`;
+                    const remainingTime = Math.max(0, Math.ceil((43200000 - timeElapsed) / 3600000));
+                    timeLeft = ` (${remainingTime}ч)`;
                 }
                 
                 statusText = `${gameProgress}/5${timeLeft}`;
@@ -1177,7 +1217,7 @@ function incrementGameProgress() {
     }
 }
 
-// Используйте эту функцию вместо прямого увеличения gameProgress
+// ��спользуйте эту функцию вместо прямого увеличения gameProgress
 
 
 

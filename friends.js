@@ -23,7 +23,7 @@ function getReferredFriends() {
         }
     } catch (error) {
         console.error('Ошибка при получении Telegram ID:', error);
-        displayReferredFriends([]); // Отображаем пустой список друзей
+        displayReferredFriends([]);
         return;
     }
 
@@ -32,6 +32,7 @@ function getReferredFriends() {
     .then(data => {
         if (data.referredFriends) {
             displayReferredFriends(data.referredFriends);
+            localStorage.setItem('referredFriendsCount', data.referredFriends.length.toString());
         } else {
             console.error('Не удалось получить список рефералов:', data.error);
             displayReferredFriends([]);
@@ -66,6 +67,8 @@ function displayReferredFriends(friends) {
                 friendsList.appendChild(friendItem);
             });
         }
+        
+        updateInviteFriendsTask(friends.length);
     }
 }
 
@@ -232,7 +235,7 @@ function showPopup(title, message) {
         });
     }
 
-// Добавьте эту функцию в конец файла
+// Добавьте эту функцию в конец ��айла
 document.addEventListener('DOMContentLoaded', initializeFriendsPage);
 
 
