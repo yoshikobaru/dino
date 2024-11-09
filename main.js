@@ -406,6 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
                         if (friendsCount >= task.maxProgress && !task.isCompleted) {
                             task.isCompleted = true;
+                            localStorage.setItem('friendsTaskCompleted', 'true');
                             totalDPS += task.dps;
                             totalTaskEarnings += task.dps;
                             localStorage.setItem('totalDPS', totalDPS.toString());
@@ -1243,7 +1244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Добавьте эту функцию для загрузки состояния задания при инициализации
 function loadTaskState() {
     const litwinTask = tasks.social.find(task => task.name === "Сыграть в LITWIN");
-    const methodTask = tasks.social.find(task => task.name === "Сыграт�� в Method");
+    const methodTask = tasks.social.find(task => task.name === "Сыграть в Method");
     if (litwinTask) {
         litwinTask.isCompleted = localStorage.getItem('litwinTaskCompleted') === 'true';
     }
@@ -1266,6 +1267,10 @@ function loadTaskState() {
     }
     if (litwinPostTask) {
         litwinPostTask.isCompleted = localStorage.getItem('litwinPostTaskCompleted') === 'true';
+    }
+    const friendsTask = tasks.refs.find(task => task.name === "Пригласить 3 друзей");
+    if (friendsTask) {
+        friendsTask.isCompleted = localStorage.getItem('friendsTaskCompleted') === 'true';
     }
 }
 
