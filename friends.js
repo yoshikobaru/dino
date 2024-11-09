@@ -1,3 +1,53 @@
+function updateRewardSection() {
+    // Находим элементы для обновления
+    const rewardDPSText = document.querySelector('#friends-page .bg-gray-800 .text-yellow-400');
+    const rewardButton = document.querySelector('#friends-page .bg-gray-800 button');
+    const todayText = document.querySelector('#friends-page .bg-gray-800 .text-sm');
+    
+    if (!rewardDPSText || !rewardButton) return;
+
+    const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
+    const rewardAmount = friendsCount * 35;
+    const lastRewardTime = parseInt(localStorage.getItem('friendsRewardCooldown')) || 0;
+    const now = Date.now();
+    const cooldownTime = 24 * 60 * 60 * 1000; // 24 часа
+    const timeLeft = lastRewardTime + cooldownTime - now;
+
+    // Обновляем текст награды слева
+    rewardDPSText.textContent = `+${rewardAmount} DPS`;
+    
+    // Обновляем состояние кнопки справа
+    if (timeLeft > 0) {
+        const hoursLeft = Math.ceil(timeLeft / (60 * 60 * 1000));
+        rewardButton.textContent = `${hoursLeft}ч`;
+        rewardButton.className = 'bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-not-allowed';
+        rewardButton.disabled = true;
+    } else {
+        rewardButton.textContent = 'Get a reward';
+        rewardButton.className = 'bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold';
+        rewardButton.disabled = false;
+    }
+}
+
+function handleRewardClick() {
+    const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
+    const rewardAmount = friendsCount * 35;
+    
+    // Сохраняем время получения награды
+    localStorage.setItem('friendsRewardCooldown', Date.now().toString());
+    
+    // Добавляем награду к общему DPS
+    const currentDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
+    localStorage.setItem('totalDPS', (currentDPS + rewardAmount).toString());
+    
+    // Обновляем отображение
+    updateRewardSection();
+    updateAllBalances(); // Убедитесь, что эта функция существует в main.js
+    
+    // Показываем уведомление
+    showPopup('Успех', `Вы получили ${rewardAmount} DPS!`);
+}
+
 function initializeFriendsPage() {
     console.log('Инициализация страницы друзей');
     const inviteButton = document.getElementById('inviteButton');
@@ -9,11 +59,12 @@ function initializeFriendsPage() {
     }
     
     if (rewardButton) {
-        rewardButton.addEventListener('click', handleRewardButtonClick);
+        rewardButton.addEventListener('click', handleRewardClick);
     }
 
-    // Запускаем таймер обновления времени
-    setInterval(updateRewardTimer, 60000); // Обновляем каждую минуту
+    // Запускаем таймер обновления
+    updateRewardSection();
+    setInterval(updateRewardSection, 60000); // Обновляем каждую минуту
     
     getReferredFriends();
 }
@@ -54,42 +105,6 @@ function getReferredFriends() {
 
 function displayReferredFriends(friends) {
     const friendsList = document.querySelector('#friends-page .space-y-3');
-    const rewardButton = document.querySelector('#friends-page .bg-gray-800 button');
-    const rewardDPSText = document.querySelector('#friends-page .bg-gray-800 .text-yellow-400');
-    
-    // Обновляем награду на основе количества друзей
-    const friendsCount = friends.length;
-    const rewardAmount = friendsCount * 35;
-    
-    // Проверяем кулдаун
-    const lastRewardTime = parseInt(localStorage.getItem('lastFriendsRewardTime')) || 0;
-    const now = Date.now();
-    const cooldownTime = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
-    const timeLeft = lastRewardTime + cooldownTime - now;
-    
-    if (timeLeft > 0) {
-        // Кулдаун активен
-        const hoursLeft = Math.ceil(timeLeft / (60 * 60 * 1000));
-        rewardButton.textContent = `Подождите ${hoursLeft}ч`;
-        rewardButton.className = 'bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-not-allowed';
-        rewardButton.disabled = true;
-    } else {
-        // Кулдаун неактивен
-        if (friendsCount === 0) {
-            rewardButton.textContent = 'Нет друзей';
-            rewardButton.className = 'bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-not-allowed';
-            rewardButton.disabled = true;
-        } else {
-            rewardButton.textContent = 'Получить награду';
-            rewardButton.className = 'bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold';
-            rewardButton.disabled = false;
-        }
-    }
-    
-    // Обновляем отображение DPS
-    rewardDPSText.textContent = `+${rewardAmount} DPS`;
-    
-    // Отображаем список друзей
     if (friendsList) {
         friendsList.innerHTML = '';
         if (friends.length === 0) {
@@ -276,53 +291,6 @@ function showPopup(title, message) {
             showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.');
         });
     }
-
-function handleRewardButtonClick() {
-    const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
-    const rewardAmount = friendsCount * 35;
-    
-    // Сохраняем время получения награды
-    localStorage.setItem('lastFriendsRewardTime', Date.now().toString());
-    
-    // Обновляем общий DPS
-    const currentDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-    localStorage.setItem('totalDPS', (currentDPS + rewardAmount).toString());
-    
-    // Обновляем отображение
-    updateAllBalances(); // Убедитесь, что эта функция существует в main.js
-    getReferredFriends(); // Обновляем интерфейс
-    
-    // Показываем уведомление
-    showPopup('Успех', `Вы получили ${rewardAmount} DPS за своих друзей!`);
-}
-
-function updateRewardTimer() {
-    const rewardButton = document.querySelector('#friends-page .bg-gray-800 button');
-    if (!rewardButton) return;
-    
-    const lastRewardTime = parseInt(localStorage.getItem('lastFriendsRewardTime')) || 0;
-    const now = Date.now();
-    const cooldownTime = 24 * 60 * 60 * 1000;
-    const timeLeft = lastRewardTime + cooldownTime - now;
-    
-    if (timeLeft > 0) {
-        const hoursLeft = Math.ceil(timeLeft / (60 * 60 * 1000));
-        rewardButton.textContent = `Подождите ${hoursLeft}ч`;
-        rewardButton.className = 'bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-not-allowed';
-        rewardButton.disabled = true;
-    } else {
-        const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
-        if (friendsCount === 0) {
-            rewardButton.textContent = 'Нет друзей';
-            rewardButton.className = 'bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-not-allowed';
-            rewardButton.disabled = true;
-        } else {
-            rewardButton.textContent = 'Получить награду';
-            rewardButton.className = 'bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold';
-            rewardButton.disabled = false;
-        }
-    }
-}
 
 // Добавьте эту функцию в конец файла
 document.addEventListener('DOMContentLoaded', initializeFriendsPage);
