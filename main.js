@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 task.isCompleted = isCompleted;
             }
             
-            if (task.name === "Посмотреть новый пост" || task.name === "Посмотреть пост в LITWIN") {
+            if (task.name === "Посмотреть новый пост в method" || task.name === "Посмотреть пост в LITWIN") {
                 const storageKey = task.name === "Посмотреть новый пост в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
                 const isCompleted = localStorage.getItem(storageKey) === 'true';
                 buttonText = isCompleted ? 'Выполнено' : 'Start';
@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             localStorage.setItem('totalDPS', totalDPS.toString());
                             localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
                             localStorage.setItem('litwinTaskCompleted', 'true'); // Убедимся, что это выполняется
-                            task.isCompleted = true; // Добавляем установку флага в объект задания
+                            task.isCompleted = true; // Добавляем установку флага в объекте задания
                         } else if (task.name === "Сыграть в Method") { // Изменено с includes на строгое сравнение
                             totalDPS += task.dps;
                             totalTaskEarnings += task.dps;
@@ -465,7 +465,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             updateTaskEarningsDisplay();
                             renderTasks(category);
                             
-                            // Открываем ссылку
                             const isTelegramWebApp = window.Telegram && window.Telegram.WebApp;
                             const linkToUse = isTelegramWebApp ? task.link : task.webLink;
                             window.open(linkToUse, '_blank');
@@ -1320,7 +1319,7 @@ function incrementGameProgress() {
 
     // Проверяем, нет ли активного кулдауна
     if (taskCooldown > currentTime) {
-        return; // Если кулдаун активен, не уве��ичиваем прогресс
+        return; // Если кулдаун активен, не увеличиваем прогресс
     }
 
     const currentProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
