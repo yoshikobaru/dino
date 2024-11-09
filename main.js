@@ -704,8 +704,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('gameTaskStartTime', '0');
                 
                 // Устанавливаем кулдаун и сразу сбрасываем прогресс
-                localStorage.setItem('gameTaskCooldown', (Date.now() + 10000).toString());
-                localStorage.setItem('gameProgress', '0'); // Важно: сбрасываем прогресс при начале кулдауна
+                // Изменяем время кулдауна с 10000 на 43200000 (12 часов)
+                localStorage.setItem('gameTaskCooldown', (Date.now() + 43200000).toString());
+                localStorage.setItem('gameProgress', '0');
                 
                 localStorage.setItem('totalDPS', totalDPS.toString());
                 localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
