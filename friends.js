@@ -10,7 +10,7 @@ function updateRewardSection() {
     const rewardAmount = friendsCount * 45;
     const lastRewardTime = parseInt(localStorage.getItem('friendsRewardCooldown')) || 0;
     const now = Date.now();
-    const cooldownTime = 24 * 60 * 60 * 1000; // 24 часа
+    const cooldownTime =  1000; // 24 часа
     const timeLeft = lastRewardTime + cooldownTime - now;
 
     // Обновляем текст награды слева
@@ -18,7 +18,7 @@ function updateRewardSection() {
     
     // Обновляем состояние кнопки справаl
     if (timeLeft > 0) {
-        const hoursLeft = Math.ceil(timeLeft / (60 * 60 * 1000));
+        const hoursLeft = Math.ceil(timeLeft / (1000));
         rewardButton.textContent = `${hoursLeft}ч`;
         rewardButton.className = 'bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-not-allowed';
         rewardButton.disabled = true;
@@ -36,17 +36,17 @@ function handleRewardClick() {
     // Сохраняем время получения награды
     localStorage.setItem('friendsRewardCooldown', Date.now().toString());
     
-    // Добавляем награду к общему DPS
+    // Добавляем награду к общему DPS и invite earnings
     const currentDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-    localStorage.setItem('totalDPS', (currentDPS + rewardAmount).toString());
-    
-    // Добавляем награду к invite earnings
     const currentInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
+    
+    // Обновляем оба значения
+    localStorage.setItem('totalDPS', (currentDPS + rewardAmount).toString());
     localStorage.setItem('totalInviteEarnings', (currentInviteEarnings + rewardAmount).toString());
     
-    // Обновляем отображение
+    // Обновляем отображение всех балансов
     updateRewardSection();
-    updateAllBalances(); // Убедитесь, что эта функция существует в main.js
+    updateAllBalances();
     
     // Показываем уведомление
     showPopup('Успех', `Вы получили ${rewardAmount} DPS!`);
@@ -243,7 +243,7 @@ function showPopup(title, message) {
         })
         .catch(error => {
             console.error('Ошибка:', error);
-            showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте поз��е.');
+            showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.');
         });
     }
     function handleShareLinkButtonClick(event) {
