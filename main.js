@@ -249,7 +249,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 dps: 500,
                 progress: 0,
                 maxProgress: 3,
-                isCompleted: false
+                isCompleted: false,
+                type: 'friends',
+                description: 'Пригласите друзей и получите бонус',
+                displayProgress: true
             },
             { name: "Name Refs Task", dps: 300 },
             { name: "Another Refs Task", dps: 300 },
@@ -270,7 +273,24 @@ document.addEventListener('DOMContentLoaded', function() {
             let buttonClass = 'bg-yellow-400 text-black';
             let statusText = '';
             
-            if (task.cooldown > 0) {
+            if (task.name === "Пригласить 3 друзей") {
+                const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
+                statusText = `${friendsCount}/${task.maxProgress}`;
+                
+                if (friendsCount >= task.maxProgress) {
+                    if (!task.isCompleted) {
+                        buttonText = 'Получить награду';
+                        buttonClass = 'bg-yellow-400 text-black';
+                    } else {
+                        buttonText = 'Выполнено';
+                        buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
+                    }
+                } else {
+                    buttonText = 'В процессе';
+                    buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
+                }
+            }
+            else if (task.cooldown > 0) {
                 statusText = 'Cooldown';
                 buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
             } else if (task.bonusTime > 0) {
@@ -366,21 +386,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!this.disabled) {
                     const category = this.getAttribute('data-category');
                     const index = parseInt(this.getAttribute('data-index'));
-                    completeTask(category, index);
                     
-                    // Обновляем отображение после вполнения задания
+                    if (task.name === "Пригласить 3 друзей") {
+                        const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
+                        if (friendsCount >= task.maxProgress && !task.isCompleted) {
+                            task.isCompleted = true;
+                            totalDPS += task.dps;
+                            totalTaskEarnings += task.dps;
+                            localStorage.setItem('totalDPS', totalDPS.toString());
+                            localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                            updateAllBalances();
+                            renderTasks(category);
+                        }
+                    } else {
+                        completeTask(category, index);
+                    }
+                    
                     updateTaskScoreDisplay();
                     updateTaskEarningsDisplay();
                     updateTotalScore();
                 }
-                
-                
             });
 
             taskContainer.appendChild(taskElement);
             taskContainer.appendChild(createSeparator());
 
-            // Добавляем обработчик для новых заданий
             if (task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") {
                 taskButton.addEventListener('click', () => checkAndCompleteRecordTask(task.name));
             }
@@ -850,7 +880,7 @@ function saveAllData() {
 
 // Вызов функций для обновления отображения при загруке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    updateGameScoreDisplay(); // Обновляем отображение очков за игру
+    updateGameScoreDisplay(); // Обновляем отображение очков ��а игру
     updateTaskScoreDisplay();
     updateTaskEarningsDisplay();
     updateInviteEarningsDisplay(); // Вызывайте эту функцию, когда пользователь зарабатывает деньги а задания
@@ -943,7 +973,7 @@ function renderTasks(category) {
                 }
             }
             
-            // Проверяем окончание кулдауна
+            // Проверяем оончание кулдауна
             if (taskCooldown > 0 && Date.now() > taskCooldown) {
                 // Кулдаун закончился, сбрасываем прогресс
                 localStorage.setItem('gameProgress', '0');
@@ -1217,7 +1247,7 @@ function incrementGameProgress() {
     }
 }
 
-// ��спользуйте эту функцию вместо прямого увеличения gameProgress
+// спользуйте эту функцию вместо прямого увеличения gameProgress
 
 
 
