@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ],
         media: [
             { 
-                name: "Посмотреть новый пост в method ", 
+                name: "Посмотреть новый пост в method", 
                 dps: 300,
                 link: "https://t.me/method_community",
                 webLink: "https://t.me/method_community",
@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             localStorage.setItem('totalDPS', totalDPS.toString());
                             localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
                             localStorage.setItem('litwinTaskCompleted', 'true'); // Убедимся, что это выполняется
-                            task.isCompleted = true; // Добавляем установку флага в объект�� задания
+                            task.isCompleted = true; // Добавляем установку флага в объект задания
                         } else if (task.name === "Сыграть в Method") { // Изменено с includes на строгое сравнение
                             totalDPS += task.dps;
                             totalTaskEarnings += task.dps;
@@ -451,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     } else if (category === 'media') {
                         const task = tasks[category][index];
-                        if ((task.name === "Посмотреть новый пост" || task.name === "Посмотреть пост в LITWIN") && !task.isCompleted) {
+                        if ((task.name === "Посмотреть новый пост в method" || task.name === "Посмотреть пост в LITWIN") && !task.isCompleted) {
                             totalDPS += task.dps;
                             totalTaskEarnings += task.dps;
                             localStorage.setItem('totalDPS', totalDPS.toString());
@@ -465,6 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             updateTaskEarningsDisplay();
                             renderTasks(category);
                             
+                            // Открываем ссылку
                             const isTelegramWebApp = window.Telegram && window.Telegram.WebApp;
                             const linkToUse = isTelegramWebApp ? task.link : task.webLink;
                             window.open(linkToUse, '_blank');
@@ -967,7 +968,7 @@ document.querySelector('button[data-page="main"]').addEventListener('click', () 
     updateTotalScore(); // Обновляем общий счет
 });
 
-// Добавьте э��у функцию для обновления всех балансов
+// Добавьте эу функцию для обновления всех балансов
 function updateAllBalances() {
     updateTotalScore();
     updateTaskEarningsDisplay();
@@ -1319,7 +1320,7 @@ function incrementGameProgress() {
 
     // Проверяем, нет ли активного кулдауна
     if (taskCooldown > currentTime) {
-        return; // Если кулдаун активен, не увеличиваем прогресс
+        return; // Если кулдаун активен, не уве��ичиваем прогресс
     }
 
     const currentProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
