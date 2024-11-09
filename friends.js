@@ -10,7 +10,7 @@ function updateRewardSection() {
     const rewardAmount = friendsCount * 45;
     const lastRewardTime = parseInt(localStorage.getItem('friendsRewardCooldown')) || 0;
     const now = Date.now();
-    const cooldownTime =  1000; // 24 часа
+    const cooldownTime = 43200000; // 12 часов (12 * 60 * 60 * 1000)
     const timeLeft = lastRewardTime + cooldownTime - now;
 
     // Обновляем текст награды слева
@@ -18,7 +18,7 @@ function updateRewardSection() {
     
     // Обновляем состояние кнопки справаl
     if (timeLeft > 0) {
-        const hoursLeft = Math.ceil(timeLeft / (1000));
+        const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60)); // Конвертируем в часы
         rewardButton.textContent = `${hoursLeft}ч`;
         rewardButton.className = 'bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-not-allowed';
         rewardButton.disabled = true;
