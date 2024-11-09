@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (task.name === "Посмотреть новый пост в method" || task.name === "Посмотреть пост в LITWIN") {
-                const storageKey = task.name === "Посмотреть новый пост в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
+                const storageKey = task.name === "Посмотреть новый по��т в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
                 const isCompleted = localStorage.getItem(storageKey) === 'true';
                 buttonText = isCompleted ? 'Выполнено' : 'Start';
                 buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const linkToUse = isTelegramWebApp ? task.link : task.webLink;
                         
                         // Начисляем DPS и сохраняем статус
-                        if (task.name === "Сыграть в LITWIN") { // Изменено с includes на строго�� сравнение
+                        if (task.name === "Сыграть в LITWIN") { // Изменено с includes на строгое сравнение
                             totalDPS += task.dps;
                             totalTaskEarnings += task.dps;
                             localStorage.setItem('totalDPS', totalDPS.toString());
@@ -908,7 +908,7 @@ function updateTaskEarningsDisplay() {
 }
 
 function updateInviteEarningsDisplay() {
-    const inviteEarningsElement = document.querySelector('.bg-yellow-400 .text-sm.font-bold.text-black');
+    const inviteEarningsElement = document.getElementById('inviteEarnings');
     if (inviteEarningsElement) {
         const totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
         inviteEarningsElement.textContent = `+${totalInviteEarnings} DPS`;
@@ -1110,7 +1110,7 @@ function loadDailyTasks() {
     renderTasks('daily');
 }
 
-// Функция для сохранения задач в localStorage
+// Функция для сохранения зад��ч в localStorage
 function saveDailyTasks() {
     localStorage.setItem('dailyTasks', JSON.stringify(tasks.daily));
     localStorage.setItem('playedCount', playedCount.toString());
