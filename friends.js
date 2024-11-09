@@ -40,6 +40,10 @@ function handleRewardClick() {
     const currentDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
     localStorage.setItem('totalDPS', (currentDPS + rewardAmount).toString());
     
+    // Добавляем награду к invite earnings
+    const currentInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
+    localStorage.setItem('totalInviteEarnings', (currentInviteEarnings + rewardAmount).toString());
+    
     // Обновляем отображение
     updateRewardSection();
     updateAllBalances(); // Убедитесь, что эта функция существует в main.js
@@ -239,7 +243,7 @@ function showPopup(title, message) {
         })
         .catch(error => {
             console.error('Ошибка:', error);
-            showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.');
+            showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте поз��е.');
         });
     }
     function handleShareLinkButtonClick(event) {

@@ -45,10 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Загружаем сохраненные значения
     totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
     totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
+    totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
     
     // Обновляем отображение
     updateTotalScore();
     updateTaskEarningsDisplay();
+    updateInviteEarningsDisplay();
 });
 
 function loadAdsgramScript() {
@@ -787,7 +789,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('totalDPS', totalDPS.toString());
             localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
             
-            // Используем setTimeout для гарантированного бновления после изменения данных
+            // Используем setTimeout для гарантированного бновления по��ле изменения данных
             setTimeout(() => {
                 updateTotalScore();
                 updateTaskEarningsDisplay();
@@ -888,7 +890,7 @@ let totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) 
 function updateInviteEarnings(amount) {
     totalInviteEarnings += amount;
     localStorage.setItem('totalInviteEarnings', totalInviteEarnings);
-    updateEarningsDisplay();
+    updateInviteEarningsDisplay();
 }
 
 // Пример вызова функции обновления заработаных денег за задания
@@ -906,6 +908,7 @@ function updateTaskEarningsDisplay() {
 function updateInviteEarningsDisplay() {
     const inviteEarningsElement = document.querySelector('.bg-yellow-400:has(.text-xs.text-black:contains("Invites")) .text-sm.font-bold.text-black');
     if (inviteEarningsElement) {
+        const totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
         inviteEarningsElement.textContent = `+${totalInviteEarnings} DPS`;
     }
 }
@@ -964,7 +967,8 @@ document.querySelector('button[data-page="main"]').addEventListener('click', () 
     updateInviteEarningsDisplay();
     totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
     totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
-    updateTotalScore(); // Обновляем общий счет
+    totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
+    updateAllBalances();
 });
 
 // Добавьте эу функцию для обновления всех балансов
@@ -972,12 +976,14 @@ function updateAllBalances() {
     updateTotalScore();
     updateTaskEarningsDisplay();
     updateGameScoreDisplay(); // Если эта функция существует
+    updateInviteEarningsDisplay();
 }
 
 // Обноте обаботчик для кнопк "Home"
 document.querySelector('button[data-page="main"]').addEventListener('click', () => {
     totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
     totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
+    totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
     updateAllBalances();
 });
 
@@ -1186,7 +1192,7 @@ function startGameTaskTimer() {
             gameTask.progress = 0;
             renderTasks('daily');
             saveDailyTasks();
-        }, 60000); // 1 минута
+        }, 60000); // 1 мину��а
     }
 }
 

@@ -61,10 +61,15 @@
     
     <div id="game-page" class="page fixed inset-0 bg-black text-white min-h-screen p-4 pb-24 overflow-y-auto overscroll-contain" style="display: none;">
         <div class="container mx-auto space-y-4">
-            <h1 class="text-2xl font-bold mb-4 text-yellow-400">GAME</h1>
-            <div id="gameContainer"></div>
-            <div id="lives" class="text-2xl mb-4"></div>
-            <button id="startButton" class="bg-yellow-400 text-black px-8 py-3 rounded-full text-lg font-bold">Start</button>
+            <h1 class="text-2xl font-bold mb-4 text-yellow-400 text-center">GAME</h1>
+            <div id="gameContainer" class="flex justify-center items-center"></div>
+            <div class="flex flex-col items-center justify-center">
+                <div id="lives" class="text-2xl mb-2 text-center"></div>
+                <div id="timer" class="text-center"></div>
+            </div>
+            <div class="flex justify-center">
+                <button id="startButton" class="bg-yellow-400 text-black px-8 py-3 rounded-full text-lg font-bold">Start</button>
+            </div>
         </div>
     </div>
     <div id="friends-page" class="page fixed inset-0 bg-black text-white min-h-screen p-4 pb-24 overflow-y-auto overscroll-contain" style="display: none;">
