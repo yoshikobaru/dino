@@ -284,13 +284,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
                 statusText = `${friendsCount}/${task.maxProgress}`;
                 
+                // Проверяем сохраненное состояние выполнения
+                const isTaskCompleted = localStorage.getItem('friendsTaskCompleted') === 'true';
+                
                 if (friendsCount >= task.maxProgress) {
-                    if (!task.isCompleted) {
+                    if (!isTaskCompleted) {
                         buttonText = 'Получить награду';
                         buttonClass = 'bg-yellow-400 text-black';
                     } else {
                         buttonText = 'Выполнено';
                         buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
+                        task.isCompleted = true; // Устанавливаем флаг выполнения
                     }
                 } else {
                     buttonText = 'В процессе';
@@ -426,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             localStorage.setItem('totalDPS', totalDPS.toString());
                             localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
                             localStorage.setItem('litwinTaskCompleted', 'true'); // Убедимся, что это выполняется
-                            task.isCompleted = true; // Добавляем установку флага в объекте задания
+                            task.isCompleted = true; // Добавляем установку флага в объект�� задания
                         } else if (task.name === "Сыграть в Method") { // Изменено с includes на строгое сравнение
                             totalDPS += task.dps;
                             totalTaskEarnings += task.dps;
@@ -963,7 +967,7 @@ document.querySelector('button[data-page="main"]').addEventListener('click', () 
     updateTotalScore(); // Обновляем общий счет
 });
 
-// Добавьте эту функцию для обновления всех балансов
+// Добавьте э��у функцию для обновления всех балансов
 function updateAllBalances() {
     updateTotalScore();
     updateTaskEarningsDisplay();
