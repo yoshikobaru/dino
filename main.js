@@ -238,10 +238,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         ],
         media: [
-            { name: "Name Media Task", dps: 200 },
-            { name: "Another Media Task", dps: 200 },
-            { name: "Third Media Task", dps: 200 },
-            { name: "Fourth Media Task", dps: 200 }
+            { 
+                name: "Посмотреть новый пост", 
+                dps: 300,
+                link: "https://t.me/method_community",
+                webLink: "https://t.me/method_community",
+                isCompleted: false
+            },
+            { 
+                name: "Посмотреть пост в LITWIN", 
+                dps: 250,
+                link: "https://t.me/litwin_community",
+                webLink: "https://t.me/litwin_community",
+                isCompleted: false
+            }
         ],
         refs: [
             { 
@@ -253,11 +263,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 type: 'friends',
                 description: 'Пригласите друзей и получите бонус',
                 displayProgress: true
-            },
-            { name: "Name Refs Task", dps: 300 },
-            { name: "Another Refs Task", dps: 300 },
-            { name: "Third Refs Task", dps: 300 },
-            { name: "Fourth Refs Task", dps: 300 }
+            }
+           
         ]
     };
 
@@ -373,6 +380,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 task.isCompleted = isCompleted;
             }
             
+            if (task.name === "Посмотреть новый пост" || task.name === "Посмотреть пост в LITWIN") {
+                const storageKey = task.name === "Посмотреть новый пост" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
+                const isCompleted = localStorage.getItem(storageKey) === 'true';
+                buttonText = isCompleted ? 'Выполнено' : 'Start';
+                buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
+                task.isCompleted = isCompleted;
+            }
+            
             taskElement.innerHTML = `
                 <div>
                     <div class="text-sm">${task.name}</div>
@@ -397,6 +412,57 @@ document.addEventListener('DOMContentLoaded', function() {
                             localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
                             updateAllBalances();
                             renderTasks(category);
+                        }
+                    } else if (category === 'social') {
+                        // Открываем ссылку
+                        const isTelegramWebApp = window.Telegram && window.Telegram.WebApp;
+                        const linkToUse = isTelegramWebApp ? task.link : task.webLink;
+                        
+                        // Начисляем DPS и сохраняем статус
+                        if (task.name === "Сыграть в LITWIN") { // Изменено с includes на строгое сравнение
+                            totalDPS += task.dps;
+                            totalTaskEarnings += task.dps;
+                            localStorage.setItem('totalDPS', totalDPS.toString());
+                            localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                            localStorage.setItem('litwinTaskCompleted', 'true'); // Убедимся, что это выполняется
+                            task.isCompleted = true; // Добавляем установку флага в объекте задания
+                        } else if (task.name === "Сыграть в Method") { // Изменено с includes на строгое сравнение
+                            totalDPS += task.dps;
+                            totalTaskEarnings += task.dps;
+                            localStorage.setItem('totalDPS', totalDPS.toString());
+                            localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                            localStorage.setItem('methodTaskCompleted', 'true');
+                            task.isCompleted = true; // Добавляем установку флага в объекте задания
+                        }
+                        
+                        // Обновляем отображение
+                        updateTotalScore();
+                        updateTaskEarningsDisplay();
+                        renderTasks(category); // Добавляем обновление отображения задач
+                        
+                        // Открываем ссылку
+                        window.open(linkToUse, '_blank');
+                        
+                        return;
+                    } else if (category === 'media') {
+                        const task = tasks[category][index];
+                        if ((task.name === "Посмотреть новый пост" || task.name === "Посмотреть пост в LITWIN") && !task.isCompleted) {
+                            totalDPS += task.dps;
+                            totalTaskEarnings += task.dps;
+                            localStorage.setItem('totalDPS', totalDPS.toString());
+                            localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                            
+                            const storageKey = task.name === "Посмотреть новый пост" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
+                            localStorage.setItem(storageKey, 'true');
+                            task.isCompleted = true;
+                            
+                            updateTotalScore();
+                            updateTaskEarningsDisplay();
+                            renderTasks(category);
+                            
+                            const isTelegramWebApp = window.Telegram && window.Telegram.WebApp;
+                            const linkToUse = isTelegramWebApp ? task.link : task.webLink;
+                            window.open(linkToUse, '_blank');
                         }
                     } else {
                         completeTask(category, index);
@@ -778,7 +844,7 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(`Вы аработали ${score} DPS! Ваш новый баланс: ${totalDPS} DPS`);
     }
 
-    // Добавляем обработчик для кнопки "Play Game" (предполагается, что такая кнопка есть в HTML)
+    // Добавляем обработчик для кнопк "Play Game" (предполагается, что такая кнопка есть в HTML)
     const playButton = document.querySelector('#playGameButton');
     if (playButton) {
         playButton.addEventListener('click', playGame);
@@ -880,7 +946,7 @@ function saveAllData() {
 
 // Вызов функций для обновления отображения при загруке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    updateGameScoreDisplay(); // Обновляем отображение очков ��а игру
+    updateGameScoreDisplay(); // Обновляем отображение очков за игру
     updateTaskScoreDisplay();
     updateTaskEarningsDisplay();
     updateInviteEarningsDisplay(); // Вызывайте эту функцию, когда пользователь зарабатывает деньги а задания
@@ -1177,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Добавьте эту функцию для загрузки состояния задания при инициализации
 function loadTaskState() {
     const litwinTask = tasks.social.find(task => task.name === "Сыграть в LITWIN");
-    const methodTask = tasks.social.find(task => task.name === "Сыграть в Method");
+    const methodTask = tasks.social.find(task => task.name === "Сыграт�� в Method");
     if (litwinTask) {
         litwinTask.isCompleted = localStorage.getItem('litwinTaskCompleted') === 'true';
     }
@@ -1191,6 +1257,15 @@ function loadTaskState() {
     }
     if (record1000DPSTask) {
         record1000DPSTask.isCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
+    }
+    const methodPostTask = tasks.media.find(task => task.name === "Посмотреть новый пост");
+    const litwinPostTask = tasks.media.find(task => task.name === "Посмотреть пост в LITWIN");
+    
+    if (methodPostTask) {
+        methodPostTask.isCompleted = localStorage.getItem('methodPostTaskCompleted') === 'true';
+    }
+    if (litwinPostTask) {
+        litwinPostTask.isCompleted = localStorage.getItem('litwinPostTaskCompleted') === 'true';
     }
 }
 
