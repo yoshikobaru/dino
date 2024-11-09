@@ -7,7 +7,7 @@ function updateRewardSection() {
     if (!rewardDPSText || !rewardButton) return;
 
     const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
-    const rewardAmount = friendsCount * 35;
+    const rewardAmount = friendsCount * 45;
     const lastRewardTime = parseInt(localStorage.getItem('friendsRewardCooldown')) || 0;
     const now = Date.now();
     const cooldownTime = 24 * 60 * 60 * 1000; // 24 часа
@@ -31,7 +31,7 @@ function updateRewardSection() {
 
 function handleRewardClick() {
     const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
-    const rewardAmount = friendsCount * 35;
+    const rewardAmount = friendsCount * 45;
     
     // Сохраняем время получения награды
     localStorage.setItem('friendsRewardCooldown', Date.now().toString());
@@ -91,7 +91,7 @@ function getReferredFriends() {
             localStorage.setItem('referredFriendsCount', data.referredFriends.length.toString());
             
             // Удаляем проверку currentCategory, так как она вызывает ошибку
-            // Вместо этого просто обновляем задачи, если нужно
+            // Весто этого просто обновляем задачи, если нужно
             if (window.renderTasks) {
                 window.renderTasks('refs');
             }
@@ -122,7 +122,7 @@ function displayReferredFriends(friends) {
                 friendItem.innerHTML = `
                     <div>
                         <div class="text-sm">${friendName}</div>
-                        <div class="text-xs text-yellow-400">+15 DPS</div>
+                        <div class="text-xs text-yellow-400">+45 DPS</div>
                     </div>
                     <div class="text-xs text-gray-400">16 Tasks</div>
                 `;
@@ -189,7 +189,7 @@ function showPopup(title, message) {
             console.log('Telegram ID:', telegramId);
         } catch (error) {
             console.error('Не удалось получить Telegram ID:', error);
-            showPopup('Ошибка', 'Не удалось получить информацию о пользов��теле');
+            showPopup('Ошибка', 'Не удалось получить информацию о пользователе');
             return;
         }
     
