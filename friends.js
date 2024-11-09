@@ -240,7 +240,7 @@ function showPopup(title, message) {
         });
     }
 
-// Добавьте эту функцию в конец айла
+// Добавьте эту функцию в конец файла
 document.addEventListener('DOMContentLoaded', initializeFriendsPage);
 
 
