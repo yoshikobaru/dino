@@ -38,11 +38,10 @@ function handleRewardClick() {
     
     // Добавляем награду к общему DPS и invite earnings
     const currentDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-    const currentInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
     
-    // Обновляем оба значения
+    // Обновляем значения
     localStorage.setItem('totalDPS', (currentDPS + rewardAmount).toString());
-    localStorage.setItem('totalInviteEarnings', (currentInviteEarnings + rewardAmount).toString());
+    updateInviteEarnings(rewardAmount); // Используем новую функцию
     
     // Обновляем отображение всех балансов
     updateRewardSection();
@@ -225,7 +224,7 @@ function showPopup(title, message) {
                 try {
                     const successful = document.execCommand('copy');
                     if (successful) {
-                        console.log('Ссылка скопирована в буфер обмена');
+                        console.log('Ссылка скопирована в буфер ��бмена');
                         showPopup('Успех', 'Реферальная ссылка скопирована в буфер обмена. Отправьте её друзьям!');
                     } else {
                         throw new Error('Копирование не удалось');

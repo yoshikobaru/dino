@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const linkToUse = isTelegramWebApp ? task.link : task.webLink;
                         
                         // Начисляем DPS и сохраняем статус
-                        if (task.name === "Сыграть в LITWIN") { // Изменено с includes на строгое сравнение
+                        if (task.name === "Сыграть в LITWIN") { // Изменено с includes на строго�� сравнение
                             totalDPS += task.dps;
                             totalTaskEarnings += task.dps;
                             localStorage.setItem('totalDPS', totalDPS.toString());
@@ -790,7 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('totalDPS', totalDPS.toString());
             localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
             
-            // Используем setTimeout для гарантированного бновления по��ле изменения данных
+            // Используем setTimeout для гарантированного бновления поле изменения данных
             setTimeout(() => {
                 updateTotalScore();
                 updateTaskEarningsDisplay();
@@ -889,8 +889,9 @@ let totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) 
 
 // Функция для обновления заработанных денег за приглашения
 function updateInviteEarnings(amount) {
+    totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
     totalInviteEarnings += amount;
-    localStorage.setItem('totalInviteEarnings', totalInviteEarnings);
+    localStorage.setItem('totalInviteEarnings', totalInviteEarnings.toString());
     updateInviteEarningsDisplay();
 }
 
@@ -907,7 +908,7 @@ function updateTaskEarningsDisplay() {
 }
 
 function updateInviteEarningsDisplay() {
-    const inviteEarningsElement = document.querySelector('.bg-yellow-400:has(.text-xs.text-black:contains("Invites")) .text-sm.font-bold.text-black');
+    const inviteEarningsElement = document.querySelector('.bg-yellow-400 .text-sm.font-bold.text-black');
     if (inviteEarningsElement) {
         const totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
         inviteEarningsElement.textContent = `+${totalInviteEarnings} DPS`;
@@ -1193,7 +1194,7 @@ function startGameTaskTimer() {
             gameTask.progress = 0;
             renderTasks('daily');
             saveDailyTasks();
-        }, 60000); // 1 мину��а
+        }, 60000); // 1 минуа
     }
 }
 
