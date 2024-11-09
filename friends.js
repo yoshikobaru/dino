@@ -23,7 +23,7 @@ function getReferredFriends() {
         }
     } catch (error) {
         console.error('Ошибка при получении Telegram ID:', error);
-        displayReferredFriends([]);
+        displayReferredFriends([]); // Отображаем пустой список друзей
         return;
     }
 
@@ -32,11 +32,7 @@ function getReferredFriends() {
     .then(data => {
         if (data.referredFriends) {
             displayReferredFriends(data.referredFriends);
-            // Обновляем количество друзей в localStorage и прогресс задания
-            const friendsCount = data.referredFriends.length;
-            localStorage.setItem('referredFriendsCount', friendsCount.toString());
-            
-            // Если открыта вкладка с заданиями refs, обновляем отображение
+            localStorage.setItem('referredFriendsCount', data.referredFriends.length.toString());
             if (currentCategory === 'refs') {
                 renderTasks('refs');
             }
