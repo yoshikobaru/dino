@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ],
         media: [
             { 
-                name: "Посмотреть новый пост", 
+                name: "Посмотреть новый пост в method", 
                 dps: 300,
                 link: "https://t.me/method_community",
                 webLink: "https://t.me/method_community",

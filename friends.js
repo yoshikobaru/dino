@@ -16,7 +16,7 @@ function updateRewardSection() {
     // Обновляем текст награды слева
     rewardDPSText.textContent = `+${rewardAmount} DPS`;
     
-    // Обновляем состояние кнопки справа
+    // Обновляем состояние кнопки справаl
     if (timeLeft > 0) {
         const hoursLeft = Math.ceil(timeLeft / (60 * 60 * 1000));
         rewardButton.textContent = `${hoursLeft}ч`;
@@ -79,7 +79,7 @@ function getReferredFriends() {
         }
     } catch (error) {
         console.error('Ошибка при получении Telegram ID:', error);
-        displayReferredFriends([]); // Отображаем пустой список друзей
+        displayReferredFriends([]); 
         return;
     }
 
@@ -89,8 +89,11 @@ function getReferredFriends() {
         if (data.referredFriends) {
             displayReferredFriends(data.referredFriends);
             localStorage.setItem('referredFriendsCount', data.referredFriends.length.toString());
-            if (currentCategory === 'refs') {
-                renderTasks('refs');
+            
+            // Удаляем проверку currentCategory, так как она вызывает ошибку
+            // Вместо этого просто обновляем задачи, если нужно
+            if (window.renderTasks) {
+                window.renderTasks('refs');
             }
         } else {
             console.error('Не удалось получить список рефералов:', data.error);
@@ -186,7 +189,7 @@ function showPopup(title, message) {
             console.log('Telegram ID:', telegramId);
         } catch (error) {
             console.error('Не удалось получить Telegram ID:', error);
-            showPopup('Ошибка', 'Не удалось получить информацию о пользователе');
+            showPopup('Ошибка', 'Не удалось получить информацию о пользов��теле');
             return;
         }
     
