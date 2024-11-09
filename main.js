@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ],
         media: [
             { 
-                name: "Посмотреть новый пост в method", 
+                name: "Посмотреть новый пост в method ", 
                 dps: 300,
                 link: "https://t.me/method_community",
                 webLink: "https://t.me/method_community",
@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (task.name === "Посмотреть новый пост" || task.name === "Посмотреть пост в LITWIN") {
-                const storageKey = task.name === "Посмотреть новый пост" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
+                const storageKey = task.name === "Посмотреть новый пост в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
                 const isCompleted = localStorage.getItem(storageKey) === 'true';
                 buttonText = isCompleted ? 'Выполнено' : 'Start';
                 buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
@@ -457,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             localStorage.setItem('totalDPS', totalDPS.toString());
                             localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
                             
-                            const storageKey = task.name === "Посмотреть новый пост" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
+                            const storageKey = task.name === "Посмотреть новый пост в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
                             localStorage.setItem(storageKey, 'true');
                             task.isCompleted = true;
                             
@@ -1263,7 +1263,7 @@ function loadTaskState() {
     if (record1000DPSTask) {
         record1000DPSTask.isCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
     }
-    const methodPostTask = tasks.media.find(task => task.name === "Посмотреть новый пост");
+    const methodPostTask = tasks.media.find(task => task.name === "Посмотреть новый пост в method");
     const litwinPostTask = tasks.media.find(task => task.name === "Посмотреть пост в LITWIN");
     
     if (methodPostTask) {
