@@ -361,6 +361,18 @@ window.addEventListener('message', (event) => {
             type: 'gameOver',
             score: game_score
         }, '*');
+    } else if (event.data.type === 'hideAd') {
+        // Удаляем кнопку рекламы и скрываем экран Game Over
+        const gameOverScreen = document.getElementById('game-over');
+        const watchAdButton = document.getElementById('watch-ad-button');
+        
+        if (watchAdButton) {
+            watchAdButton.remove();
+        }
+        
+        if (gameOverScreen) {
+            gameOverScreen.style.display = 'none';
+        }
     } else if (event.data.type === 'startGame') {
         hideGameOver();
         main();

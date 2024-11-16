@@ -129,7 +129,7 @@ function createGameIframe() {
             if (heartTimers.length === 1) {
                 lastHeartRecoveryTime = Date.now();
             }
-            
+            startButton.style.display = 'none';
             // Обновляем прогресс только если нет активного кулдауна
             if (taskCooldown <= currentTime) {
                 gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
@@ -173,27 +173,34 @@ function createGameIframe() {
             updateGameEarningsDisplay();
             updateGameScoreDisplay();
             updatePlayedCountTask();
-        
-        alert(`Вы заработали ${gameScore} DPS! Ваш новый баланс: ${totalDPS} DPS`);
-        
-        // После claim возвращаем кнопку в обычное состояние
-        startButton.classList.remove('claim-mode');
-        updateStartButtonState();
-        
-    } else {
-        // Запуск новой игры
-        if (availableGames > 0) {
-            availableGames--;
-            localStorage.setItem('availableGames', availableGames);
-            updateAvailableGamesDisplay();
             
+            alert(`Вы заработали ${gameScore} DPS! Ваш новый баланс: ${totalDPS} DPS`);
+            
+            // Отправляем сообщение в iframe для удаления кнопки рекламы
             if (gameIframe && gameIframe.contentWindow) {
-                gameIframe.contentWindow.postMessage({ type: 'startGame' }, '*');
+                gameIframe.contentWindow.postMessage({ type: 'hideAd' }, '*');
             }
+            
+            // Возвращаем кнопку в режим Start
+            startButton.classList.remove('claim-mode');
+            updateStartButtonState();
+        } else {
+            // Запуск новой игры
+            if (availableGames > 0) {
+                // Скрываем кнопку на время игры
+                startButton.style.display = 'none';
+                
+                availableGames--;
+                localStorage.setItem('availableGames', availableGames);
+                updateAvailableGamesDisplay();
+                
+                if (gameIframe && gameIframe.contentWindow) {
+                    gameIframe.contentWindow.postMessage({ type: 'startGame' }, '*');
+                }
+            }
+            updateStartButtonState();
         }
-        updateStartButtonState();
-    }
-});
+    });
 
 // Вызываем updateStartButtonState при загрузке страницы и после каждого изменения availableGames
 document.addEventListener('DOMContentLoaded', updateStartButtonState);
@@ -222,18 +229,19 @@ function updateStartButtonState() {
     }
 }
 
-    window.addEventListener('message', (event) => {
-        if (event.data.type === 'gameOver') {
-            startButton.style.display = 'block';
-            startButton.classList.add('claim-mode');
-            startButton.innerHTML = 'Claim x1 DPS';
-            startButton.dataset.pendingScore = event.data.score;
-            startButton.classList.remove('bg-yellow-400', 'text-black');
-            startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
-            
-            if (availableGames === 0) {
-                livesDisplay.innerHTML = 'Игры закончились';
-            }
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'gameOver') {
+        // Показываем кнопку в режиме claim
+        startButton.style.display = 'block';
+        startButton.classList.add('claim-mode');
+        startButton.innerHTML = 'Claim x1 DPS';
+        startButton.dataset.pendingScore = event.data.score;
+        startButton.classList.remove('bg-yellow-400', 'text-black');
+        startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+        
+        if (availableGames === 0) {
+            livesDisplay.innerHTML = 'Игры закончились';
+        }
                 
             // Проверяем, не установлен ли новый рекорд
             const gameScore = event.data.score;
