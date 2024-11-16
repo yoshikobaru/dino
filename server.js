@@ -165,57 +165,33 @@ const routes = {
     return { status: 500, body: { error: 'Internal server error' } };
   }
 },
-    '/watch-ad': async (req, res, query) => {
-      const telegramId = query.telegramId;
-      const uniqueId = query.uniqueId;
+'/reward': async (req, res, query) => {
+    const telegramId = query.userid;
+    
+    if (!telegramId) {
+        return { status: 400, body: { error: 'Missing userid parameter' } };
+    }
 
-      if (!telegramId || !uniqueId) {
-        return { status: 400, body: { error: 'Telegram ID and Unique ID are required' } };
-      }
-
-      try {
+    try {
         const user = await User.findOne({ where: { telegramId } });
         if (!user) {
-          return { status: 404, body: { error: 'User not found' } };
+            return { status: 404, body: { error: 'User not found' } };
         }
 
-        if (user.lastAdUniqueId === uniqueId) {
-          return { status: 200, body: { message: 'Ad already processed' } };
-        }
-
-        const adWatchCount = (user.adWatchCount || 0) + 1;
-        
+        // Обновляем только счетчик просмотров рекламы
         await user.update({
-          adWatchCount: adWatchCount,
-          lastAdUniqueId: uniqueId,
-          lastAdWatchTime: Date.now()
+            adWatchCount: (user.adWatchCount || 0) + 1
         });
 
-        return { status: 200, body: { success: true, adWatchCount } };
-      } catch (error) {
-        console.error('Error processing ad watch:', error);
+        return { status: 200, body: { 
+            success: true, 
+            message: 'Ad view recorded',
+            adWatchCount: user.adWatchCount + 1
+        }};
+    } catch (error) {
+        console.error('Error in reward endpoint:', error);
         return { status: 500, body: { error: 'Internal server error' } };
-      }
-    },
-    '/reward': async (req, res, query) => {
-      const telegramId = query.userid;
-      if (!telegramId) {
-        return { status: 400, body: { error: 'Missing userid parameter' } };
-      }
-
-      try {
-        const user = await User.findOne({ where: { telegramId } });
-        if (!user) {
-          return { status: 404, body: { error: 'User not found' } };
-        }
-
-        // Здесь мы не изменяем tapProfit в базе данных,
-        // так как это временный бонус
-        return { status: 200, body: { success: true, message: 'Reward applied' } };
-      } catch (error) {
-        console.error('Error processing reward:', error);
-        return { status: 500, body: { error: 'Internal server error' } };
-      }
+    }
     }
   },
   POST: {}

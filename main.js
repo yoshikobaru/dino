@@ -1308,9 +1308,8 @@ function loadTaskState() {
 
 document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
-    loadTaskState(); // Добавьте эту строку
+    loadTaskState(); 
     renderTasks('daily');
-    // ... остальной код инициализации ...
 });
 
 // Добавим функцию проверки кулдауна
