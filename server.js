@@ -9,10 +9,15 @@ const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
 
 // Создаем подключение к базе данных
-const sequelize = new Sequelize('dino_db', 'dino_user', 'Negxtic007', {
-  host: 'localhost',
-  dialect: 'postgres'
-});
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD, 
+  {
+      host: process.env.DB_HOST,
+      dialect: process.env.DB_DIALECT
+  }
+);
 
 // Определяем модель User
 const User = sequelize.define('User', {

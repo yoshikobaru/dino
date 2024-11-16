@@ -596,20 +596,12 @@ video {
   position: absolute;
 }
 
-.relative {
-  position: relative;
-}
-
 .inset-0 {
   inset: 0px;
 }
 
 .bottom-0 {
   bottom: 0px;
-}
-
-.bottom-8 {
-  bottom: 2rem;
 }
 
 .left-0 {
@@ -620,56 +612,8 @@ video {
   right: 0px;
 }
 
-.-top-24 {
-  top: -6rem;
-}
-
-.top-1\/2 {
-  top: 50%;
-}
-
-.bottom-16 {
-  bottom: 4rem;
-}
-
-.right-4 {
-  right: 1rem;
-}
-
-.bottom-40 {
-  bottom: 10rem;
-}
-
-.bottom-1 {
-  bottom: 0.25rem;
-}
-
-.-bottom-0 {
-  bottom: -0px;
-}
-
-.-bottom-10 {
-  bottom: -2.5rem;
-}
-
-.-bottom-5 {
-  bottom: -1.25rem;
-}
-
-.bottom-\[-320px\] {
-  bottom: -320px;
-}
-
-.right-\[-100px\] {
-  right: -100px;
-}
-
 .z-50 {
   z-index: 50;
-}
-
-.z-10 {
-  z-index: 10;
 }
 
 .col-span-2 {
@@ -721,36 +665,12 @@ video {
   height: 4rem;
 }
 
-.h-24 {
-  height: 6rem;
-}
-
 .h-6 {
   height: 1.5rem;
 }
 
 .h-full {
   height: 100%;
-}
-
-.h-auto {
-  height: auto;
-}
-
-.h-32 {
-  height: 8rem;
-}
-
-.h-40 {
-  height: 10rem;
-}
-
-.h-\[160px\] {
-  height: 160px;
-}
-
-.h-\[640px\] {
-  height: 640px;
 }
 
 .min-h-screen {
@@ -765,32 +685,12 @@ video {
   width: 4rem;
 }
 
-.w-24 {
-  width: 6rem;
-}
-
 .w-6 {
   width: 1.5rem;
 }
 
 .w-full {
   width: 100%;
-}
-
-.w-32 {
-  width: 8rem;
-}
-
-.w-40 {
-  width: 10rem;
-}
-
-.w-\[160px\] {
-  width: 160px;
-}
-
-.w-\[640px\] {
-  width: 640px;
 }
 
 .max-w-md {
@@ -807,11 +707,6 @@ video {
 
 .flex-shrink-0 {
   flex-shrink: 0;
-}
-
-.-translate-y-1\/2 {
-  --tw-translate-y: -50%;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
 .transform {
@@ -951,11 +846,6 @@ video {
   --tw-gradient-to: #1E3A8A var(--tw-gradient-to-position);
 }
 
-.object-contain {
-  -o-object-fit: contain;
-     object-fit: contain;
-}
-
 .p-0\.5 {
   padding: 0.125rem;
 }
@@ -1062,8 +952,4 @@ video {
 .text-yellow-400 {
   --tw-text-opacity: 1;
   color: rgb(250 204 21 / var(--tw-text-opacity));
-}
-
-.opacity-30 {
-  opacity: 0.3;
 }
