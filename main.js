@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (task.name === "Посмотреть новый пост в method" || task.name === "Посмотреть пост в LITWIN") {
-                const storageKey = task.name === "Посмотреть новый по��т в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
+                const storageKey = task.name === "Посмотреть новый пот в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
                 const isCompleted = localStorage.getItem(storageKey) === 'true';
                 buttonText = isCompleted ? 'Выполнено' : 'Start';
                 buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
@@ -521,23 +521,27 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadDailyTask() {
         const savedTask = localStorage.getItem('dailyTask');
         const lastUpdateTime = localStorage.getItem('lastUpdateTime');
+        
         if (savedTask && lastUpdateTime) {
             const task = JSON.parse(savedTask);
             const now = Date.now();
-            const timePassed = Math.floor((now - parseInt(lastUpdateTime)) / 1000);
             
-            if (task.cooldown > 0) {
-                task.cooldown = Math.max(0, task.cooldown - timePassed);
-                if (task.cooldown === 0 && task.progress > 1) {
-                    task.bonusTime = 10;
-                }
-            } else if (task.bonusTime > 0) {
-                task.bonusTime = Math.max(0, task.bonusTime - timePassed);
+            // Восстанавливаем бонусное время
+            const bonusTimeStart = parseInt(localStorage.getItem('bonusTimeStart'));
+            const bonusTimeRemaining = parseInt(localStorage.getItem('bonusTimeRemaining'));
+            
+            if (bonusTimeStart && bonusTimeRemaining) {
+                const elapsedBonusTime = Math.floor((now - bonusTimeStart) / 1000);
+                task.bonusTime = Math.max(0, bonusTimeRemaining - elapsedBonusTime);
+                
                 if (task.bonusTime === 0) {
                     task.progress = 1;
                     task.dps = 150;
+                    localStorage.removeItem('bonusTimeStart');
+                    localStorage.removeItem('bonusTimeRemaining');
                 }
             }
+            
             tasks.daily[0] = task;
         }
         saveDailyTask();
@@ -550,19 +554,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateDailyTask() {
         const task = tasks.daily[0];
+        const now = Date.now();
+        const lastUpdateTime = parseInt(localStorage.getItem('lastUpdateTime')) || now;
+        const timePassed = Math.floor((now - lastUpdateTime) / 1000);
+
         if (task.cooldown > 0) {
-            task.cooldown--;
+            task.cooldown = Math.max(0, task.cooldown - timePassed);
             if (task.cooldown === 0) {
-                task.bonusTime = 86400; // 24 часа * 60 минут * 60 секунд
+                task.bonusTime = 86400; // 24 часа в секундах
+                localStorage.setItem('bonusTimeStart', now.toString());
+                localStorage.setItem('bonusTimeRemaining', task.bonusTime.toString());
             }
         } else if (task.bonusTime > 0) {
-            task.bonusTime--;
+            const bonusTimeStart = parseInt(localStorage.getItem('bonusTimeStart'));
+            const elapsedBonusTime = Math.floor((now - bonusTimeStart) / 1000);
+            task.bonusTime = Math.max(0, parseInt(localStorage.getItem('bonusTimeRemaining')) - elapsedBonusTime);
+            
+            localStorage.setItem('bonusTimeRemaining', task.bonusTime.toString());
+            
             if (task.bonusTime === 0) {
                 task.progress = 1;
                 task.dps = 150;
+                localStorage.removeItem('bonusTimeStart');
+                localStorage.removeItem('bonusTimeRemaining');
             }
         }
+
+        localStorage.setItem('lastUpdateTime', now.toString());
         saveDailyTask();
+        
         if (currentCategory === 'daily') {
             updateTaskDisplay(task);
         }
@@ -1110,7 +1130,7 @@ function loadDailyTasks() {
     renderTasks('daily');
 }
 
-// Функция для сохранения зад��ч в localStorage
+// Функция для сохранения задч в localStorage
 function saveDailyTasks() {
     localStorage.setItem('dailyTasks', JSON.stringify(tasks.daily));
     localStorage.setItem('playedCount', playedCount.toString());
@@ -1317,7 +1337,7 @@ function incrementGameProgress() {
     const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
     const currentTime = Date.now();
 
-    // Если кулдаун только что закончился, сбрасываем рогресс
+    // Если кулдаун только что закончился, с��расываем рогресс
     if (taskCooldown > 0 && currentTime > taskCooldown) {
         localStorage.setItem('gameProgress', '0');
         localStorage.setItem('gameTaskStartTime', '0');

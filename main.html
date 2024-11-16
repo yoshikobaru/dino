@@ -74,21 +74,23 @@
     </div>
     <div id="friends-page" class="page fixed inset-0 bg-black text-white min-h-screen p-4 pb-24 overflow-y-auto overscroll-contain" style="display: none;">
         <div class="container mx-auto space-y-4">
-            <h1 class="text-2xl font-bold mb-2">Invite your Friends</h1>
-            <p class="text-sm text-gray-400 mb-4">Get 20% bonuses from your refs and 10% from their tasks</p>
-            
-            <div class="bg-gray-800 rounded-lg p-4 mb-4 flex items-center justify-between">
-                <div class="flex items-center">
-                    <img src="assets/loading.png" alt="Динозавр" class="w-10 h-10 mr-3">
-                    <div>
-                        <div class="text-sm">Today</div>
-                        <div class="text-lg font-bold text-yellow-400">+45 DPS</div>
+            <div class="bg-gray-800 rounded-lg p-4 space-y-4">
+                <h1 class="text-2xl font-bold">Invite your Friends</h1>
+                <p class="text-sm text-gray-400">Get 20% bonuses from your refs and 10% from their tasks</p>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <img src="assets/loading.png" alt="Динозавр" class="w-10 h-10 mr-3">
+                        <div>
+                            <div class="text-sm">Today</div>
+                            <div class="text-lg font-bold text-yellow-400">+45 DPS</div>
+                        </div>
                     </div>
+                    <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold">Get a reward</button>
                 </div>
-                <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold">Get a reward</button>
+                
+                <button id="inviteButton" class="w-full bg-yellow-400 text-black py-3 rounded-lg text-lg font-bold">Invite</button>
             </div>
-            
-            <button id="inviteButton" class="w-full bg-yellow-400 text-black py-3 rounded-lg text-lg font-bold mb-4">Invite</button>
             
             <div class="flex mb-4">
                 <button class="flex-1 bg-yellow-400 text-black py-2 rounded-l-lg text-sm font-bold">Friends</button>

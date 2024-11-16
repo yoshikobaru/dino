@@ -31,8 +31,8 @@ function updateTimer() {
     const now = Date.now();
     let updated = false;
 
-    // Проверяем, прошло ли 20 секунд с момента последнего восстановления сердца
-    if (heartTimers.length > 0 && now - lastHeartRecoveryTime >= 20000) {
+    // Проверяем, прошло ли 5 минут с момента последнего восстановления сердца
+    if (heartTimers.length > 0 && now - lastHeartRecoveryTime >= 300000) {
         if (availableGames < 5) {
             availableGames++;
             updated = true;
@@ -46,7 +46,7 @@ function updateTimer() {
     }
 
     // Вычисляем оставшееся время до следующего восстановления
-    const nextRecoveryTime = lastHeartRecoveryTime + 20000;
+    const nextRecoveryTime = lastHeartRecoveryTime + 300000;
     const remainingTime = Math.max(0, Math.ceil((nextRecoveryTime - now) / 1000));
     const minutes = Math.floor(remainingTime / 60);
     const seconds = remainingTime % 60;
