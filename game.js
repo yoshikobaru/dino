@@ -1,7 +1,11 @@
 let totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-//let totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
-let availableGames = parseInt(localStorage.getItem('availableGames')) || 0; // Изменено: начальное значение
-let nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || Date.now(); // Устанавливаем начальное значение
+let totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
+let availableGames = parseInt(localStorage.getItem('availableGames')) || 0;
+let nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || Date.now();
+let gameIframe = null;
+let startButton = document.getElementById('startButton');
+let livesDisplay = document.getElementById('lives');
+
 
 // Убедимся, что при 0 сердцах они остаются 0
 if (availableGames === 0) {
@@ -27,7 +31,7 @@ let gameTaskTimer = null;
 let gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
 
 // Функция для обновления таймера
-function updateTimer() {
+window.updateTimer = function() {
     const now = Date.now();
     let updated = false;
 
@@ -81,16 +85,20 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameIframe;
 
     function loadGame() {
-        if (!gameIframe) {
-            gameIframe = document.createElement('iframe');
-            gameIframe.src = 'game/index.html';
-            gameIframe.style.width = '100%';
-            gameIframe.style.height = '300px';
-            gameIframe.style.border = 'none';
-            gameContainer.appendChild(gameIframe);
-        }
+        gameIframe = createGameIframe();
     }
-
+// Функция создания iframe
+function createGameIframe() {
+    if (!gameIframe) {
+        gameIframe = document.createElement('iframe');
+        gameIframe.src = 'game/index.html';
+        gameIframe.style.width = '100%';
+        gameIframe.style.height = '300px';
+        gameIframe.style.border = 'none';
+        document.getElementById('gameContainer').appendChild(gameIframe);
+    }
+    return gameIframe;
+}
     function updateAvailableGames() {
         const availableGamesElement = document.querySelector('#lives'); // Исправл: добавлен id 'lives'
         
@@ -99,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateAvailableGamesDisplay() {
+    window.updateAvailableGamesDisplay = function() {
         const timerData = updateTimer();
         livesDisplay.innerHTML = '❤️'.repeat(timerData.availableGames) + '🖤'.repeat(5 - timerData.availableGames);
         
@@ -109,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             timerDisplay.style.display = 'none'; // Скрываем таймер, если 5 сердец
         }
-    }
+    };
 
     function startGame() {
         if (availableGames > 0) {
@@ -140,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             saveGameState();
             updateAvailableGamesDisplay();
-            startButton.style.display = 'none';
             
             if (gameIframe && gameIframe.contentWindow) {
                 gameIframe.contentWindow.postMessage({ type: 'slowDown' }, '*');
@@ -152,37 +159,84 @@ document.addEventListener('DOMContentLoaded', () => {
             updatePlayedCountTask();
         }
     }
-
-    startButton.addEventListener('click', startGame);
-
-    window.addEventListener('message', (event) => {
-        if (event.data.type === 'gameOver') {
-            if (availableGames > 0) {
-                startButton.style.display = 'block';
-            } else {
-                startButton.style.display = 'none';
-                livesDisplay.innerHTML = 'Игры закончились';
-            }
-            
-            // Добавляем очки к общему балансу
-            const gameScore = event.data.score;
+    // Обновляем обработчик кнопки
+    startButton.addEventListener('click', () => {
+        if (startButton.classList.contains('claim-mode')) {
+            // Начисляем очки
+            const gameScore = parseInt(startButton.dataset.pendingScore);
             totalDPS += gameScore;
-            let totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
             totalGameEarnings += gameScore;
             localStorage.setItem('totalDPS', totalDPS);
             localStorage.setItem('totalGameEarnings', totalGameEarnings);
             
-            // Обновляем отображение сразу после окончания игры
             updateTotalScore();
             updateGameEarningsDisplay();
             updateGameScoreDisplay();
-            
-            // Показываем сообщение о полученных очках
-            alert(`Вы заработали ${gameScore} DPS! Ваш новый баланс: ${totalDPS} DPS`);
-            
             updatePlayedCountTask();
+        
+        alert(`Вы заработали ${gameScore} DPS! Ваш новый баланс: ${totalDPS} DPS`);
+        
+        // После claim возвращаем кнопку в обычное состояние
+        startButton.classList.remove('claim-mode');
+        updateStartButtonState();
+        
+    } else {
+        // Запуск новой игры
+        if (availableGames > 0) {
+            availableGames--;
+            localStorage.setItem('availableGames', availableGames);
+            updateAvailableGamesDisplay();
+            
+            if (gameIframe && gameIframe.contentWindow) {
+                gameIframe.contentWindow.postMessage({ type: 'startGame' }, '*');
+            }
+        }
+        updateStartButtonState();
+    }
+});
 
+// Вызываем updateStartButtonState при загрузке страницы и после каждого изменения availableGames
+document.addEventListener('DOMContentLoaded', updateStartButtonState);
+
+function updateStartButtonState() {
+    if (!startButton) return;
+    
+    if (availableGames === 0 && !startButton.classList.contains('claim-mode')) {
+        // Если нет сердец и кнопка не в режиме claim
+        startButton.classList.remove('bg-yellow-400', 'text-black');
+        startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80');
+        startButton.innerHTML = 'Недостаточно сердец';
+        startButton.disabled = true;
+    } else if (startButton.classList.contains('claim-mode')) {
+        // Если кнопка в режиме claim
+        startButton.classList.remove('bg-yellow-400', 'text-black');
+        startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+        startButton.innerHTML = 'Claim x1 DPS';
+        startButton.disabled = false;
+    } else {
+        // Обычное состояние (есть сердца)
+        startButton.classList.remove('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+        startButton.classList.add('bg-yellow-400', 'text-black');
+        startButton.innerHTML = 'Start';
+        startButton.disabled = false;
+    }
+}
+
+    window.addEventListener('message', (event) => {
+        if (event.data.type === 'gameOver') {
+            startButton.style.display = 'block';
+            startButton.classList.add('claim-mode');
+            startButton.innerHTML = 'Claim x1 DPS';
+            startButton.dataset.pendingScore = event.data.score;
+            startButton.classList.remove('bg-yellow-400', 'text-black');
+            startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+            
+            if (availableGames === 0) {
+                livesDisplay.innerHTML = 'Игры закончились';
+            }
+                
             // Проверяем, не установлен ли новый рекорд
+            const gameScore = event.data.score;
             const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
             if (gameScore > highScore) {
                 localStorage.setItem('project.github.chrome_dino.high_score', gameScore.toString());
@@ -205,21 +259,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('button[data-page="game"]').addEventListener('click', () => {
         if (gamePage.style.display !== 'none') {
             loadGame();
-            updateAvailableGames();
             updateAvailableGamesDisplay();
             updateTimer();
-            if (availableGames > 0) {
-                startButton.style.display = 'block';
-            } else {
-                startButton.style.display = 'none';
-                livesDisplay.innerHTML = 'Игры закончились';
-            }
+            updateStartButtonState();
         }
     });
 
     // Вызов функции при загрузке страницы
     document.addEventListener('DOMContentLoaded', () => {
-        updateAvailableGames(); // Обновляем отображение сердец при загрузке
+        updateAvailableGamesDisplay(); // Обновляем отображение сердец при загрузке
         updateGameEarningsDisplay(); // Обновляем отображение заработанных денег за игры
     });
 });
@@ -296,7 +344,7 @@ function loadGameState() {
 // Изменяем обработчик события DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
     loadGameState(); // Загружаем состояние игры
-    updateAvailableGames(); // Обновляем отображение сердец
+    updateAvailableGamesDisplay(); // Обновляем отображение сердец
     updateGameEarningsDisplay(); // Обновляем отображение заработанных денег за игры
     updateTaskEarningsDisplay(); // Добавляем обновление отображения заработка за задания
 });
@@ -513,33 +561,72 @@ async function initAdsgram() {
 // Инициализируем Adsgram при загрузке страницы
 document.addEventListener('DOMContentLoaded', initAdsgram);
 
+function updateStartButtonText(isClaim = false) {
+    if (startButton) {
+        if (isClaim) {
+            startButton.innerHTML = 'Claim x1 DPS 😢';
+            startButton.classList.add('claim-mode');
+            startButton.classList.remove('bg-yellow-400', 'text-black');
+            startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+        } else {
+            startButton.innerHTML = 'Start';
+            startButton.classList.remove('claim-mode');
+            startButton.classList.remove('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+            startButton.classList.add('bg-yellow-400', 'text-black');
+        }
+    }
+}
 // Обновляем обработчик сообщений от игры
 window.addEventListener('message', async (event) => {
     if (event.data.type === 'gameOver') {
-        // ... существующий код обработки gameOver ...
+        // При окончании игры всегда показываем кнопку Claim
+        startButton.style.display = 'block';
+        startButton.classList.add('claim-mode');
+        startButton.innerHTML = 'Claim x1 DPS';
+        startButton.dataset.pendingScore = event.data.score;
+        startButton.classList.remove('bg-yellow-400', 'text-black');
+        startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+        
+        // Обновляем отображение сердец отдельно
+        if (availableGames === 0) {
+            livesDisplay.innerHTML = 'Игры закончились';
+        }
     } else if (event.data.type === 'showAd') {
         // Показываем рекламу
         if (!AdController) {
             await initAdsgram();
         }
-
+    
         try {
             const result = await AdController.show();
             console.log('Пользователь посмотрел рекламу', result);
             
-            const telegramId = window.Telegram.WebApp.initDataUnsafe.user?.id;
+            // Начисляем очки с множителем x3 после просмотра рекламы
+            const currentScore = event.data.currentScore;
+            const gameScore = currentScore * 3;
             
-            if (!telegramId) {
-                console.error('Telegram ID не найден');
-                return;
-            }
-
-            // Отправляем сообщение обратно в игру
+            totalDPS += gameScore;
+            totalGameEarnings += gameScore;
+            localStorage.setItem('totalDPS', totalDPS);
+            localStorage.setItem('totalGameEarnings', totalGameEarnings);
+            
+            updateTotalScore();
+            updateGameEarningsDisplay();
+            updateGameScoreDisplay();
+            updatePlayedCountTask();
+            
+            alert(`Вы заработали ${gameScore} DPS (x3)! Ваш новый баланс: ${totalDPS} DPS`);
+            
+            // Отправляем сообщение в iframe о том, что реклама просмотрена
             if (gameIframe && gameIframe.contentWindow) {
-                gameIframe.contentWindow.postMessage({
-                    type: 'adWatched'
-                }, '*');
+                gameIframe.contentWindow.postMessage({ type: 'adWatched' }, '*');
             }
+            
+            // Возвращаем кнопку в режим Start
+            startButton.classList.remove('claim-mode');
+            startButton.innerHTML = 'Start';
+            startButton.classList.remove('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+            startButton.classList.add('bg-yellow-400', 'text-black');
             
         } catch (error) {
             console.error('Ошибка при показе рекламы:', error);

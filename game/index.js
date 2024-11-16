@@ -140,12 +140,40 @@ function paint_layout(character_layout, character_position) {
     }
 }
 
+// Обновляем функцию showGameOver
 function showGameOver(score) {
     const gameOverScreen = document.getElementById('game-over');
     const finalScoreElement = document.getElementById('final-score');
     
+    // Сначала удаляем все существующие кнопки рекламы
+    const existingButtons = gameOverScreen.querySelectorAll('#watch-ad-button');
+    existingButtons.forEach(button => button.remove());
+    
+    // Создаем новую кнопку рекламы
+    const watchAdButton = document.createElement('button');
+    watchAdButton.id = 'watch-ad-button';
+    watchAdButton.innerHTML = '<span>Watch <span class="yellow-text">ad</span> for x3 DPS</span>';
+    
+    // Добавляем обработчик клика
+    watchAdButton.addEventListener('click', () => {
+        window.parent.postMessage({
+            type: 'showAd',
+            currentScore: game_score
+        }, '*');
+        // Сразу удаляем кнопку после клика
+        watchAdButton.remove();
+    });
+    
     finalScoreElement.textContent = `+${Math.floor(score)} DPS`;
     gameOverScreen.style.display = 'block';
+    
+    // Добавляем новую кнопку
+    gameOverScreen.appendChild(watchAdButton);
+    
+    window.parent.postMessage({
+        type: 'gameOver',
+        score: Math.floor(score)
+    }, '*');
 }
 
 function hideGameOver() {
@@ -259,12 +287,12 @@ function event_loop(gravity) {
         if (isCollided(dino_current_position.get()[0], dino_current_position.get()[1], dino_current_layout.length, dino_current_layout[0].length, HARMFULL_CHARACTER_POSITION.get()[0], HARMFULL_CHARACTER_POSITION.get()[1], HARMFULL_CHARACTER_LAYOUT.length, HARMFULL_CHARACTER_LAYOUT[0].length)) {
             paint_layout(dino_layout.dead, harmfull_characters_pool[0].get_position().get());
             
-            if (localStorage.getItem("project.github.chrome_dino.high_score") < game_score) {
-                localStorage.setItem("project.github.chrome_dino.high_score", game_score);
+            if (game_hi_score < game_score) {
+                game_hi_score = game_score;
+                localStorage.setItem("project.github.chrome_dino.high_score", Math.floor(game_hi_score));
             }
             
             showGameOver(game_score);
-            window.parent.postMessage({type: 'gameOver', score: game_score}, '*');
             return;
         }
     }
@@ -309,13 +337,32 @@ document.getElementById('watch-ad-button').addEventListener('click', () => {
     }, '*');
 });
 
-// Слушаем ответ от родительского окна
+// Слушаем сообщения от родительского окна
 window.addEventListener('message', (event) => {
     if (event.data.type === 'adWatched') {
         // Умножаем счет после просмотра рекламы
         game_score *= 3;
         updateScore();
+        
+        // Скрываем экран Game Over и удаляем кнопку рекламы
+        const gameOverScreen = document.getElementById('game-over');
+        const watchAdButton = document.getElementById('watch-ad-button');
+        
+        if (watchAdButton) {
+            watchAdButton.remove(); // Полностью удаляем кнопку из DOM
+        }
+        
+        if (gameOverScreen) {
+            gameOverScreen.style.display = 'none';
+        }
+        
+        // Отправляем обновленный счет через gameOver
+        window.parent.postMessage({
+            type: 'gameOver',
+            score: game_score
+        }, '*');
+    } else if (event.data.type === 'startGame') {
         hideGameOver();
-        main(); // Перезапускаем игру
+        main();
     }
 });
