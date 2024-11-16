@@ -484,4 +484,65 @@ function checkAndCompleteRecordTask(taskName) {
     
     alert(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания "${taskName}"!`);
 }
+// Добавляем инициализацию Adsgram
+function loadAdsgramScript() {
+    return new Promise((resolve, reject) => {
+        if (window.Adsgram) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://sad.adsgram.ai/js/sad.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.body.appendChild(script);
+    });
+}
 
+let AdController;
+async function initAdsgram() {
+    try {
+        await loadAdsgramScript();
+        console.log('Adsgram SDK загружен успешно');
+        AdController = window.Adsgram.init({ blockId: "4178" }); 
+    } catch (error) {
+        console.error('Ошибка загрузки Adsgram SDK:', error);
+    }
+}
+
+// Инициализируем Adsgram при загрузке страницы
+document.addEventListener('DOMContentLoaded', initAdsgram);
+
+// Обновляем обработчик сообщений от игры
+window.addEventListener('message', async (event) => {
+    if (event.data.type === 'gameOver') {
+        // ... существующий код обработки gameOver ...
+    } else if (event.data.type === 'showAd') {
+        // Показываем рекламу
+        if (!AdController) {
+            await initAdsgram();
+        }
+
+        try {
+            const result = await AdController.show();
+            console.log('Пользователь посмотрел рекламу', result);
+            
+            const telegramId = window.Telegram.WebApp.initDataUnsafe.user?.id;
+            
+            if (!telegramId) {
+                console.error('Telegram ID не найден');
+                return;
+            }
+
+            // Отправляем сообщение обратно в игру
+            if (gameIframe && gameIframe.contentWindow) {
+                gameIframe.contentWindow.postMessage({
+                    type: 'adWatched'
+                }, '*');
+            }
+            
+        } catch (error) {
+            console.error('Ошибка при показе рекламы:', error);
+        }
+    }
+});
