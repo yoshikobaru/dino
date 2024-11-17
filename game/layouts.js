@@ -354,7 +354,35 @@ const RETRY = [
     [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1],
 ];
 
+// Определяем цвета для разных скинов
+const DINO_COLORS = {
+    default: 2,  // Стандартный серый цвет
+    red: 3,      // Красный цвет
+    green: 4     // Зеленый цвет
+};
+
+// Создаем функцию для генерации спрайта динозавра с нужным цветом
+function createDinoLayout(colorCode) {
+    return {
+        stand: DINO_STAND.map(row => row.map(cell => cell === 2 ? colorCode : cell)),
+        dead: DINO_DEAD.map(row => row.map(cell => cell === 2 ? colorCode : cell)),
+        run: [
+            DINO_LEFT_LEG_UP.map(row => row.map(cell => cell === 2 ? colorCode : cell)),
+            DINO_RIGHT_LEG_UP.map(row => row.map(cell => cell === 2 ? colorCode : cell))
+        ],
+        jump: DINO_STAND.map(row => row.map(cell => cell === 2 ? colorCode : cell))
+    };
+}
+
+// Создаем объект со всеми скинами
+const dino_skins = {
+    default: createDinoLayout(2),  // Стандартный серый
+    red: createDinoLayout(3),      // Красный
+    green: createDinoLayout(4)     // Зеленый
+};
+
 const gameLayouts = {
+    dino_layout: dino_skins.default, // По умолчанию используем обычный скин
     dino_layout: {
         stand: DINO_STAND,
         dead: DINO_DEAD,
@@ -398,7 +426,7 @@ const gameLayouts = {
             road: "#535353",
             score_text: "#747474",
             info_text: "#535353",
-            layout: [false, "transparent", "#535353", "#dadada", "#535353", false]
+            layout: [false, "transparent", "#535353", "#FF0000", "#00FF00", false]  // Добавляем красный и зеленый цвета
         },
         dark: {
             id: 2,
@@ -406,11 +434,11 @@ const gameLayouts = {
             road: "#acacac",
             score_text: "#909191",
             info_text: "#acacac",
-            layout: [false, "transparent", "#acacac", "#3e3f3f", "#acacac", "#3e3f3f"]
+            layout: [false, "transparent", "#acacac", "#FF0000", "#00FF00", "#3e3f3f"]  // Добавляем красный и зеленый цвета
         }
     }
 };
-
+window.dino_skins = dino_skins;
 window.gameLayouts = gameLayouts;
 window.stone_layout = gameLayouts.stone_layout;
 window.cloud_layout = gameLayouts.cloud_layout;

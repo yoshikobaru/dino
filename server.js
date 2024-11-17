@@ -54,6 +54,11 @@ const User = sequelize.define('User', {
   lastAdWatchTime: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  skins: {
+    type: DataTypes.JSON,
+    defaultValue: ['default'], // По умолчанию доступен только базовый скин
+    allowNull: false
   }
 });
 
@@ -109,7 +114,37 @@ bot.command('start', async (ctx) => {
 
 // Запускаем бота
 bot.launch();
+bot.on('pre_checkout_query', async (ctx) => {
+  try {
+    await ctx.answerPreCheckoutQuery(true);
+  } catch (error) {
+    console.error('Error in pre_checkout_query:', error);
+  }
+});
 
+// Обработка successful_payment
+bot.on('successful_payment', async (ctx) => {
+  try {
+    const payment = ctx.message.successful_payment;
+    const [type, telegramId, skinName] = payment.invoice_payload.split('_');
+
+    if (type === 'skin') {
+      const user = await User.findOne({ where: { telegramId } });
+      if (!user) {
+        console.error('User not found:', telegramId);
+        return;
+      }
+
+      // Добавляем новый скин
+      const updatedSkins = [...new Set([...user.skins, skinName])];
+      await user.update({ skins: updatedSkins });
+
+      await ctx.reply('✨ Скин успешно приобретен! Теперь вы можете выбрать его в игре.');
+    }
+  } catch (error) {
+    console.error('Error in successful_payment:', error);
+  }
+});
 const routes = {
   GET: {
     '/get-referral-link': async (req, res, query) => {
@@ -173,6 +208,96 @@ const routes = {
     return { status: 500, body: { error: 'Internal server error' } };
   }
 },
+'/create-skin-invoice': async (req, res, query) => {
+      const { telegramId, stars, skinName } = query;
+      
+      if (!telegramId || !stars || !skinName) {
+        return { status: 400, body: { error: 'Missing required parameters' } };
+      }
+
+      try {
+        const user = await User.findOne({ where: { telegramId } });
+        if (!user) {
+          return { status: 404, body: { error: 'User not found' } };
+        }
+
+        // Проверяем, не куплен ли уже скин
+        if (user.skins.includes(skinName)) {
+          return { status: 400, body: { error: 'Skin already purchased' } };
+        }
+
+        const invoice = await bot.telegram.createInvoiceLink({
+          title: 'Покупка скина динозавра',
+          description: `${skinName === 'red' ? 'Красный' : 'Зеленый'} скин для вашего динозавра`,
+          payload: `skin_${telegramId}_${skinName}`,
+          provider_token: "",
+          currency: 'XTR',
+          prices: [{
+            label: '⭐️ Скин',
+            amount: parseInt(stars)
+          }]
+        });
+
+        return { status: 200, body: { slug: invoice } };
+      } catch (error) {
+        console.error('Error creating skin invoice:', error);
+        return { status: 500, body: { error: 'Failed to create invoice' } };
+      }
+    },
+    '/update-user-skins': async (req, res, query) => {
+      const { telegramId, skinName } = query;
+      
+      if (!telegramId || !skinName) {
+        return { status: 400, body: { error: 'Missing required parameters' } };
+      }
+
+      try {
+        const user = await User.findOne({ where: { telegramId } });
+        if (!user) {
+          return { status: 404, body: { error: 'User not found' } };
+        }
+
+        // Добавляем новый скин к существующим
+        const updatedSkins = [...new Set([...user.skins, skinName])];
+        await user.update({ skins: updatedSkins });
+
+        return { 
+          status: 200, 
+          body: { 
+            success: true,
+            skins: updatedSkins
+          }
+        };
+      } catch (error) {
+        console.error('Error updating user skins:', error);
+        return { status: 500, body: { error: 'Failed to update user skins' } };
+      }
+    },
+
+    '/get-user-skins': async (req, res, query) => {
+      const { telegramId } = query;
+      
+      if (!telegramId) {
+        return { status: 400, body: { error: 'Missing telegramId parameter' } };
+      }
+
+      try {
+        const user = await User.findOne({ where: { telegramId } });
+        if (!user) {
+          return { status: 404, body: { error: 'User not found' } };
+        }
+
+        return { 
+          status: 200, 
+          body: { 
+            skins: user.skins 
+          }
+        };
+      } catch (error) {
+        console.error('Error getting user skins:', error);
+        return { status: 500, body: { error: 'Failed to get user skins' } };
+      }
+    },
 '/reward': async (req, res, query) => {
     const telegramId = query.userid;
     

@@ -122,7 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Обновляем отображение
+    addShopButton();
+    createShopModal();
     updateAvailableGamesDisplay();
+    loadUserSkins();
 });
 // Функция создания iframe
 function createGameIframe() {
@@ -663,3 +666,239 @@ window.addEventListener('message', async (event) => {
         updateAvailableGamesDisplay();
     }
 });
+let currentSkin = localStorage.getItem('currentDinoSkin') || 'default';
+let availableSkins = JSON.parse(localStorage.getItem('availableSkins')) || {
+    default: true,
+    red: false,
+    green: false
+};
+function setButtonLoading(button, isLoading) {
+    if (isLoading) {
+        button.disabled = true;
+        button.innerHTML = 'Загрузка...';
+    } else {
+        button.disabled = false;
+        updateShopButtons(); // Восстанавливаем правильный текст кнопки
+    }
+}
+// Добавляем кнопку магазина
+function addShopButton() {
+    const shopButton = document.createElement('button');
+    shopButton.innerHTML = '🏪';
+    shopButton.id = 'shopButton'; // Добавляем id для удобного доступа
+    shopButton.className = 'fixed top-4 right-4 text-2xl bg-yellow-400 rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-colors hidden'; // Добавляем hidden по умолчанию
+    shopButton.onclick = openShopModal;
+    document.body.appendChild(shopButton);
+}
+// Создаем модальное окно магазина
+function createShopModal() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center hidden';
+    modal.id = 'shopModal';
+
+    const content = document.createElement('div');
+    content.className = 'bg-black rounded-lg p-6 max-w-md w-full mx-4 border border-yellow-400';
+    content.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-yellow-400">Магазин скинов</h2>
+            <button class="text-yellow-400 hover:text-yellow-500" onclick="closeShopModal()">✕</button>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="border border-yellow-400 rounded p-4 text-center bg-black">
+                <img src="assets/dino-default.jpg" alt="Default Dino" class="w-16 h-16 mx-auto mb-2">
+                <div class="font-bold text-yellow-400">Обычный</div>
+                <button data-skin="default" class="mt-2 px-4 py-2 bg-gray-200 rounded" disabled>Выбран</button>
+            </div>
+            <div class="border border-yellow-400 rounded p-4 text-center bg-black">
+                <img src="assets/dino-red.jpg" alt="Red Dino" class="w-16 h-16 mx-auto mb-2">
+                <div class="font-bold text-yellow-400">Красный</div>
+                <button data-skin="red" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
+                    Купить за <span class="text-white">10</span> ⭐️
+                </button>
+            </div>
+            <div class="border border-yellow-400 rounded p-4 text-center bg-black">
+                <img src="assets/dino-green.jpg" alt="Green Dino" class="w-16 h-16 mx-auto mb-2">
+                <div class="font-bold text-yellow-400">Зеленый</div>
+                <button data-skin="green" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
+                    Купить за <span class="text-white">15</span> ⭐️
+                </button>
+            </div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    updateShopButtons();
+}
+
+// Функции управления модальным окном
+function openShopModal() {
+    const modal = document.getElementById('shopModal');
+    modal.classList.remove('hidden');
+}
+
+function closeShopModal() {
+    const modal = document.getElementById('shopModal');
+    modal.classList.add('hidden');
+}
+async function loadUserSkins() {
+    try {
+        const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
+        const response = await fetch(`/get-user-skins?telegramId=${telegramId}`);
+        const data = await response.json();
+        
+        if (data.skins) {
+            // Обновляем локальное хранилище доступных скинов
+            availableSkins = data.skins.reduce((acc, skin) => {
+                acc[skin] = true;
+                return acc;
+            }, {});
+            localStorage.setItem('availableSkins', JSON.stringify(availableSkins));
+            
+            // Загружаем текущий скин
+            currentSkin = localStorage.getItem('currentDinoSkin') || 'default';
+            
+            // Обновляем кнопки в магазине
+            updateShopButtons();
+        }
+    } catch (error) {
+        console.error('Error loading user skins:', error);
+    }
+}
+// Обновляем функцию purchaseSkin
+window.purchaseSkin = async function(skinName, price) {
+    const button = document.querySelector(`button[data-skin="${skinName}"]`);
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = 'Загрузка...';
+    }
+    
+    try {
+        const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
+        const response = await fetch(`/create-skin-invoice?telegramId=${telegramId}&stars=${price}&skinName=${skinName}`);
+        const data = await response.json();
+        
+        if (!data.slug) {
+            throw new Error('No slug received from server');
+        }
+
+        // Сохраняем информацию о покупаемом скине
+        localStorage.setItem('pendingSkin', JSON.stringify({
+            skinName: skinName,
+            price: price,
+            timestamp: Date.now()
+        }));
+
+        // Открываем инвойс
+        window.Telegram.WebApp.openInvoice(data.slug);
+        
+    } catch (error) {
+        console.error('Error in purchaseSkin:', error);
+        localStorage.removeItem('pendingSkin');
+        window.Telegram.WebApp.showPopup({
+            title: 'Ошибка',
+            message: 'Произошла ошибка при создании счета'
+        });
+    } finally {
+        if (button) {
+            button.disabled = false;
+            updateShopButtons(); // Восстанавливаем правильный текст кнопки
+        }
+    }
+}
+
+// Добавляем обработчик закрытия Invoice
+window.Telegram.WebApp.onEvent('invoiceClosed', async (data) => {
+    console.log('Invoice closed with status:', data.status);
+    
+    if (data.status === 'paid') {
+        try {
+            const pendingSkin = localStorage.getItem('pendingSkin');
+            if (!pendingSkin) return;
+
+            const skinData = JSON.parse(pendingSkin);
+            const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
+            
+            const response = await fetch(`/update-user-skins?telegramId=${telegramId}&skinName=${skinData.skinName}`);
+            const responseData = await response.json();
+
+            if (responseData.success) {
+                // Обновляем локальные данные о скинах
+                availableSkins[skinData.skinName] = true;
+                localStorage.setItem('availableSkins', JSON.stringify(availableSkins));
+                
+                // Выбираем купленный скин
+                selectSkin(skinData.skinName);
+                
+                window.Telegram.WebApp.showPopup({
+                    title: '✨ Успех!',
+                    message: 'Скин успешно приобретен!'
+                });
+                
+                updateShopButtons();
+            }
+        } catch (error) {
+            console.error('Ошибка при активации скина:', error);
+        } finally {
+            localStorage.removeItem('pendingSkin');
+        }
+    } else {
+        localStorage.removeItem('pendingSkin');
+    }
+});
+// Добавляем новую функцию для выбора скина
+window.selectSkin = function(skinName) {
+    if (availableSkins[skinName]) {
+        currentSkin = skinName;
+        localStorage.setItem('currentDinoSkin', skinName);
+        
+        // Отправляем сообщение в iframe для обновления скина
+        if (gameIframe && gameIframe.contentWindow) {
+            gameIframe.contentWindow.postMessage({ 
+                type: 'changeSkin', 
+                skin: skinName 
+            }, '*');
+        }
+        
+        // Перезагружаем iframe для обновления начального состояния
+        if (gameIframe) {
+            const currentSrc = gameIframe.src;
+            gameIframe.src = '';
+            gameIframe.src = currentSrc;
+        }
+        
+        updateShopButtons();
+        showPopup('Скин успешно выбран!');
+    }
+}
+
+// Обновление кнопок в магазине
+function updateShopButtons() {
+    const modal = document.getElementById('shopModal');
+    if (!modal) return;
+
+    const buttons = modal.querySelectorAll('button[data-skin]');
+    buttons.forEach(button => {
+        const skinName = button.getAttribute('data-skin');
+        if (skinName) {
+            if (availableSkins[skinName]) {
+                // Если скин куплен
+                if (currentSkin === skinName) {
+                    button.textContent = 'Выбран';
+                    button.disabled = true;
+                    button.className = 'mt-2 px-4 py-2 bg-gray-200 text-gray-600 rounded cursor-not-allowed';
+                } else {
+                    button.textContent = 'Выбрать';
+                    button.disabled = false;
+                    button.className = 'mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors';
+                    button.onclick = () => selectSkin(skinName);
+                }
+            } else {
+                // Если скин не куплен - теперь все скины по 100 звезд
+                button.innerHTML = `Купить за <span class="text-white">100</span> ⭐️`;
+                button.className = 'mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors';
+                button.onclick = () => purchaseSkin(skinName, 100);
+            }
+        }
+    });
+}

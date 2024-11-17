@@ -78,6 +78,10 @@ let harmfull_character_allocator = [
         , 500, 50
     )
 ]
+let currentSkin = localStorage.getItem('currentDinoSkin') || 'default';
+if (dino_skins[currentSkin]) {
+    dino_layout = dino_skins[currentSkin];
+}
 
 function updateScore() {
     const currentScoreElement = document.getElementById('current-score');
@@ -317,6 +321,12 @@ function event_loop(gravity) {
 
 function main() {
     const { gravity } = initialize();
+    
+    // Устанавливаем правильный скин при старте
+    if (dino_skins[currentSkin]) {
+        dino_layout = dino_skins[currentSkin];
+    }
+    
     event_loop(gravity);
 }
 
@@ -370,5 +380,44 @@ window.addEventListener('message', (event) => {
     } else if (event.data.type === 'startGame') {
         hideGameOver();
         main();
+    }
+});
+// Добавляем функцию для перерисовки начального состояния
+function redrawInitialState() {
+    if (!game_over && is_first_time) {
+        canvas_ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Перерисовываем дорогу
+        drawLayout(
+            canvas_ctx,
+            road_layout,
+            new Position(0, 0),
+            current_theme.road
+        );
+        
+        // Перерисовываем начального динозавра
+        drawLayout(
+            canvas_ctx,
+            dino_layout.stand,
+            DINO_FLOOR_INITIAL_POSITION,
+            current_theme.layout
+        );
+    }
+}
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'changeSkin') {
+        const skinName = event.data.skin;
+        if (dino_skins[skinName]) {
+            dino_layout = dino_skins[skinName];
+            // Если игра уже запущена, обновляем текущий спрайт
+            if (typeof main_character !== 'undefined' && main_character) {
+                main_character._character_meta._movements_array = [
+                    dino_layout.stand,
+                    ...dino_layout.run
+                ];
+            }
+            // Перерисовываем начальное состояние
+            redrawInitialState();
+        }
     }
 });

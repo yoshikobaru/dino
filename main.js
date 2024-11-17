@@ -22,6 +22,7 @@ function showPage(pageName) {
         console.error(`Страница ${pageName} не найдена`);
     }
 
+    // Обновляем активную кнопку в футере
     document.querySelectorAll('footer button').forEach(btn => {
         btn.classList.remove('text-yellow-400');
         btn.classList.add('text-gray-500');
@@ -30,6 +31,20 @@ function showPage(pageName) {
     if (activeButton) {
         activeButton.classList.remove('text-gray-500');
         activeButton.classList.add('text-yellow-400');
+    }
+
+    // Управляем видимостью кнопки магазина
+    const shopButton = document.getElementById('shopButton');
+    if (shopButton) {
+        if (pageName === 'game') {
+            shopButton.classList.remove('hidden');
+            loadGame();
+            updateAvailableGamesDisplay();
+            updateTimer();
+            updateStartButtonState();
+        } else {
+            shopButton.classList.add('hidden');
+        }
     }
 }
 
