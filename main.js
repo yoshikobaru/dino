@@ -68,9 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const taskButtons = document.querySelectorAll('.flex.mb-4.space-x-2.overflow-x-auto button');
     const taskContainer = document.querySelector('.space-y-2');
     const totalScoreElement = document.querySelector('#totalScore');
-
-
-    // Получаем текущий баланс из localStorage или устанавливаем 0, если его нет
     let totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
    
     // Функция для обновления отображения общего счета
@@ -82,17 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTaskScoreDisplay();
         
     }
-    
-
-    // Вызываем функцию сразу для отображения начального баланса
     updateTotalScore();
-    
-    
-
-
-
-    
-    
 
     tasks = {
         daily: [
@@ -614,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateAllBalances();
                 renderTasks(category);
                 
-                alert(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
+                showPopup(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
             }
         } else if (task.name === "Сыграть 25 раз") {
             let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
@@ -632,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateTaskEarningsDisplay();
                 renderTasks(category);
                 
-                alert(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
+                showPopup(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
             }
         } else if (task.name === "Набрать 500 DPS за игру" && !task.isCompleted) {
             const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
@@ -650,9 +637,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderTasks(category);
                 saveTasks();
                 
-                alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
+                showPopup(`Вы получили ${task.dps} DPS за выполнение задания!`);
             } else {
-                alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 500 DPS!`);
+                showPopup(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 500 DPS!`);
             }
         } else if (task.name === "Набрать 1000 DPS за игру" && !task.isCompleted) {
             const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
@@ -670,9 +657,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderTasks(category);
                 saveTasks();
                 
-                alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
+                showPopup(`Вы получили ${task.dps} DPS за выполнение задания!`);
             } else {
-                alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 1000 DPS!`);
+                showPopup(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь 1000 DPS!`);
             }
         } else {
             const earnedDPS = task.dps;
@@ -716,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTasks(category);
         saveTasks();
         
-        alert(`Вы получили ${task.dps} DPS за выполнение задания!`);
+        showPopup(`Вы получили ${task.dps} DPS за выполнение задания!`);
     }
 
     taskButtons.forEach(button => {
@@ -749,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('totalGameEarnings', totalGameEarnings);
         updateGameEarningsDisplay();
         updateTotalScore();
-        alert(`Вы аработали ${score} DPS! Ваш новый баланс: ${totalDPS} DPS`);
+        showPopup(`Вы аработали ${score} DPS! Ваш новый баланс: ${totalDPS} DPS`);
     }
 
     // Добавляем обработчик для кнопк "Play Game" (предполагается, что такая кнопка есть в HTML)
@@ -767,37 +754,22 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTaskEarningsDisplay();
     });
 
-    // бновям интервал для обнвления таймеров
     setInterval(() => {
         if (currentCategory === 'daily') {
             updateDailyTask();
         }
-        renderTasks(currentCategory); // Использу текущую атегорию
-    }, 1000);
+        renderTasks(currentCategory); 
+    }, 500);
 });
-
-// Добавляем переменные для отслеживания заработанных денег
-// Заработанные деньги за игры
 let totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0; // Заработанные деньги за задания
 let totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0; // Заработанные деньги за приглашения
 
-
-
-// Функция для обновления заработанных денег за задания
-
-
-
-// Функция для обновления заработанных денег за приглашения
 function updateInviteEarnings(amount) {
     totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
     totalInviteEarnings += amount;
     localStorage.setItem('totalInviteEarnings', totalInviteEarnings.toString());
     updateInviteEarningsDisplay();
 }
-
-// Пример вызова функции обновления заработаных денег за задания
-
-
 function updateTaskEarningsDisplay() {
     requestAnimationFrame(() => {
         const taskEarningsElement = document.getElementById('earnedDPS');
@@ -815,11 +787,9 @@ function updateInviteEarningsDisplay() {
     }
 }
 
-// Вызов функций для обновления отображения при згрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-   // Обновляем отображние зараотанных денег за игры
     updateTaskEarningsDisplay();
-    updateInviteEarningsDisplay(); // Вызывайте эту функцию, когда ользователь зарабатывает деньги за задания
+    updateInviteEarningsDisplay(); 
 });
 
 
@@ -840,12 +810,11 @@ function updateTotalScore() {
     updateTaskEarningsDisplay();
 }
 
-// Функция для обновления отображения очков за игру
 function updateGameScoreDisplay() {
     const gameScoreElement = document.getElementById('gameScore');
-    const totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0; // Поучаем из localStorage
+    const totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0; 
     if (gameScoreElement) {
-        gameScoreElement.textContent = `+${totalGameEarnings} DPS`; // Обновяем отображение
+        gameScoreElement.textContent = `+${totalGameEarnings} DPS`; 
     }
 }
 function saveAllData() {
@@ -854,7 +823,6 @@ function saveAllData() {
     
 }
 
-// Вызов функций для обновления отображения при загруке страницы
 document.addEventListener('DOMContentLoaded', () => {
     updateGameScoreDisplay(); // Обновляем отображение очков за игру
     updateTaskScoreDisplay();
@@ -992,21 +960,18 @@ function renderTasks(category) {
                     buttonClass = 'bg-yellow-400 text-black';
                 }
             }
-            
-            // ... остальной код отрисовки ...
         }
     });
 }
 
-// Функция для загрузки задач из localStorage
 function loadDailyTasks() {
     const savedTasks = JSON.parse(localStorage.getItem('dailyTasks'));
     if (savedTasks) {
         tasks.daily = savedTasks;
     } else {
-        addGameTask(); // Добавляем новую задачу толко если нет сохраненных задач
+        addGameTask(); 
     }
-    loadPlayedCount(); // Загружаем playedCount и обновляем задачу
+    loadPlayedCount(); 
     renderTasks('daily');
 }
 
@@ -1101,17 +1066,12 @@ function startGameTaskTimer() {
 // Вызываем функцию загрузки задач при инициализации
 document.addEventListener('DOMContentLoaded', () => {
     loadDailyTasks();
-    // ... остальной код инициализации ...
 });
 
-// Обновляем обработчик потери жизни в игре
 function loseLife() {
-    // ... существующий код ...
 
     updateGameTaskProgress();
 }
-
-// ... существущий код ...
 
 // Добавьте новую функцию:
 function completePlayedCountTask(index) {
@@ -1150,7 +1110,6 @@ function loadPlayedCount() {
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayedCount();
     renderTasks('daily');
-    // ... остальной код инициализации ...
 });
 
 // Добавьте эту функцию для загрузки состояния задания при инициализации
@@ -1197,26 +1156,11 @@ function isTaskOnCooldown() {
     const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
     return taskCooldown > Date.now();
 }
-
-// В game.js добавьте эту проверку перед увеличением gameProgress
-function incrementGameProgress() {
-    if (!isTaskOnCooldown()) {
-        const currentProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
-        if (currentProgress < 5) { // Увеличиваем только если меньше 5
-            localStorage.setItem('gameProgress', (currentProgress + 1).toString());
-            if (currentProgress === 0) {
-                localStorage.setItem('gameTaskStartTime', Date.now().toString());
-            }
-        }
-    }
-}
-
-// Добавим функцию для безопасного увеличения прогресса
 function incrementGameProgress() {
     const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
     const currentTime = Date.now();
 
-    // Если кулдаун только что закончился, с��расываем рогресс
+    // Если кулдаун только что закончился, сбрасываем прогресс
     if (taskCooldown > 0 && currentTime > taskCooldown) {
         localStorage.setItem('gameProgress', '0');
         localStorage.setItem('gameTaskStartTime', '0');

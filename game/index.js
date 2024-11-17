@@ -349,18 +349,12 @@ window.addEventListener('message', (event) => {
         const watchAdButton = document.getElementById('watch-ad-button');
         
         if (watchAdButton) {
-            watchAdButton.remove(); // Полностью удаляем кнопку из DOM
+            watchAdButton.remove();
         }
         
         if (gameOverScreen) {
             gameOverScreen.style.display = 'none';
         }
-        
-        // Отправляем обновленный счет через gameOver
-        window.parent.postMessage({
-            type: 'gameOver',
-            score: game_score
-        }, '*');
     } else if (event.data.type === 'hideAd') {
         // Удаляем кнопку рекламы и скрываем экран Game Over
         const gameOverScreen = document.getElementById('game-over');

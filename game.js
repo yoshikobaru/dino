@@ -1,3 +1,4 @@
+// Объявляем глобальные переменные один раз в начале файла
 let totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
 let totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
 let availableGames = parseInt(localStorage.getItem('availableGames')) || 0;
@@ -5,6 +6,17 @@ let nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || Date.now(
 let gameIframe = null;
 let startButton = document.getElementById('startButton');
 let livesDisplay = document.getElementById('lives');
+let timerDisplay;
+let gamePage;
+let gameContainer;
+let timerActive = false;
+let heartTimers = [];
+let lastHeartRecoveryTime = 0;
+let tasks = JSON.parse(localStorage.getItem('dailyTasks')) || { daily: [] };
+let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
+let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+let gameTaskTimer = null;
+let gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
 
 
 // Убедимся, что при 0 сердцах они остаются 0
@@ -12,54 +24,42 @@ if (availableGames === 0) {
     availableGames = 0; // Сохраняем 0 при обновлении
 }
 
-// Добавляем переменную для отслеживания состояния таймера
-let timerActive = false; // Состояние таймера
-
-// Массив для хранения таймеров каждого сердца
-let heartTimers = [];
-let lastHeartRecoveryTime = 0;
-
-// В начале файла добавьте:
-let tasks = JSON.parse(localStorage.getItem('dailyTasks')) || { daily: [] };
-
-// Добавьте в начало файла:
-let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
-
-// Добавляем новые переменные для отслеживания прогресса
-let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
-let gameTaskTimer = null;
-let gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
-
 // Функция для обновления таймера
 window.updateTimer = function() {
     const now = Date.now();
     let updated = false;
 
-    // Проверяем, прошло ли 5 минут с момента последнего восстановления сердца
-    if (heartTimers.length > 0 && now - lastHeartRecoveryTime >= 300000) {
+    // Проверяем время восстановления сердца
+    if (nextHeartTime > 0 && now >= nextHeartTime && availableGames < 5) {
+        availableGames++;
+        updated = true;
+        
+        // Устанавливаем следующее время восстановления
         if (availableGames < 5) {
-            availableGames++;
-            updated = true;
+            nextHeartTime = now + 300000; // 5 минут
+        } else {
+            nextHeartTime = 0; // Сбрасываем таймер только когда достигли 5 сердец
         }
-        heartTimers.shift(); // Удаляем первый элемент
-        lastHeartRecoveryTime = now; // Обновляем время последнего восстановления
+        
+        localStorage.setItem('availableGames', availableGames);
+        localStorage.setItem('nextHeartTime', nextHeartTime);
     }
 
-    if (updated) {
-        saveGameState();
+    // Вычисляем оставшееся время
+    let remainingTime = 0;
+    if (nextHeartTime > 0 && availableGames < 5) {
+        remainingTime = Math.max(0, Math.ceil((nextHeartTime - now) / 1000));
     }
 
-    // Вычисляем оставшееся время до следующего восстановления
-    const nextRecoveryTime = lastHeartRecoveryTime + 300000;
-    const remainingTime = Math.max(0, Math.ceil((nextRecoveryTime - now) / 1000));
     const minutes = Math.floor(remainingTime / 60);
     const seconds = remainingTime % 60;
 
     return {
         time: `${minutes}:${seconds.toString().padStart(2, '0')}`,
-        availableGames: availableGames
+        availableGames: availableGames,
+        updated: updated
     };
-}
+};
 
 // Запускаем таймер обновления независимо от состояния DOM
 let timerInterval = setInterval(() => {
@@ -72,21 +72,58 @@ let timerInterval = setInterval(() => {
         document.getElementById('lives').innerHTML = '❤️'.repeat(timerData.availableGames) + '🖤'.repeat(5 - timerData.availableGames);
     }
 }, 1000);
-
-document.addEventListener('DOMContentLoaded', () => {
-    const gamePage = document.getElementById('game-page');
-    const gameContainer = document.getElementById('gameContainer');
-    const startButton = document.getElementById('startButton');
-    const livesDisplay = document.getElementById('lives');
-    const timerDisplay = document.createElement('div');
-    timerDisplay.id = 'timer';
-    livesDisplay.parentNode.insertBefore(timerDisplay, livesDisplay.nextSibling);
+function updateAvailableGamesDisplay() {
+    const timerData = updateTimer();
     
-    let gameIframe;
-
-    function loadGame() {
-        gameIframe = createGameIframe();
+    // Обновляем сердца
+    if (livesDisplay) {
+        livesDisplay.innerHTML = '❤️'.repeat(timerData.availableGames) + '🖤'.repeat(5 - timerData.availableGames);
     }
+    
+    // Обновляем таймер
+    if (timerDisplay) {
+        if (timerData.availableGames < 5) {
+            timerDisplay.textContent = `Следующее сердце через: ${timerData.time}`;
+            timerDisplay.style.display = 'block';
+        } else {
+            timerDisplay.style.display = 'none';
+        }
+    }
+    
+    // Обновляем состояние кнопки
+    updateStartButtonState();
+};
+function loadGame() {
+    if (!gameContainer) return;
+    gameIframe = createGameIframe();
+    updateAvailableGamesDisplay();
+}
+document.addEventListener('DOMContentLoaded', () => {
+    // Инициализация элементов
+    gamePage = document.getElementById('game-page');
+    gameContainer = document.getElementById('gameContainer');
+    startButton = document.getElementById('startButton');
+    livesDisplay = document.getElementById('lives');
+    
+    // Создаем timerDisplay
+    timerDisplay = document.createElement('div');
+    timerDisplay.id = 'timer';
+    if (livesDisplay) {
+        livesDisplay.parentNode.insertBefore(timerDisplay, livesDisplay.nextSibling);
+    }
+    
+    // Восстанавливаем состояние из localStorage
+    availableGames = parseInt(localStorage.getItem('availableGames')) || 5;
+    nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || 0;
+    
+    // Загружаем игру
+    if (gameContainer) {
+        loadGame();
+    }
+    
+    // Обновляем отображение
+    updateAvailableGamesDisplay();
+});
 // Функция создания iframe
 function createGameIframe() {
     if (!gameIframe) {
@@ -99,108 +136,112 @@ function createGameIframe() {
     }
     return gameIframe;
 }
-    function updateAvailableGames() {
-        const availableGamesElement = document.querySelector('#lives'); // Исправл: добавлен id 'lives'
-        
-        if (availableGamesElement) {
-            availableGamesElement.innerHTML = '❤️'.repeat(availableGames) + '🖤'.repeat(5 - availableGames);
-        }
+window.showPopup = function(message, duration = 3000) {
+    // Удаляем существующий попап, если есть
+    const existingPopup = document.getElementById('custom-popup');
+    if (existingPopup) {
+        existingPopup.remove();
     }
-
-    window.updateAvailableGamesDisplay = function() {
-        const timerData = updateTimer();
-        livesDisplay.innerHTML = '❤️'.repeat(timerData.availableGames) + '🖤'.repeat(5 - timerData.availableGames);
+    
+    // Создаем элементы попапа
+    const popup = document.createElement('div');
+    popup.id = 'custom-popup';
+    popup.className = 'fixed top-0 left-0 right-0 z-50 transform -translate-y-full transition-transform duration-300 ease-out';
+    
+    const innerDiv = document.createElement('div');
+    innerDiv.className = 'bg-black/90 text-yellow-400 px-6 py-4 mx-auto max-w-md shadow-lg rounded-b-lg border-b-2 border-x-2 border-yellow-400';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'text-center font-bold text-lg';
+    messageDiv.textContent = message;
+    
+    // Собираем структуру
+    innerDiv.appendChild(messageDiv);
+    popup.appendChild(innerDiv);
+    document.body.appendChild(popup);
+    
+    // Показываем попап
+    requestAnimationFrame(() => {
+        popup.classList.remove('-translate-y-full');
+        popup.classList.add('translate-y-0');
         
-        if (timerData.availableGames < 5) {
-            timerDisplay.textContent = `Следующее сердце через: ${timerData.time}`;
-            timerDisplay.style.display = 'block';
-        } else {
-            timerDisplay.style.display = 'none'; // Скрываем таймер, если 5 сердец
+        // Скрываем и удаляем попап через duration мс
+        setTimeout(() => {
+            popup.classList.remove('translate-y-0');
+            popup.classList.add('-translate-y-full');
+            
+            // Удаляем элемент после завершения анимации
+            setTimeout(() => {
+                popup.remove();
+            }, 300); // Время равно duration-300 из класса
+        }, duration);
+    });
+}
+startButton.addEventListener('click', () => {
+    if (startButton.classList.contains('claim-mode')) {
+        // Начисляем очки
+        const gameScore = parseInt(startButton.dataset.pendingScore);
+        totalDPS += gameScore;
+        totalGameEarnings += gameScore;
+        localStorage.setItem('totalDPS', totalDPS);
+        localStorage.setItem('totalGameEarnings', totalGameEarnings);
+        
+        updateTotalScore();
+        updateGameEarningsDisplay();
+        updateGameScoreDisplay();
+        updatePlayedCountTask();
+        
+        // Добавляем обновление всех балансов
+        if (window.updateAllBalances) {
+            window.updateAllBalances();
         }
-    };
-
-    function startGame() {
+        
+        showPopup(`Вы заработали ${gameScore} DPS! Ваш новый баланс: ${totalDPS} DPS`);
+        
+        // Отправляем сообщение в iframe для удаления кнопки рекламы
+        if (gameIframe && gameIframe.contentWindow) {
+            gameIframe.contentWindow.postMessage({ type: 'hideAd' }, '*');
+        }
+        
+        // Возвращаем кнопку в режим Start
+        startButton.classList.remove('claim-mode');
+        updateStartButtonState();
+    } else {
         if (availableGames > 0) {
-            const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
-            const currentTime = Date.now();
+            startButton.style.display = 'none';
             
             availableGames--;
-            heartTimers.push(Date.now());
-            if (heartTimers.length === 1) {
-                lastHeartRecoveryTime = Date.now();
-            }
-            startButton.style.display = 'none';
-            // Обновляем прогресс только если нет активного кулдауна
-            if (taskCooldown <= currentTime) {
-                gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
-                
-                if (gameProgress === 0) {
-                    gameTaskStartTime = Date.now();
-                    localStorage.setItem('gameTaskStartTime', gameTaskStartTime);
-                    startGameTaskTimer();
-                }
-                
-                if (gameProgress < 5) {
-                    gameProgress++;
-                    localStorage.setItem('gameProgress', gameProgress.toString());
-                }
+            // Запускаем таймер сразу при использовании первого сердца
+            if (availableGames < 5 && nextHeartTime === 0) {
+                nextHeartTime = Date.now() + 300000; // 5 минут
+                localStorage.setItem('nextHeartTime', nextHeartTime);
             }
             
-            saveGameState();
+            localStorage.setItem('availableGames', availableGames);
             updateAvailableGamesDisplay();
             
-            if (gameIframe && gameIframe.contentWindow) {
-                gameIframe.contentWindow.postMessage({ type: 'slowDown' }, '*');
-                gameIframe.contentWindow.main();
-            }
-            
+            // Обновляем прогресс заданий
             playedCount++;
             localStorage.setItem('playedCount', playedCount.toString());
             updatePlayedCountTask();
-        }
-    }
-    // Обновляем обработчик кнопки
-    startButton.addEventListener('click', () => {
-        if (startButton.classList.contains('claim-mode')) {
-            // Начисляем очки
-            const gameScore = parseInt(startButton.dataset.pendingScore);
-            totalDPS += gameScore;
-            totalGameEarnings += gameScore;
-            localStorage.setItem('totalDPS', totalDPS);
-            localStorage.setItem('totalGameEarnings', totalGameEarnings);
             
-            updateTotalScore();
-            updateGameEarningsDisplay();
-            updateGameScoreDisplay();
-            updatePlayedCountTask();
-            
-            alert(`Вы заработали ${gameScore} DPS! Ваш новый баланс: ${totalDPS} DPS`);
-            
-            // Отправляем сообщение в iframe для удаления кнопки рекламы
-            if (gameIframe && gameIframe.contentWindow) {
-                gameIframe.contentWindow.postMessage({ type: 'hideAd' }, '*');
-            }
-            
-            // Возвращаем кнопку в режим Start
-            startButton.classList.remove('claim-mode');
-            updateStartButtonState();
-        } else {
-            // Запуск новой игры
-            if (availableGames > 0) {
-                // Скрываем кнопку на время игры
-                startButton.style.display = 'none';
-                
-                availableGames--;
-                localStorage.setItem('availableGames', availableGames);
-                updateAvailableGamesDisplay();
-                
-                if (gameIframe && gameIframe.contentWindow) {
-                    gameIframe.contentWindow.postMessage({ type: 'startGame' }, '*');
+            // Обновляем прогресс задания "Сыграть 5 раз"
+            const currentProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+            if (currentProgress < 5) {
+                if (currentProgress === 0) {
+                    localStorage.setItem('gameTaskStartTime', Date.now().toString());
                 }
+                localStorage.setItem('gameProgress', (currentProgress + 1).toString());
             }
-            updateStartButtonState();
+            
+            // Запускаем игру
+            if (gameIframe && gameIframe.contentWindow) {
+                gameIframe.contentWindow.postMessage({ type: 'startGame' }, '*');
+            }
         }
-    });
+        updateStartButtonState();
+    }
+});
 
 // Вызываем updateStartButtonState при загрузке страницы и после каждого изменения availableGames
 document.addEventListener('DOMContentLoaded', updateStartButtonState);
@@ -252,12 +293,12 @@ window.addEventListener('message', (event) => {
                 if (gameScore >= 1000) {
                     const record1000DPSCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
                     if (!record1000DPSCompleted) {
-                        alert('Поздравляем! Вы набрали 1000 DPS за игру. Получите награду в заданиях!');
+                        showPopup('Поздравляем! Вы набрали 1000 DPS за игру. Получите награду в заданиях!');
                     }
                 } else if (gameScore >= 500) {
                     const record500DPSCompleted = localStorage.getItem('record500DPSCompleted') === 'true';
                     if (!record500DPSCompleted) {
-                        alert('Поздравляем! Вы набрали 500 DPS за игру. Получите награду в заданиях!');
+                        showPopup('Поздравляем! Вы набрали 500 DPS за игру. Получите награду в заданиях!');
                     }
                 }
             }
@@ -273,12 +314,6 @@ window.addEventListener('message', (event) => {
         }
     });
 
-    // Вызов функции при загрузке страницы
-    document.addEventListener('DOMContentLoaded', () => {
-        updateAvailableGamesDisplay(); // Обновляем отображение сердец при загрузке
-        updateGameEarningsDisplay(); // Обновляем отображение заработанных денег за игры
-    });
-});
 //let totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
 function updateGameEarningsDisplay() {
     const gameEarningsElements = document.querySelectorAll('.bg-yellow-400 .text-sm.font-bold.text-black');
@@ -311,19 +346,11 @@ function updateGameScoreDisplay() {
     }
 }
 
-// При загрузке страницы восстанавливаем данные из localStorage
-document.addEventListener('DOMContentLoaded', () => {
-    const savedTimers = JSON.parse(localStorage.getItem('heartTimers')) || [];
-    heartTimers = savedTimers;
-    availableGames = parseInt(localStorage.getItem('availableGames')) || 5;
-    lastHeartRecoveryTime = parseInt(localStorage.getItem('lastHeartRecoveryTime')) || 0;
-    updateTimer(); // Обновляем состояние сразу после загрузки
-});
-
 function saveGameState() {
     localStorage.setItem('availableGames', availableGames);
     localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
     localStorage.setItem('lastHeartRecoveryTime', lastHeartRecoveryTime);
+    updateAvailableGamesDisplay(); 
 }
 
 // Изменяем функцию loadGameState
@@ -347,15 +374,8 @@ function loadGameState() {
     // Проверяем и обновляем состояние сразу после загрузки
     updateTimer();
     updateAvailableGamesDisplay();
-}
 
-// Изменяем обработчик события DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    loadGameState(); // Загружаем состояние игры
-    updateAvailableGamesDisplay(); // Обновляем отображение сердец
-    updateGameEarningsDisplay(); // Обновляем отображение заработанных денег за игры
-    updateTaskEarningsDisplay(); // Добавляем обновление отображения заработка за задания
-});
+}
 
 // Экспортируем функцию обновления счета за задания, чтобы она была доступна в других файлах
 window.updateTaskEarningsDisplay = updateTaskEarningsDisplay;
@@ -380,43 +400,25 @@ function updateGameTaskProgress() {
 // Измените функцию startGame
 function startGame() {
     if (availableGames > 0) {
-        const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
-        const currentTime = Date.now();
-        
         availableGames--;
-        heartTimers.push(Date.now());
-        if (heartTimers.length === 1) {
-            lastHeartRecoveryTime = Date.now();
+        
+        // Если это первое использованное сердце, запускаем таймер
+        if (nextHeartTime === 0) {
+            nextHeartTime = Date.now() + 300000; // 5 минут
+            localStorage.setItem('nextHeartTime', nextHeartTime);
         }
         
-        // Обновляем прогресс только если нет активного кулдауна
-        if (taskCooldown <= currentTime) {
-            gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
-            
-            if (gameProgress === 0) {
-                gameTaskStartTime = Date.now();
-                localStorage.setItem('gameTaskStartTime', gameTaskStartTime);
-                startGameTaskTimer();
-            }
-            
-            if (gameProgress < 5) {
-                gameProgress++;
-                localStorage.setItem('gameProgress', gameProgress.toString());
-            }
-        }
+        // Сохраняем обновленное количество сердец
+        localStorage.setItem('availableGames', availableGames);
         
-        saveGameState();
+        // Обновляем отображение
         updateAvailableGamesDisplay();
-        startButton.style.display = 'none';
+        if (startButton) startButton.style.display = 'none';
         
+        // Запускаем игру
         if (gameIframe && gameIframe.contentWindow) {
-            gameIframe.contentWindow.postMessage({ type: 'slowDown' }, '*');
-            gameIframe.contentWindow.main();
+            gameIframe.contentWindow.postMessage({ type: 'start' }, '*');
         }
-        
-        playedCount++;
-        localStorage.setItem('playedCount', playedCount.toString());
-        updatePlayedCountTask();
     }
 }
 
@@ -505,13 +507,13 @@ function checkAndCompleteRecordTask(taskName) {
 
     // Проверяем, не было ли уже выполнено задание
     if (localStorage.getItem(taskCompletedKey) === 'true') {
-        alert('Это задание уже выполнено!');
+        showPopup('Это задание уже выполнено!');
         return;
     }
 
     // Строгая проверка рекорда
     if (highScore < requiredScore) {
-        alert(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь ${requiredScore} DPS!`);
+        showPopup(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь ${requiredScore} DPS!`);
         return;
     }
 
@@ -519,7 +521,7 @@ function checkAndCompleteRecordTask(taskName) {
     if (requiredScore === 1000) {
         // Проверяем, выполнена ли предыдущая задача на 500 DPS
         if (localStorage.getItem('record500DPSCompleted') !== 'true') {
-            alert('Сначала выполните задание "Набрать 500 DPS за игру"!');
+            showPopup('Сначала выполните задание "Набрать 500 DPS за игру"!');
             return;
         }
     }
@@ -538,7 +540,7 @@ function checkAndCompleteRecordTask(taskName) {
     renderTasks('daily');
     saveTasks();
     
-    alert(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания "${taskName}"!`);
+    showPopup(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания "${taskName}"!`);
 }
 // Добавляем инициализацию Adsgram
 function loadAdsgramScript() {
@@ -586,20 +588,7 @@ function updateStartButtonText(isClaim = false) {
 }
 // Обновляем обработчик сообщений от игры
 window.addEventListener('message', async (event) => {
-    if (event.data.type === 'gameOver') {
-        // При окончании игры всегда показываем кнопку Claim
-        startButton.style.display = 'block';
-        startButton.classList.add('claim-mode');
-        startButton.innerHTML = 'Claim x1 DPS';
-        startButton.dataset.pendingScore = event.data.score;
-        startButton.classList.remove('bg-yellow-400', 'text-black');
-        startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
-        
-        // Обновляем отображение сердец отдельно
-        if (availableGames === 0) {
-            livesDisplay.innerHTML = 'Игры закончились';
-        }
-    } else if (event.data.type === 'showAd') {
+    if (event.data.type === 'showAd') {
         // Показываем рекламу
         if (!AdController) {
             await initAdsgram();
@@ -623,21 +612,54 @@ window.addEventListener('message', async (event) => {
             updateGameScoreDisplay();
             updatePlayedCountTask();
             
-            alert(`Вы заработали ${gameScore} DPS (x3)! Ваш новый баланс: ${totalDPS} DPS`);
+            // Добавляем обновление отображения задач
+            if (window.updateTaskStatuses) {
+                window.updateTaskStatuses('daily');
+            }
+            
+            showPopup(`Вы заработали ${gameScore} DPS (x3)! Ваш новый баланс: ${totalDPS} DPS`);
             
             // Отправляем сообщение в iframe о том, что реклама просмотрена
             if (gameIframe && gameIframe.contentWindow) {
                 gameIframe.contentWindow.postMessage({ type: 'adWatched' }, '*');
             }
             
-            // Возвращаем кнопку в режим Start
+            // Полностью сбрасываем состояние кнопки на Start
             startButton.classList.remove('claim-mode');
-            startButton.innerHTML = 'Start';
             startButton.classList.remove('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
             startButton.classList.add('bg-yellow-400', 'text-black');
+            startButton.innerHTML = 'Start';
+            startButton.disabled = availableGames === 0;
+            delete startButton.dataset.pendingScore; // Удаляем сохраненный счет
             
         } catch (error) {
             console.error('Ошибка при показе рекламы:', error);
         }
+    } else if (event.data.type === 'gameOver') {
+        // Проверяем, не была ли уже начислена награда
+        if (!startButton.dataset.pendingScore) {
+            startButton.style.display = 'block';
+            startButton.classList.add('claim-mode');
+            startButton.innerHTML = 'Claim x1 DPS';
+            startButton.dataset.pendingScore = event.data.score;
+            startButton.classList.remove('bg-yellow-400', 'text-black');
+            startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+            
+            // Увеличиваем счетчик сыгранных игр
+            playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
+            playedCount++;
+            localStorage.setItem('playedCount', playedCount);
+            
+            // Обновляем отображение задач
+            if (window.updateTaskStatuses) {
+                window.updateTaskStatuses('daily');
+            }
+        }
+        
+        // Обновляем отображение сердец отдельно
+        if (availableGames === 0) {
+            livesDisplay.innerHTML = 'Игры закончились';
+        }
+        updateAvailableGamesDisplay();
     }
 });
