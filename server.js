@@ -209,41 +209,46 @@ const routes = {
   }
 },
 '/create-skin-invoice': async (req, res, query) => {
-      const { telegramId, stars, skinName } = query;
-      
-      if (!telegramId || !stars || !skinName) {
+    const { telegramId, stars, skinName } = query;
+    
+    console.log('Creating invoice with params:', { telegramId, stars, skinName }); // Отладочный лог
+    
+    if (!telegramId || !skinName || !stars) {
         return { status: 400, body: { error: 'Missing required parameters' } };
-      }
+    }
 
-      try {
+    try {
         const user = await User.findOne({ where: { telegramId } });
         if (!user) {
-          return { status: 404, body: { error: 'User not found' } };
+            return { status: 404, body: { error: 'User not found' } };
         }
 
-        // Проверяем, не куплен ли уже скин
         if (user.skins.includes(skinName)) {
-          return { status: 400, body: { error: 'Skin already purchased' } };
+            return { status: 400, body: { error: 'Skin already purchased' } };
         }
+
+        const amount = parseInt(stars);
+        console.log('Creating invoice with amount:', amount); // Отладочный лог
 
         const invoice = await bot.telegram.createInvoiceLink({
-          title: 'Покупка скина динозавра',
-          description: `${skinName === 'red' ? 'Красный' : 'Зеленый'} скин для вашего динозавра`,
-          payload: `skin_${telegramId}_${skinName}`,
-          provider_token: "",
-          currency: 'XTR',
-          prices: [{
-            label: '⭐️ Скин',
-            amount: parseInt(stars)
-          }]
+            title: 'Покупка скина динозавра',
+            description: `${skinName === 'red' ? 'Красный' : 'Зеленый'} скин для вашего динозавра`,
+            payload: `skin_${telegramId}_${skinName}`,
+            provider_token: "",
+            currency: 'XTR',
+            prices: [{
+                label: '⭐️ Скин',
+                amount: amount // Используем переданную цену
+            }]
         });
 
+        console.log('Invoice created:', invoice); // Отладочный лог
         return { status: 200, body: { slug: invoice } };
-      } catch (error) {
+    } catch (error) {
         console.error('Error creating skin invoice:', error);
         return { status: 500, body: { error: 'Failed to create invoice' } };
-      }
-    },
+    }
+},
     '/update-user-skins': async (req, res, query) => {
       const { telegramId, skinName } = query;
       

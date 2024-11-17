@@ -774,22 +774,27 @@ window.purchaseSkin = async function(skinName, price) {
     }
     
     try {
+        console.log('Attempting to purchase skin:', skinName, 'for price:', price); // Отладочный лог
         const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
         const response = await fetch(`/create-skin-invoice?telegramId=${telegramId}&stars=${price}&skinName=${skinName}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('Invoice data received:', data); // Отладочный лог
         
         if (!data.slug) {
             throw new Error('No slug received from server');
         }
 
-        // Сохраняем информацию о покупаемом скине
         localStorage.setItem('pendingSkin', JSON.stringify({
             skinName: skinName,
             price: price,
             timestamp: Date.now()
         }));
 
-        // Открываем инвойс
         window.Telegram.WebApp.openInvoice(data.slug);
         
     } catch (error) {
@@ -802,7 +807,7 @@ window.purchaseSkin = async function(skinName, price) {
     } finally {
         if (button) {
             button.disabled = false;
-            updateShopButtons(); // Восстанавливаем правильный текст кнопки
+            updateShopButtons();
         }
     }
 }
@@ -894,11 +899,12 @@ function updateShopButtons() {
                     button.onclick = () => selectSkin(skinName);
                 }
             } else {
-                // Если скин не куплен
-                const price = skinName === 'red' ? '10' : '15';
-                button.innerHTML = `Купить за <span class="text-white">${price}</span> ⭐️`;
+                button.innerHTML = `Купить за <span class="text-white">100</span> ⭐️`;
                 button.className = 'mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors';
-                button.onclick = () => purchaseSkin(skinName, parseInt(price));
+                button.onclick = () => {
+                    console.log('Purchase button clicked with price: 100'); // Отладочный лог
+                    purchaseSkin(skinName, 100);
+                };
             }
         }
     });
