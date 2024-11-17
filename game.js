@@ -894,10 +894,11 @@ function updateShopButtons() {
                     button.onclick = () => selectSkin(skinName);
                 }
             } else {
-                // Если скин не куплен - теперь все скины по 100 звезд
-                button.innerHTML = `Купить за <span class="text-white">100</span> ⭐️`;
+                // Если скин не куплен
+                const price = skinName === 'red' ? '10' : '15';
+                button.innerHTML = `Купить за <span class="text-white">${price}</span> ⭐️`;
                 button.className = 'mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors';
-                button.onclick = () => purchaseSkin(skinName, 100);
+                button.onclick = () => purchaseSkin(skinName, parseInt(price));
             }
         }
     });
