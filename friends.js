@@ -1,15 +1,75 @@
+function updateRewardSection() {
+    // Находим элементы для обновления
+    const rewardDPSText = document.querySelector('#friends-page .bg-gray-800 .text-yellow-400');
+    const rewardButton = document.querySelector('#friends-page .bg-gray-800 button');
+    const todayText = document.querySelector('#friends-page .bg-gray-800 .text-sm');
+    
+    if (!rewardDPSText || !rewardButton) return;
+
+    const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
+    const rewardAmount = friendsCount * 45;
+    const lastRewardTime = parseInt(localStorage.getItem('friendsRewardCooldown')) || 0;
+    const now = Date.now();
+    const cooldownTime = 43200000; // 12 часов (12 * 60 * 60 * 1000)
+    const timeLeft = lastRewardTime + cooldownTime - now;
+
+    // Обновляем текст награды слева
+    rewardDPSText.textContent = `+${rewardAmount} DPS`;
+    
+    // Обновляем состояние кнопки справаl
+    if (timeLeft > 0) {
+        const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60)); // Конвертируем в часы
+        rewardButton.textContent = `${hoursLeft}ч`;
+        rewardButton.className = 'bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-not-allowed';
+        rewardButton.disabled = true;
+    } else {
+        rewardButton.textContent = 'Get a reward';
+        rewardButton.className = 'bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold';
+        rewardButton.disabled = false;
+    }
+}
+
+function handleRewardClick() {
+    const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
+    const rewardAmount = friendsCount * 45;
+    
+    // Сохраняем время получения награды
+    localStorage.setItem('friendsRewardCooldown', Date.now().toString());
+    
+    // Получаем текущие значения
+    const currentDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
+    const currentInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
+    
+    // Обновляем значения
+    localStorage.setItem('totalDPS', (currentDPS + rewardAmount).toString());
+    localStorage.setItem('totalInviteEarnings', (currentInviteEarnings + rewardAmount).toString());
+    
+    // Обновляем отображение
+    updateRewardSection();
+    updateAllBalances();
+    
+    // Показываем уведомление
+    showPopup('Успех', `Вы получили ${rewardAmount} DPS!`);
+}
+
 function initializeFriendsPage() {
     console.log('Инициализация страницы друзей');
     const inviteButton = document.getElementById('inviteButton');
+    const rewardButton = document.querySelector('#friends-page .bg-gray-800 button');
     
     if (inviteButton) {
         console.log('Кнопка приглашения найдена, добавляем обработчик');
         inviteButton.addEventListener('click', handleShareLinkButtonClick);
-    } else {
-        console.error('Кнопка приглашения не найдена');
+    }
+    
+    if (rewardButton) {
+        rewardButton.addEventListener('click', handleRewardClick);
     }
 
-    // Получаем список приглашенных друзей
+    // Запускаем таймер обновления
+    updateRewardSection();
+    setInterval(updateRewardSection, 60000); // Обновляем каждую минуту
+    
     getReferredFriends();
 }
 
@@ -23,7 +83,7 @@ function getReferredFriends() {
         }
     } catch (error) {
         console.error('Ошибка при получении Telegram ID:', error);
-        displayReferredFriends([]); // Отображаем пустой список друзей
+        displayReferredFriends([]); 
         return;
     }
 
@@ -32,6 +92,13 @@ function getReferredFriends() {
     .then(data => {
         if (data.referredFriends) {
             displayReferredFriends(data.referredFriends);
+            localStorage.setItem('referredFriendsCount', data.referredFriends.length.toString());
+            
+            // Удаляем проверку currentCategory, так как она вызывает ошибку
+            // Весто этого просто обновляем задачи, если нужно
+            if (window.renderTasks) {
+                window.renderTasks('refs');
+            }
         } else {
             console.error('Не удалось получить список рефералов:', data.error);
             displayReferredFriends([]);
@@ -59,7 +126,7 @@ function displayReferredFriends(friends) {
                 friendItem.innerHTML = `
                     <div>
                         <div class="text-sm">${friendName}</div>
-                        <div class="text-xs text-yellow-400">+15 DPS</div>
+                        <div class="text-xs text-yellow-400">+45 DPS</div>
                     </div>
                     <div class="text-xs text-gray-400">16 Tasks</div>
                 `;
@@ -158,7 +225,7 @@ function showPopup(title, message) {
                 try {
                     const successful = document.execCommand('copy');
                     if (successful) {
-                        console.log('Ссылка скопирована в буфер обмена');
+                        console.log('Ссылка скопирована в буфер бмена');
                         showPopup('Успех', 'Реферальная ссылка скопирована в буфер обмена. Отправьте её друзьям!');
                     } else {
                         throw new Error('Копирование не удалось');
