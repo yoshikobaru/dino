@@ -1120,7 +1120,7 @@ function loadPlayedCount() {
         }
     }
 }
-
+//
 // Вызовите эту функцию при загрузке страниы:
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayedCount();
