@@ -114,6 +114,16 @@ function initialize() {
 
     const gravity = ENVIRONMENT_GRAVITY;
 
+    // Добавляем обработчики событий, использующие существующую функцию handleJump
+    document.addEventListener('keydown', (event) => {
+        if (event.code === 'Space' || event.key === ' ') {
+            handleJump();
+        }
+    });
+
+    document.addEventListener('click', handleJump);
+    document.addEventListener('touchstart', handleJump);
+
     // Изменим обработчики событий
     const handleJump = () => {
         if (!game_over && dino_ready_to_jump) {
