@@ -565,7 +565,7 @@ async function initAdsgram() {
     try {
         await loadAdsgramScript();
         console.log('Adsgram SDK загружен успешно');
-        AdController = window.Adsgram.init({ blockId: "4178" }); 
+        AdController = window.Adsgram.init({ blockId: "5315" }); 
     } catch (error) {
         console.error('Ошибка загрузки Adsgram SDK:', error);
     }
