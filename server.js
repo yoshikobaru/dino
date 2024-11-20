@@ -211,8 +211,6 @@ const routes = {
 '/create-skin-invoice': async (req, res, query) => {
     const { telegramId, stars, skinName } = query;
     
-    console.log('Creating invoice with params:', { telegramId, stars, skinName }); // Отладочный лог
-    
     if (!telegramId || !skinName || !stars) {
         return { status: 400, body: { error: 'Missing required parameters' } };
     }
@@ -227,9 +225,6 @@ const routes = {
             return { status: 400, body: { error: 'Skin already purchased' } };
         }
 
-        const amount = parseInt(stars);
-        console.log('Creating invoice with amount:', amount); // Отладочный лог
-
         const invoice = await bot.telegram.createInvoiceLink({
             title: 'Покупка скина динозавра',
             description: `${skinName === 'red' ? 'Красный' : 'Зеленый'} скин для вашего динозавра`,
@@ -238,15 +233,14 @@ const routes = {
             currency: 'XTR',
             prices: [{
                 label: '⭐️ Скин',
-                amount: amount // Используем переданную цену
+                amount: parseInt(stars)
             }]
         });
 
-        console.log('Invoice created:', invoice); // Отладочный лог
         return { status: 200, body: { slug: invoice } };
     } catch (error) {
         console.error('Error creating skin invoice:', error);
-        return { status: 500, body: { error: 'Failed to create invoice' } };
+        return { status: 500, body: { error: 'Failed to create invoice: ' + error.message } };
     }
 },
     '/update-user-skins': async (req, res, query) => {
