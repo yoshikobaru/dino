@@ -320,7 +320,7 @@ function event_loop(gravity) {
         }
     }
 
-    // dino jump
+    // dino jump1
     dino_character.set_position(applyVelocityToPosition(dino_character.get_position(), dino_current_trust));
 
     if (dino_character.get_position().get()[0] > DINO_FLOOR_INITIAL_POSITION.get()[0]) {
