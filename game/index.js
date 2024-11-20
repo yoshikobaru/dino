@@ -224,16 +224,7 @@ function event_loop(gravity) {
             current_theme = themes.classic;
         }
     }
-    if (game_score % 100 === 0 && game_score > 0) {
-        // Проверяем достижения при каждых 100 очках
-        window.parent.postMessage({
-            type: 'checkAchievements',
-            score: game_score,
-            combo: currentCombo,
-            timeAlive: (Date.now() - gameStartTime) / 1000,
-            theme: current_theme.id
-        }, '*');
-    }
+
     canvas_ctx.clearRect(0, 0, canvas.width, canvas.height);
     canvas_ctx.fillStyle = current_theme.background;
     canvas_ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -245,7 +236,6 @@ function event_loop(gravity) {
         canvas_ctx.fillRect(0, 232, canvas.width, CELL_SIZE * 0.2);
     }
 
-    // Вместо этого, обновляем счет:
     updateScore();
 
     // first time
@@ -253,17 +243,10 @@ function event_loop(gravity) {
         is_first_time = false;
         paint_layout(dino_layout.stand, harmfull_characters_pool[0].get_position().get());
         game_over = Date.now();
-
-        canvas_ctx.textBaseline = 'middle';
-        canvas_ctx.textAlign = 'center';
-        canvas_ctx.font = "25px Arcade";
-        canvas_ctx.fillStyle = current_theme.info_text;
-        canvas_ctx.fillText("ARE             YOU            READY?", canvas.width / 2, (canvas.height / 2) - 50);
         return;
     }
 
     // characters
-    // new characters generate
     [[harmless_character_allocator, harmless_characters_pool], [harmfull_character_allocator, harmfull_characters_pool]].forEach(character_allocator_details => {
         for (let i = 0; i < character_allocator_details[0].length; i++) {
             const ALLOCATOR = character_allocator_details[0][i];
@@ -283,10 +266,7 @@ function event_loop(gravity) {
 
     // characters display
     [harmless_characters_pool, harmfull_characters_pool].forEach((characters_pool, index) => {
-
         for (let i = characters_pool.length - 1; i >= 0; i--) {
-
-            // Increase velocity on each cycle
             if ((!(index == 1 && i == 0)) && (game_score % 200 == 0)) {
                 characters_pool[i].get_velocity().add(step_velocity);
             }
@@ -294,12 +274,9 @@ function event_loop(gravity) {
             characters_pool[i].tick();
             let CHARACTER_LAYOUT = characters_pool[i].get_layout();
 
-            // A special case for dino jump. It's leg should be in standing position while jump
-            // Yes, this can be done much better but I am lazy :-)
             if (!dino_ready_to_jump && index == 1 && i == 0) {
                 CHARACTER_LAYOUT = dino_layout.stand;
             }
-            // ******
 
             const CHARACTER_POSITION = characters_pool[i].get_position().get();
 
@@ -312,15 +289,25 @@ function event_loop(gravity) {
         }
     });
 
-
-    // harmfull characters collision detection
+    // collision detection
     let dino_character = harmfull_characters_pool[0];
     let dino_current_position = dino_character.get_position();
     let dino_current_layout = dino_character.get_layout();
+
     for (let i = harmfull_characters_pool.length - 1; i > 0; i--) {
         const HARMFULL_CHARACTER_POSITION = harmfull_characters_pool[i].get_position();
         const HARMFULL_CHARACTER_LAYOUT = harmfull_characters_pool[i].get_layout();
-        if (isCollided(dino_current_position.get()[0], dino_current_position.get()[1], dino_current_layout.length, dino_current_layout[0].length, HARMFULL_CHARACTER_POSITION.get()[0], HARMFULL_CHARACTER_POSITION.get()[1], HARMFULL_CHARACTER_LAYOUT.length, HARMFULL_CHARACTER_LAYOUT[0].length)) {
+        
+        if (isCollided(
+            dino_current_position.get()[0],
+            dino_current_position.get()[1],
+            dino_current_layout.length,
+            dino_current_layout[0].length,
+            HARMFULL_CHARACTER_POSITION.get()[0],
+            HARMFULL_CHARACTER_POSITION.get()[1],
+            HARMFULL_CHARACTER_LAYOUT.length,
+            HARMFULL_CHARACTER_LAYOUT[0].length
+        )) {
             paint_layout(dino_layout.dead, harmfull_characters_pool[0].get_position().get());
             
             if (game_hi_score < game_score) {
@@ -333,7 +320,7 @@ function event_loop(gravity) {
         }
     }
 
-    // dino jump case
+    // dino jump
     dino_character.set_position(applyVelocityToPosition(dino_character.get_position(), dino_current_trust));
 
     if (dino_character.get_position().get()[0] > DINO_FLOOR_INITIAL_POSITION.get()[0]) {
@@ -341,7 +328,7 @@ function event_loop(gravity) {
         dino_ready_to_jump = true;
     }
 
-    dino_current_trust.sub(gravity); // Используем ыбранную гравитацию
+    dino_current_trust.sub(gravity);
 
     if (game_score > game_hi_score) {
         game_hi_score = game_score;
