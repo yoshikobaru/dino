@@ -7,42 +7,12 @@
     <title>Dinosaur App</title>
     <link href="/dist/output.css" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
+    
     <style>
-        :root {
-            --safe-area-top: env(safe-area-inset-top, 0px);
-            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-        }
-
         #timer {
             font-size: 14px;
             margin-top: 5px;
             color: #888;
-        }
-
-        /* Добавляем стили для безопасных зон */
-        .page {
-            padding-top: max(var(--safe-area-top), 1rem);
-            padding-bottom: max(var(--safe-area-bottom), 6rem);
-        }
-
-        footer {
-            padding-bottom: var(--safe-area-bottom);
-        }
-
-        /* Стили для полноэкранного режима */
-        body.fullscreen {
-            height: 100vh;
-            height: -webkit-fill-available;
-        }
-
-        /* Адаптация для кнопок в безопасной зоне */
-        #shopButton {
-            top: max(1rem, var(--safe-area-top));
-        }
-
-        #achievementsButton {
-            top: max(5rem, calc(var(--safe-area-top) + 4rem));
         }
     </style>
 </head>
