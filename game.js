@@ -710,19 +710,19 @@ function createShopModal() {
                 <button data-skin="default" class="mt-2 px-4 py-2 bg-gray-200 rounded" disabled>Выбран</button>
             </div>
             <div class="border border-yellow-400 rounded p-4 text-center bg-black">
-                <img src="assets/dino-red.jpg" alt="Red Dino" class="w-16 h-16 mx-auto mb-2">
-                <div class="font-bold text-yellow-400">Красный</div>
-                <button data-skin="red" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
-                    Купить за <span class="text-white">10</span> ⭐️
-                </button>
-            </div>
-            <div class="border border-yellow-400 rounded p-4 text-center bg-black">
-                <img src="assets/dino-green.jpg" alt="Green Dino" class="w-16 h-16 mx-auto mb-2">
-                <div class="font-bold text-yellow-400">Зеленый</div>
-                <button data-skin="green" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
-                    Купить за <span class="text-white">15</span> ⭐️
-                </button>
-            </div>
+        <img src="assets/dino-red.jpg" alt="Red Dino" class="w-16 h-16 mx-auto mb-2">
+        <div class="font-bold text-yellow-400">Красный</div>
+        <button data-skin="red" data-price="100" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
+            Купить за <span class="text-white">100</span> ⭐️
+        </button>
+    </div>
+    <div class="border border-yellow-400 rounded p-4 text-center bg-black">
+        <img src="assets/dino-green.jpg" alt="Green Dino" class="w-16 h-16 mx-auto mb-2">
+        <div class="font-bold text-yellow-400">Зеленый</div>
+        <button data-skin="green" data-price="100" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
+            Купить за <span class="text-white">100</span> ⭐️
+        </button>
+    </div>
         </div>
     `;
 
@@ -885,6 +885,8 @@ function updateShopButtons() {
     const buttons = modal.querySelectorAll('button[data-skin]');
     buttons.forEach(button => {
         const skinName = button.getAttribute('data-skin');
+        const price = parseInt(button.getAttribute('data-price')) || 100;
+        
         if (skinName) {
             if (availableSkins[skinName]) {
                 // Если скин куплен
@@ -899,11 +901,11 @@ function updateShopButtons() {
                     button.onclick = () => selectSkin(skinName);
                 }
             } else {
-                button.innerHTML = `Купить за <span class="text-white">100</span> ⭐️`;
+                button.innerHTML = `Купить за <span class="text-white">${price}</span> ⭐️`;
                 button.className = 'mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors';
                 button.onclick = () => {
-                    console.log('Purchase button clicked with price: 100'); // Отладочный лог
-                    purchaseSkin(skinName, 100);
+                    console.log(`Purchase button clicked with price: ${price}`);
+                    purchaseSkin(skinName, price);
                 };
             }
         }
