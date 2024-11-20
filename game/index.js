@@ -6,7 +6,8 @@ const ROWS = 300;
 let COLUMNS = 1000;
 const FLOOR_VELOCITY = new Velocity(0, -3.5);
 let CACTUS_MIN_GAP = 80;
-
+let currentCombo = 0;
+let lastJumpTime = 0;
 if (screen.width < COLUMNS) {
     COLUMNS = screen.width;
 }
@@ -92,6 +93,8 @@ function updateScore() {
 }
 
 function initialize() {
+    gameStartTime = Date.now();
+    currentCombo = 0;
     current_theme = themes.classic;
     cumulative_velocity = new Velocity(0, 0);
     game_over = false;
@@ -112,6 +115,23 @@ function initialize() {
     // Изменим обработчики событий
     const handleJump = () => {
         if (!game_over && dino_ready_to_jump) {
+            const now = Date.now();
+            if (now - lastJumpTime < 2000) { // 2 секунды на комбо
+                currentCombo++;
+            } else {
+                currentCombo = 1;
+            }
+            lastJumpTime = now;
+    
+            // Проверяем достижение за комбо
+            window.parent.postMessage({
+                type: 'checkAchievements',
+                score: game_score,
+                combo: currentCombo,
+                timeAlive: (Date.now() - gameStartTime) / 1000,
+                theme: current_theme.id
+            }, '*');
+    
             dino_ready_to_jump = false;
             dino_current_trust = DINO_INITIAL_TRUST.clone();
         }
@@ -146,6 +166,18 @@ function paint_layout(character_layout, character_position) {
 
 // Обновляем функцию showGameOver
 function showGameOver(score) {
+     // Проверяем достижения в конце игры
+     window.parent.postMessage({
+        type: 'checkAchievements',
+        score: game_score,
+        combo: currentCombo,
+        timeAlive: (Date.now() - gameStartTime) / 1000,
+        theme: current_theme.id
+    }, '*');
+     // Добавляем сильную вибрацию при смерти
+     if (window.parent && window.parent.Telegram && window.parent.Telegram.WebApp) {
+        window.parent.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+    }
     const gameOverScreen = document.getElementById('game-over');
     const finalScoreElement = document.getElementById('final-score');
     
@@ -201,7 +233,16 @@ function event_loop(gravity) {
             current_theme = themes.classic;
         }
     }
-
+    if (game_score % 100 === 0 && game_score > 0) {
+        // Проверяем достижения при каждых 100 очках
+        window.parent.postMessage({
+            type: 'checkAchievements',
+            score: game_score,
+            combo: currentCombo,
+            timeAlive: (Date.now() - gameStartTime) / 1000,
+            theme: current_theme.id
+        }, '*');
+    }
     canvas_ctx.clearRect(0, 0, canvas.width, canvas.height);
     canvas_ctx.fillStyle = current_theme.background;
     canvas_ctx.fillRect(0, 0, canvas.width, canvas.height);

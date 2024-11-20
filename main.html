@@ -71,6 +71,25 @@
                 <button id="startButton" class="bg-yellow-400 text-black px-8 py-3 rounded-full text-lg font-bold">Start</button>
             </div>
         </div>
+        
+        <button id="achievementsButton" class="fixed top-20 right-4 text-2xl bg-yellow-400 rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-colors">
+            🎮
+        </button>
+        </div>
+    </div>
+    </div>
+    
+    <!-- Добавляем модальное окно достижений -->
+    <div id="achievementsModal" class="fixed inset-0 bg-black/90 z-50 hidden">
+        <div class="container mx-auto h-full p-4 flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-yellow-400">🏆 Достижения</h2>
+                <button id="closeAchievements" class="text-yellow-400 text-2xl">&times;</button>
+            </div>
+            <div id="achievementsList" class="flex-1 overflow-y-auto space-y-2">
+                <!-- Достижения будут добавлены через JavaScript -->
+            </div>
+        </div>
     </div>
     <div id="friends-page" class="page fixed inset-0 bg-black text-white min-h-screen p-4 pb-24 overflow-y-auto overscroll-contain" style="display: none;"> 
         <div class="container mx-auto space-y-4"> 
@@ -155,7 +174,7 @@
         </nav>
     </footer>
     <script src="main.js"></script>
-    <script src="friends.js"></script>
     <script src="game.js"></script>
+    <script src="friends.js"></script>
 </body>
 </html>

@@ -48,8 +48,7 @@ function handleRewardClick() {
     updateRewardSection();
     updateAllBalances();
     
-    // Показываем уведомление
-    showPopup('Успех', `Вы получили ${rewardAmount} DPS!`);
+    window.showPopup(`Вы получили ${rewardAmount} DPS!`, 5000);
 }
 
 function initializeFriendsPage() {
@@ -146,7 +145,7 @@ function displayReferredFriends(friends) {
         
         if (!window.Telegram || !window.Telegram.WebApp) {
             console.error('Telegram WebApp не доступен');
-            showPopup('Ошибка', 'Telegram WebApp не доступен');
+            window.showPopup('Ошибка', 'Telegram WebApp не доступен', 5000);
             return;
         }
         
@@ -158,13 +157,13 @@ function displayReferredFriends(friends) {
             console.log('Telegram ID:', telegramId);
         } catch (error) {
             console.error('Не удалось получить Telegram ID:', error);
-            showPopup('Ошибка', 'Не удалось получить информацию о пользователе');
+            window.showPopup('Ошибка', 'Не удалось получить информацию о пользователе', 5000);
             return;
         }
     
         if (!telegramId) {
             console.error('Telegram ID не определен');
-            showPopup('Ошибка', 'Не удалось получить информацию о пользователе');
+            window.showPopup('Ошибка', 'Не удалось получить информацию о пользователе', 5000);
             return;
         }
     
@@ -191,24 +190,24 @@ function displayReferredFriends(friends) {
                     const successful = document.execCommand('copy');
                     if (successful) {
                         console.log('Ссылка скопирована в буфер бмена');
-                        showPopup('Успех', 'Реферальная ссылка скопирована в буфер обмена. Отправьте её друзьям!');
+                        window.showPopup('Успех', 'Реферальная ссылка скопирована в буфер обмена. Отправьте её друзьям!', 5000);
                     } else {
                         throw new Error('Копирование не удалось');
                     }
                 } catch (err) {
                     console.error('Не удалось скопировать ссылку:', err);
-                    showPopup('Внимание', `Не удалось скопировать ссылку. Пожалуйста, скопируйте её вручную: ${data.inviteLink}`);
+                    window.showPopup('Внимание', `Не удалось скопировать ссылку. Пожалуйста, скопируйте её вручную: ${data.inviteLink}`, 5000);
                 }
     
                 document.body.removeChild(tempInput);
             } else {
                 console.error('Ссылка не получена:', data);
-                showPopup('Ошибка', 'Не удалось получить реферальную ссылку. Попробуйте позже.');
+                window.showPopup('Ошибка', 'Не удалось получить реферальную ссылку. Попробуйте позже.', 5000);
             }
         })
         .catch(error => {
             console.error('Ошибка:', error);
-            showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.');
+            window.showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.', 5000);
         });
     }
     function handleShareLinkButtonClick(event) {
@@ -221,7 +220,7 @@ function displayReferredFriends(friends) {
         
         if (!window.Telegram || !window.Telegram.WebApp) {
             console.error('Telegram WebApp не доступен');
-            showPopup('Ошибка', 'Telegram WebApp не доступен');
+            window.showPopup('Ошибка', 'Telegram WebApp не доступен', 5000);
             return;
         }
         
@@ -231,13 +230,13 @@ function displayReferredFriends(friends) {
             console.log('Telegram ID:', telegramId);
         } catch (error) {
             console.error('Не удалось получить Telegram ID:', error);
-            showPopup('Ошибка', 'Не удалось получить информацию о пользователе');
+            window.showPopup('Ошибка', 'Не удалось получить информацию о пользователе', 5000);
             return;
         }
     
         if (!telegramId) {
             console.error('Telegram ID не определен');
-            showPopup('Ошибка', 'Не удалось получить информацию о пользователе');
+            window.showPopup('Ошибка', 'Не удалось получить информацию о пользователе', 5000);
             return;
         }
     
@@ -255,12 +254,12 @@ function displayReferredFriends(friends) {
                 }
             } else {
                 console.error('Ссылка не получена:', data);
-                showPopup('Ошибка', 'Не удалось получить реферальную ссылку. Попробуйте позже.');
+                window.showPopup('Ошибка', 'Не удалось получить реферальную ссылку. Попробуйте позже.', 5000);
             }
         })
         .catch(error => {
             console.error('Ошибка:', error);
-            showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.');
+            window.showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.', 5000);
         });
     }
 

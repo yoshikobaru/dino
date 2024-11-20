@@ -1,7 +1,14 @@
 // Объявляем глобальные переменные один раз в начале файла
 let totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
 let totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
-let availableGames = parseInt(localStorage.getItem('availableGames')) || 0;
+let availableGames = parseInt(localStorage.getItem('availableGames'));
+if (availableGames === null) {
+    availableGames = 5;
+    localStorage.setItem('availableGames', availableGames);
+} else if (availableGames === 0) {
+    // Убедимся, что при 0 сердцах они остаются 0
+    localStorage.setItem('availableGames', 0);
+}
 let nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || Date.now();
 let gameIframe = null;
 let startButton = document.getElementById('startButton');
@@ -17,12 +24,6 @@ let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
 let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
 let gameTaskTimer = null;
 let gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
-
-
-// Убедимся, что при 0 сердцах они остаются 0
-if (availableGames === 0) {
-    availableGames = 0; // Сохраняем 0 при обновлении
-}
 
 // Функция для обновления таймера
 window.updateTimer = function() {
@@ -113,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Восстанавливаем состояние из localStorage
-    availableGames = parseInt(localStorage.getItem('availableGames')) || 5;
     nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || 0;
     
     // Загружаем игру
@@ -182,6 +182,9 @@ window.showPopup = function(message, duration = 3000) {
 }
 startButton.addEventListener('click', () => {
     if (startButton.classList.contains('claim-mode')) {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
         // Начисляем очки
         const gameScore = parseInt(startButton.dataset.pendingScore);
         totalDPS += gameScore;
@@ -211,6 +214,10 @@ startButton.addEventListener('click', () => {
         updateStartButtonState();
     } else {
         if (availableGames > 0) {
+            // Вибрация при старте игры
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
             startButton.style.display = 'none';
             
             availableGames--;
@@ -248,6 +255,220 @@ startButton.addEventListener('click', () => {
 
 // Вызываем updateStartButtonState при загрузке страницы и после каждого изменения availableGames
 document.addEventListener('DOMContentLoaded', updateStartButtonState);
+
+const ACHIEVEMENTS = {
+    // COMMON (зеленые)
+    FIRST_HUNDRED: {
+        id: 'first_hundred',
+        name: 'Первая сотня',
+        description: 'Набрать 100 очков',
+        icon: '💯',
+        rarity: 'common',
+        condition: (score) => score >= 100
+    },
+    MASTER_JUMPER: {
+        id: 'master_jumper',
+        name: 'Мастер прыжков',
+        description: 'Сделать 5 прыжков подряд',
+        icon: '🦘',
+        rarity: 'common',
+        condition: (_, combo) => combo >= 5
+    },
+    FIRST_MINUTE: {
+        id: 'first_minute',
+        name: 'Первая минута',
+        description: 'Продержаться 1 минуту',
+        icon: '⏱️',
+        rarity: 'common',
+        condition: (_, __, timeAlive) => timeAlive >= 60
+    },
+
+    // RARE (синие)
+    SPEED_MASTER: {
+        id: 'speed_master',
+        name: 'Скоростной мастер',
+        description: 'Набрать 300 очков',
+        icon: '🏃',
+        rarity: 'rare',
+        condition: (score) => score >= 300
+    },
+    COMBO_KING: {
+        id: 'combo_king',
+        name: 'Король комбо',
+        description: 'Сделать 10 прыжков подряд',
+        icon: '👑',
+        rarity: 'rare',
+        condition: (_, combo) => combo >= 10
+    },
+
+    // EPIC (фиолетовые)
+    NIGHT_RUNNER: {
+        id: 'night_runner',
+        name: 'Ночной бегун',
+        description: 'Набрать 200 очков в ночном режиме',
+        icon: '🌙',
+        rarity: 'epic',
+        condition: (score, _, __, theme) => score >= 200 && theme === 2
+    },
+    SURVIVOR: {
+        id: 'survivor',
+        name: 'Выживший',
+        description: 'Играть 5 минут без смерти',
+        icon: '⭐️',
+        rarity: 'epic',
+        condition: (_, __, timeAlive) => timeAlive >= 300
+    }
+};
+
+// Цвета для разных редкостей
+const RARITY_COLORS = {
+    common: 'text-green-400 border-green-400',
+    rare: 'text-blue-400 border-blue-400',
+    epic: 'text-purple-400 border-purple-400'
+};
+
+// Добавляем HTML для уведомления о достижении
+const achievementNotification = document.createElement('div');
+achievementNotification.className = 'fixed top-4 left-0 right-0 flex justify-center items-center z-50 pointer-events-none';
+achievementNotification.style.display = 'none';
+document.body.appendChild(achievementNotification);
+
+// Функция для показа уведомления о достижении
+function showAchievementNotification(achievement) {
+    achievementNotification.innerHTML = `
+        <div class="bg-black/90 px-6 py-4 rounded-lg border-2 flex items-center space-x-3 ${RARITY_COLORS[achievement.rarity]}">
+            <span class="text-2xl">${achievement.icon}</span>
+            <div>
+                <div class="font-bold">${achievement.name}</div>
+                <div class="text-sm">${achievement.description}</div>
+                <div class="text-xs mt-1 ${RARITY_COLORS[achievement.rarity]}">${achievement.rarity.toUpperCase()}</div>
+            </div>
+        </div>
+    `;
+    achievementNotification.style.display = 'flex';
+    
+    setTimeout(() => {
+        achievementNotification.style.display = 'none';
+    }, 3000);
+}
+
+// Функция проверки достижений
+function checkAchievements(score, combo, timeAlive, theme) {
+    const unlockedAchievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+    
+    Object.values(ACHIEVEMENTS).forEach(achievement => {
+        if (!unlockedAchievements.includes(achievement.id) && 
+            achievement.condition(score, combo, timeAlive, theme)) {
+            
+            unlockedAchievements.push(achievement.id);
+            localStorage.setItem('achievements', JSON.stringify(unlockedAchievements));
+            
+            // Вибрация
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+            
+            showAchievementNotification(achievement);
+        }
+    });
+}
+
+// Обработчик сообщений от iframe
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'checkAchievements') {
+        const unlockedAchievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+        
+        Object.values(ACHIEVEMENTS).forEach(achievement => {
+            if (!unlockedAchievements.includes(achievement.id) && 
+                achievement.condition(
+                    event.data.score,
+                    event.data.combo,
+                    event.data.timeAlive,
+                    event.data.theme
+                )) {
+                
+                unlockedAchievements.push(achievement.id);
+                localStorage.setItem('achievements', JSON.stringify(unlockedAchievements));
+                
+                // Вибрация
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                }
+                
+                // Показываем уведомление
+                achievementNotification.innerHTML = `
+                    <div class="bg-black/90 text-yellow-400 px-6 py-4 rounded-lg border-2 border-yellow-400 flex items-center space-x-3">
+                        <span class="text-2xl">${achievement.icon}</span>
+                        <div>
+                            <div class="font-bold">${achievement.name}</div>
+                            <div class="text-sm">${achievement.description}</div>
+                        </div>
+                    </div>
+                `;
+                achievementNotification.style.display = 'flex';
+                
+                setTimeout(() => {
+                    achievementNotification.style.display = 'none';
+                }, 3000);
+            }
+        });
+    }
+});
+// Функция для отображения достижений
+function showAchievements() {
+    const achievementsModal = document.getElementById('achievementsModal');
+    const achievementsList = document.getElementById('achievementsList');
+    const unlockedAchievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+    
+    achievementsList.innerHTML = '';
+    
+    // Группируем достижения по редкости
+    const groupedAchievements = {
+        epic: [],
+        rare: [],
+        common: []
+    };
+    
+    Object.values(ACHIEVEMENTS).forEach(achievement => {
+        groupedAchievements[achievement.rarity].push(achievement);
+    });
+    
+    // Отображаем достижения по группам
+    Object.entries(groupedAchievements).forEach(([rarity, achievements]) => {
+        achievementsList.innerHTML += `
+            <div class="mb-4">
+                <h3 class="text-lg font-bold ${RARITY_COLORS[rarity]} mb-2">
+                    ${rarity.toUpperCase()}
+                </h3>
+                <div class="space-y-2">
+                    ${achievements.map(achievement => {
+                        const isUnlocked = unlockedAchievements.includes(achievement.id);
+                        return `
+                            <div class="bg-gray-800 rounded-lg p-4 flex items-center space-x-4 
+                                ${isUnlocked ? `border-2 ${RARITY_COLORS[achievement.rarity]}` : ''}">
+                                <span class="text-3xl">${isUnlocked ? achievement.icon : '🔒'}</span>
+                                <div>
+                                    <h3 class="font-bold ${isUnlocked ? RARITY_COLORS[achievement.rarity] : 'text-gray-400'}">
+                                        ${achievement.name}
+                                    </h3>
+                                    <p class="text-sm text-gray-400">${achievement.description}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    achievementsModal.classList.remove('hidden');
+}
+
+// Добавляем обработчики событий
+document.getElementById('achievementsButton')?.addEventListener('click', showAchievements);
+document.getElementById('closeAchievements')?.addEventListener('click', () => {
+    document.getElementById('achievementsModal').classList.add('hidden');
+});
 
 function updateStartButtonState() {
     if (!startButton) return;
@@ -361,12 +582,37 @@ function loadGameState() {
     const savedAvailableGames = localStorage.getItem('availableGames');
     const savedHeartTimers = localStorage.getItem('heartTimers');
     const savedLastHeartRecoveryTime = localStorage.getItem('lastHeartRecoveryTime');
+    const savedNextHeartTime = parseInt(localStorage.getItem('nextHeartTime'));
 
     if (savedAvailableGames !== null) {
         availableGames = parseInt(savedAvailableGames);
+        
+        // Проверяем офлайн-восстановление
+        if (savedNextHeartTime && availableGames < 5) {
+            const now = Date.now();
+            const timePassed = now - savedNextHeartTime;
+            const heartsToRecover = Math.floor(timePassed / 300000); // Делим на 5 минут
+            
+            if (heartsToRecover > 0) {
+                availableGames = Math.min(5, availableGames + heartsToRecover);
+                
+                // Если все еще нужно восстанавливать сердца
+                if (availableGames < 5) {
+                    nextHeartTime = now + 300000; // Следующее сердце через 5 минут
+                } else {
+                    nextHeartTime = 0; // Все сердца восстановлены
+                }
+                
+                // Сохраняем обновленные значения
+                localStorage.setItem('availableGames', availableGames);
+                localStorage.setItem('nextHeartTime', nextHeartTime);
+            }
+        }
     } else {
-        availableGames = 5; // Устанавливаем 5 сердец только если нет сораненного значения
+        availableGames = 5;
+        localStorage.setItem('availableGames', availableGames);
     }
+
     if (savedHeartTimers !== null) {
         heartTimers = JSON.parse(savedHeartTimers);
     }
@@ -377,7 +623,6 @@ function loadGameState() {
     // Проверяем и обновляем состояние сразу после загрузки
     updateTimer();
     updateAvailableGamesDisplay();
-
 }
 
 // Экспортируем функцию обновления счета за задания, чтобы она была доступна в других файлах
