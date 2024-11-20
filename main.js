@@ -53,8 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
     showPage('main');
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
-        // Устанавливаем темную тему
-        window.Telegram.WebApp.setHeaderColor('secondary_bg_color');
+        // Устанавливаем полностью черный цвет для заголовка и фона
+        window.Telegram.WebApp.setHeaderColor('#000000');
+        window.Telegram.WebApp.setBackgroundColor('#000000');
+        
+        // Запрещаем случайное закрытие свайпом
+        window.Telegram.WebApp.expand(); // Разворачиваем на полный экран
     }
     
     loadDailyTasks(); // Загружаем задачи и добавляем новую, если её нет
