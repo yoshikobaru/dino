@@ -462,3 +462,20 @@ window.addEventListener('message', (event) => {
         }
     }
 });
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'jump') {
+        // Выполняем прыжок
+        if (!game_over && dino_ready_to_jump) {
+            const now = Date.now();
+            if (now - lastJumpTime < 2000) { // 2 секунды на комбо
+                currentCombo++;
+            } else {
+                currentCombo = 1;
+            }
+            lastJumpTime = now;
+    
+            dino_ready_to_jump = false;
+            dino_current_trust = DINO_INITIAL_TRUST.clone();
+        }
+    }
+});

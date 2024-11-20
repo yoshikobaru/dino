@@ -24,7 +24,8 @@ let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
 let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
 let gameTaskTimer = null;
 let gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
-
+const shopButton = document.getElementById('shopButton');
+shopButton?.addEventListener('click', openShopModal);
 // Функция для обновления таймера
 window.updateTimer = function() {
     const now = Date.now();
@@ -73,6 +74,21 @@ let timerInterval = setInterval(() => {
         document.getElementById('lives').innerHTML = '❤️'.repeat(timerData.availableGames) + '🖤'.repeat(5 - timerData.availableGames);
     }
 }, 1000);
+
+function handleJump(event) {
+    // Не используем preventDefault для touch-событий
+    if (event.type !== 'touchstart') {
+        event.preventDefault();
+    }
+    
+    // Отправляем сообщение в iframe для прыжка
+    if (gameIframe && gameIframe.contentWindow) {
+        gameIframe.contentWindow.postMessage({ 
+            type: 'jump'
+        }, '*');
+    }
+}
+
 function updateAvailableGamesDisplay() {
     const timerData = updateTimer();
     
@@ -120,9 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gameContainer) {
         loadGame();
     }
-    
     // Обновляем отображение
-    addShopButton();
     createShopModal();
     updateAvailableGamesDisplay();
     loadUserSkins();
@@ -215,11 +229,33 @@ startButton.addEventListener('click', () => {
     } else {
         if (availableGames > 0) {
             // Вибрация при старте игры
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-            }
-            startButton.style.display = 'none';
-            
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+    }
+    
+    // Скрываем элементы
+    const elementsToHide = [
+        document.querySelector('h1'),
+        document.getElementById('lives'),
+        document.getElementById('timer'),
+        document.getElementById('startButton'),
+        document.getElementById('achievementsButton'),
+        document.getElementById('shopButton')
+    ];
+    
+    elementsToHide.forEach(el => {
+        if (el) el.style.display = 'none';
+    });
+    
+   // Добавляем обработчики с правильными опциями
+   document.addEventListener('click', handleJump);
+   document.addEventListener('touchstart', handleJump, { passive: true });
+   document.addEventListener('keydown', (event) => {
+       if (event.code === 'Space' || event.key === ' ') {
+           handleJump(event);
+       }
+   });
+    startButton.style.display = 'none';
             availableGames--;
             // Запускаем таймер сразу при использовании первого сердца
             if (availableGames < 5 && nextHeartTime === 0) {
@@ -496,6 +532,23 @@ function updateStartButtonState() {
 
 window.addEventListener('message', (event) => {
     if (event.data.type === 'gameOver') {
+     // Показываем обратно все элементы
+     const elementsToShow = [
+        document.querySelector('h1'),
+        document.getElementById('lives'),
+        document.getElementById('timer'),
+        document.getElementById('achievementsButton'),
+        document.getElementById('shopButton')
+    ];
+    
+    elementsToShow.forEach(el => {
+        if (el) el.style.display = '';
+    });
+    
+    // Удаляем все обработчики прыжка
+    document.removeEventListener('click', handleJump);
+    document.removeEventListener('touchstart', handleJump);
+    document.removeEventListener('keydown', handleJump);
         // Показываем кнопку в режиме claim
         startButton.style.display = 'block';
         startButton.classList.add('claim-mode');
@@ -925,15 +978,6 @@ function setButtonLoading(button, isLoading) {
         button.disabled = false;
         updateShopButtons(); // Восстанавливаем правильный текст кнопки
     }
-}
-// Добавляем кнопку магазина
-function addShopButton() {
-    const shopButton = document.createElement('button');
-    shopButton.innerHTML = '🏪';
-    shopButton.id = 'shopButton'; // Добавляем id для удобного доступа
-    shopButton.className = 'fixed top-4 right-4 text-2xl bg-yellow-400 rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-yellow-500 transition-colors hidden'; // Добавляем hidden по умолчанию
-    shopButton.onclick = openShopModal;
-    document.body.appendChild(shopButton);
 }
 // Создаем модальное окно магазина
 function createShopModal() {

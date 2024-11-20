@@ -53,6 +53,19 @@ document.addEventListener('DOMContentLoaded', () => {
     showPage('main');
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.requestFullscreen();
+        
+        // Добавляем класс для полноэкранного режима
+        document.body.classList.add('fullscreen');
+        
+        // Обработчик изменения полноэкранного режима
+        window.Telegram.WebApp.onEvent('fullscreenChanged', () => {
+            if (window.Telegram.WebApp.isFullscreen) {
+                document.body.classList.add('fullscreen');
+            } else {
+                document.body.classList.remove('fullscreen');
+            }
+        });
     }
     
     loadDailyTasks(); // Загружаем задачи и добавляем новую, если её нет
