@@ -7,7 +7,8 @@ let COLUMNS = 1000;
 const FLOOR_VELOCITY = new Velocity(0, -3.5);
 let CACTUS_MIN_GAP = 80;
 let currentCombo = 0;
-let lastJumpTime = 0;
+let lastJumpTime = Date.now(); // Инициализируем lastJumpTime
+let gameStartTime = Date.now(); // Добавляем gameStartTime здесь
 if (screen.width < COLUMNS) {
     COLUMNS = screen.width;
 }
@@ -95,12 +96,13 @@ function updateScore() {
 function initialize() {
     gameStartTime = Date.now();
     currentCombo = 0;
+    lastJumpTime = Date.now(); // Сбрасываем lastJumpTime при инициализации
     current_theme = themes.classic;
     cumulative_velocity = new Velocity(0, 0);
     game_over = false;
     game_score = 0;
     game_hi_score = parseInt(localStorage.getItem("project.github.chrome_dino.high_score")) || 0;
-    updateScore(); // Инициализируем отображение счета
+    updateScore();
     canvas.height = ROWS;
     canvas.width = COLUMNS;
 
