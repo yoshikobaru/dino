@@ -92,7 +92,29 @@ function updateScore() {
     currentScoreElement.textContent = Math.floor(game_score);
     highScoreElement.textContent = Math.floor(game_hi_score);
 }
+const handleJump = () => {
+    if (!game_over && dino_ready_to_jump) {
+        const now = Date.now();
+        if (now - lastJumpTime < 2000) { // 2 секунды на комбо
+            currentCombo++;
+        } else {
+            currentCombo = 1;
+        }
+        lastJumpTime = now;
 
+        // Проверяем достижение за комбо
+        window.parent.postMessage({
+            type: 'checkAchievements',
+            score: game_score,
+            combo: currentCombo,
+            timeAlive: (Date.now() - gameStartTime) / 1000,
+            theme: current_theme.id
+        }, '*');
+
+        dino_ready_to_jump = false;
+        dino_current_trust = DINO_INITIAL_TRUST.clone();
+    }
+};
 function initialize() {
     gameStartTime = Date.now();
     currentCombo = 0;
@@ -125,29 +147,6 @@ function initialize() {
     document.addEventListener('touchstart', handleJump);
 
     // Изменим обработчики событий
-    const handleJump = () => {
-        if (!game_over && dino_ready_to_jump) {
-            const now = Date.now();
-            if (now - lastJumpTime < 2000) { // 2 секунды на комбо
-                currentCombo++;
-            } else {
-                currentCombo = 1;
-            }
-            lastJumpTime = now;
-    
-            // Проверяем достижение за комбо
-            window.parent.postMessage({
-                type: 'checkAchievements',
-                score: game_score,
-                combo: currentCombo,
-                timeAlive: (Date.now() - gameStartTime) / 1000,
-                theme: current_theme.id
-            }, '*');
-    
-            dino_ready_to_jump = false;
-            dino_current_trust = DINO_INITIAL_TRUST.clone();
-        }
-    };
     hideGameOver();
 
     return { gravity };
