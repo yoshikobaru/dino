@@ -88,12 +88,12 @@
     
     <!-- Добавляем модальное окно достижений -->
     <div id="achievementsModal" class="fixed inset-0 bg-black/90 z-50 hidden">
-        <div class="container mx-auto h-full p-4 flex flex-col">
+        <div class="container mx-auto h-full p-4 pb-24 flex flex-col"> <!-- Добавили pb-24 -->
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-yellow-400">🏆 Достижения</h2>
                 <button id="closeAchievements" class="text-yellow-400 text-2xl">&times;</button>
             </div>
-            <div id="achievementsList" class="flex-1 overflow-y-auto space-y-2">
+            <div id="achievementsList" class="flex-1 overflow-y-auto space-y-2 pb-16"> <!-- Добавили pb-16 -->
                 <!-- Достижения будут добавлены через JavaScript -->
             </div>
         </div>

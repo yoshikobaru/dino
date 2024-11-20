@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showPage('main');
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
+        // Устанавливаем темную тему
+        window.Telegram.WebApp.setHeaderColor('secondary_bg_color');
     }
     
     loadDailyTasks(); // Загружаем задачи и добавляем новую, если её нет
