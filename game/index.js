@@ -136,15 +136,6 @@ function initialize() {
             dino_current_trust = DINO_INITIAL_TRUST.clone();
         }
     };
-
-    document.ontouchstart = handleJump;
-    document.body.onclick = handleJump;
-    document.body.onkeydown = event => {
-        if (event.code === 'Space' || event.key === ' ') {
-            handleJump();
-        }
-    };
-
     hideGameOver();
 
     return { gravity };
@@ -464,10 +455,10 @@ window.addEventListener('message', (event) => {
 });
 window.addEventListener('message', (event) => {
     if (event.data.type === 'jump') {
-        // Выполняем прыжок
+        // Проверяем условия для прыжка
         if (!game_over && dino_ready_to_jump) {
             const now = Date.now();
-            if (now - lastJumpTime < 2000) { // 2 секунды на комбо
+            if (now - lastJumpTime < 2000) {
                 currentCombo++;
             } else {
                 currentCombo = 1;
@@ -478,4 +469,4 @@ window.addEventListener('message', (event) => {
             dino_current_trust = DINO_INITIAL_TRUST.clone();
         }
     }
-});
+}, false);

@@ -76,19 +76,36 @@ let timerInterval = setInterval(() => {
 }, 1000);
 
 function handleJump(event) {
-    // Не используем preventDefault для touch-событий
-    if (event.type !== 'touchstart') {
+    // Предотвращаем всплытие события только для desktop
+    if (event.type !== 'touchstart' && event.type !== 'touchend') {
         event.preventDefault();
+        event.stopPropagation();
     }
     
-    // Отправляем сообщение в iframe для прыжка
+    // Проверяем готовность iframe
     if (gameIframe && gameIframe.contentWindow) {
         gameIframe.contentWindow.postMessage({ 
             type: 'jump'
         }, '*');
     }
 }
+function setupEventListeners() {
+    // Добавляем обработчики для всего документа
+    document.addEventListener('keydown', (event) => {
+        if (event.code === 'Space' || event.key === ' ') {
+            handleJump(event);
+        }
+    }, { passive: false });
 
+    document.addEventListener('touchstart', handleJump, { passive: true });
+    document.addEventListener('click', handleJump, { passive: false });
+
+    // Добавляем обработчики для gameContainer
+    if (gameContainer) {
+        gameContainer.addEventListener('touchstart', handleJump, { passive: true });
+        gameContainer.addEventListener('click', handleJump, { passive: false });
+    }
+}
 function updateAvailableGamesDisplay() {
     const timerData = updateTimer();
     
@@ -112,7 +129,12 @@ function updateAvailableGamesDisplay() {
 };
 function loadGame() {
     if (!gameContainer) return;
+    
     gameIframe = createGameIframe();
+    
+    // Добавляем обработчики после создания iframe
+    setupEventListeners();
+    
     updateAvailableGamesDisplay();
 }
 document.addEventListener('DOMContentLoaded', () => {
