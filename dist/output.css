@@ -608,10 +608,6 @@ video {
   bottom: 0px;
 }
 
-.bottom-24 {
-  bottom: 6rem;
-}
-
 .left-0 {
   left: 0px;
 }
@@ -628,16 +624,12 @@ video {
   top: 0px;
 }
 
-.top-4 {
-  top: 1rem;
-}
-
-.bottom-16 {
-  bottom: 4rem;
-}
-
 .top-20 {
   top: 5rem;
+}
+
+.top-4 {
+  top: 1rem;
 }
 
 .z-50 {
@@ -678,12 +670,12 @@ video {
   margin-right: 1rem;
 }
 
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
 .mt-1 {
   margin-top: 0.25rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
 }
 
 .block {
@@ -912,11 +904,6 @@ video {
   border-bottom-width: 2px;
 }
 
-.border-yellow-400 {
-  --tw-border-opacity: 1;
-  border-color: rgb(250 204 21 / var(--tw-border-opacity));
-}
-
 .border-blue-400 {
   --tw-border-opacity: 1;
   border-color: rgb(96 165 250 / var(--tw-border-opacity));
@@ -930,6 +917,11 @@ video {
 .border-purple-400 {
   --tw-border-opacity: 1;
   border-color: rgb(192 132 252 / var(--tw-border-opacity));
+}
+
+.border-yellow-400 {
+  --tw-border-opacity: 1;
+  border-color: rgb(250 204 21 / var(--tw-border-opacity));
 }
 
 .bg-black {
@@ -1039,12 +1031,12 @@ video {
   padding-bottom: 1rem;
 }
 
-.pb-24 {
-  padding-bottom: 6rem;
+.pb-16 {
+  padding-bottom: 4rem;
 }
 
-.pb-2 {
-  padding-bottom: 0.5rem;
+.pb-24 {
+  padding-bottom: 6rem;
 }
 
 .text-center {
@@ -1090,6 +1082,11 @@ video {
   color: rgb(0 0 0 / var(--tw-text-opacity));
 }
 
+.text-blue-400 {
+  --tw-text-opacity: 1;
+  color: rgb(96 165 250 / var(--tw-text-opacity));
+}
+
 .text-gray-400 {
   --tw-text-opacity: 1;
   color: rgb(156 163 175 / var(--tw-text-opacity));
@@ -1105,21 +1102,6 @@ video {
   color: rgb(75 85 99 / var(--tw-text-opacity));
 }
 
-.text-white {
-  --tw-text-opacity: 1;
-  color: rgb(255 255 255 / var(--tw-text-opacity));
-}
-
-.text-yellow-400 {
-  --tw-text-opacity: 1;
-  color: rgb(250 204 21 / var(--tw-text-opacity));
-}
-
-.text-blue-400 {
-  --tw-text-opacity: 1;
-  color: rgb(96 165 250 / var(--tw-text-opacity));
-}
-
 .text-green-400 {
   --tw-text-opacity: 1;
   color: rgb(74 222 128 / var(--tw-text-opacity));
@@ -1128,6 +1110,16 @@ video {
 .text-purple-400 {
   --tw-text-opacity: 1;
   color: rgb(192 132 252 / var(--tw-text-opacity));
+}
+
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.text-yellow-400 {
+  --tw-text-opacity: 1;
+  color: rgb(250 204 21 / var(--tw-text-opacity));
 }
 
 .opacity-80 {

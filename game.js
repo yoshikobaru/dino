@@ -1152,6 +1152,39 @@ window.purchaseSkin = async function(skinName, price) {
     }
 }
 
+function initializeGame() {
+    const isMobile = window.Telegram?.WebApp?.platform !== 'desktop';
+    const gameContainer = document.getElementById('game-container');
+    
+    if (isMobile) {
+        // Настраиваем размеры для мобильных устройств
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        if (canvas) {
+            canvas.style.width = `${viewportWidth}px`;
+            canvas.style.height = `${viewportHeight * 0.6}px`;
+            canvas.width = viewportWidth * window.devicePixelRatio;
+            canvas.height = (viewportHeight * 0.6) * window.devicePixelRatio;
+            
+            // Масштабируем контекст для сохранения качества
+            canvas_ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        
+        if (gameContainer) {
+            gameContainer.style.width = '100%';
+            gameContainer.style.height = '60vh';
+            gameContainer.style.position = 'fixed';
+            gameContainer.style.top = '0';
+            gameContainer.style.left = '0';
+        }
+    }
+}
+
+// Добавьте эти слушатели событий
+document.addEventListener('DOMContentLoaded', initializeGame);
+window.addEventListener('resize', initializeGame);
+
 // Добавляем обработчик закрытия Invoice
 window.Telegram.WebApp.onEvent('invoiceClosed', async (data) => {
     console.log('Invoice closed with status:', data.status);
