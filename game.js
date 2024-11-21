@@ -273,6 +273,20 @@ startButton.addEventListener('click', () => {
         updateStartButtonState();
     } else {
         if (availableGames > 0) {
+            // Добавляем увеличение gameProgress здесь
+            let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
+            const gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
+            
+            // Если это первая игра или прошло больше 12 часов
+            if (gameProgress === 0 || Date.now() - gameTaskStartTime > 43200000) {
+                gameProgress = 1;
+                localStorage.setItem('gameTaskStartTime', Date.now().toString());
+            } else if (gameProgress < 5) {
+                gameProgress++;
+            }
+            
+            localStorage.setItem('gameProgress', gameProgress.toString());
+            
             // Вибрация при старте игры
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
@@ -345,7 +359,6 @@ startButton.addEventListener('click', () => {
         updateStartButtonState();
     }
 });
-
 // Вызываем updateStartButtonState при загрузке страницы и после каждого изменения availableGames
 document.addEventListener('DOMContentLoaded', updateStartButtonState);
 
@@ -1322,3 +1335,4 @@ function updateShopButtons() {
         }
     });
 }
+
