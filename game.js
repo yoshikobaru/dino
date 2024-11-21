@@ -9,7 +9,7 @@ if (availableGames === null) {
     // Убедимся, что при 0 сердцах они остаются 0
     localStorage.setItem('availableGames', 0);
 }
-let nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || Date.now();
+let nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || 0;
 let lastHeartCheckTime = parseInt(localStorage.getItem('lastHeartCheckTime')) || Date.now();
 let gameIframe = null;
 let startButton = document.getElementById('startButton');
@@ -18,7 +18,7 @@ let timerDisplay;
 let gamePage;
 let gameContainer;
 let timerActive = false;
-let heartTimers = [];
+let heartTimers = JSON.parse(localStorage.getItem('heartTimers')) || [];
 let lastHeartRecoveryTime = 0;
 let tasks = JSON.parse(localStorage.getItem('dailyTasks')) || { daily: [] };
 let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
@@ -27,32 +27,29 @@ let gameTaskTimer = null;
 let gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
 const shopButton = document.getElementById('shopButton');
 shopButton?.addEventListener('click', openShopModal);
-// Функция для обновления таймера
+
 window.updateTimer = function() {
     const now = Date.now();
-    checkAndUpdateHearts();
     let updated = false;
 
-    // Проверяем время восстановления сердца
-    if (nextHeartTime > 0 && now >= nextHeartTime && availableGames < 5) {
+    // Проверяем и обновляем сердца
+    while (heartTimers.length > 0 && now >= heartTimers[0] && availableGames < 5) {
         availableGames++;
         updated = true;
+        heartTimers.shift(); // Удаляем использованный таймер
         
-        // Устанавливаем следующее время восстановления
-        if (availableGames < 5) {
-            nextHeartTime = now + 300000; // 5 минут
-        } else {
-            nextHeartTime = 0; // Сбрасываем таймер только когда достигли 5 сердец
-        }
+        // Обновляем nextHeartTime
+        nextHeartTime = heartTimers[0] || 0;
         
         localStorage.setItem('availableGames', availableGames);
+        localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
         localStorage.setItem('nextHeartTime', nextHeartTime);
     }
 
-    // Вычисляем оставшееся время
+    // Вычисляем оставшееся время для следующего сердца
     let remainingTime = 0;
-    if (nextHeartTime > 0 && availableGames < 5) {
-        remainingTime = Math.max(0, Math.ceil((nextHeartTime - now) / 1000));
+    if (heartTimers.length > 0 && availableGames < 5) {
+        remainingTime = Math.max(0, Math.ceil((heartTimers[0] - now) / 1000));
     }
 
     const minutes = Math.floor(remainingTime / 60);
@@ -109,26 +106,26 @@ function setupEventListeners() {
     }
 }
 
+// Функция для проверки и обновления сердец
 function checkAndUpdateHearts() {
     const now = Date.now();
-    const timeSinceLastCheck = now - lastHeartCheckTime;
-    const heartsToAdd = Math.floor(timeSinceLastCheck / 300000); // 300000 мс = 5 минут
     
-    if (heartsToAdd > 0 && availableGames < 5) {
-        availableGames = Math.min(5, availableGames + heartsToAdd);
-        localStorage.setItem('availableGames', availableGames);
-        
-        // Обновляем время следующего сердца
-        if (availableGames < 5) {
-            nextHeartTime = now + 300000;
-        } else {
-            nextHeartTime = 0;
-        }
-        localStorage.setItem('nextHeartTime', nextHeartTime);
+    // Фильтруем и обновляем таймеры
+    while (heartTimers.length > 0 && now >= heartTimers[0] && availableGames < 5) {
+        availableGames++;
+        heartTimers.shift();
     }
     
-    lastHeartCheckTime = now;
-    localStorage.setItem('lastHeartCheckTime', lastHeartCheckTime);
+    // Если все сердца восстановлены, очищаем таймеры
+    if (availableGames >= 5) {
+        heartTimers = [];
+        nextHeartTime = 0;
+    }
+    
+    // Сохраняем обновленное состояние
+    localStorage.setItem('availableGames', availableGames);
+    localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
+    localStorage.setItem('nextHeartTime', nextHeartTime);
 }
 
 function updateAvailableGamesDisplay() {
@@ -305,28 +302,40 @@ startButton.addEventListener('click', () => {
    });
     startButton.style.display = 'none';
             availableGames--;
-            // Запускаем таймер сразу при использовании первого сердца
-            if (availableGames < 5 && nextHeartTime === 0) {
-                nextHeartTime = Date.now() + 300000; // 5 минут
-                localStorage.setItem('nextHeartTime', nextHeartTime);
+            
+            // Обновленная логика для heartTimers
+            const now = Date.now();
+            
+            // Если это первое использованное сердце
+            if (availableGames === 4 && heartTimers.length === 0) {
+                nextHeartTime = now + 20000;
+                heartTimers.push(nextHeartTime);
+            } else if (availableGames < 5) {
+                // Для последующих сердец
+                const lastTimer = heartTimers.length > 0 ? 
+                    Math.max(...heartTimers) : 
+                    now;
+                const newTimer = Math.max(lastTimer + 20000, now + 20000);
+                heartTimers.push(newTimer);
             }
             
+            // Сортируем таймеры по возрастанию
+            heartTimers.sort((a, b) => a - b);
+            
+            // Обновляем nextHeartTime на ближайший таймер
+            nextHeartTime = heartTimers[0] || 0;
+            
+            // Сохраняем все в localStorage
             localStorage.setItem('availableGames', availableGames);
+            localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
+            localStorage.setItem('nextHeartTime', nextHeartTime);
+            
             updateAvailableGamesDisplay();
             
             // Обновляем прогресс заданий
             playedCount++;
             localStorage.setItem('playedCount', playedCount.toString());
             updatePlayedCountTask();
-            
-            // Обновляем прогресс задания "Сыграть 5 раз"
-            const currentProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
-            if (currentProgress < 5) {
-                if (currentProgress === 0) {
-                    localStorage.setItem('gameTaskStartTime', Date.now().toString());
-                }
-                localStorage.setItem('gameProgress', (currentProgress + 1).toString());
-            }
             
             // Запускаем игру
             if (gameIframe && gameIframe.contentWindow) {
@@ -682,54 +691,67 @@ function saveGameState() {
 function loadGameState() {
     const savedAvailableGames = localStorage.getItem('availableGames');
     const savedHeartTimers = localStorage.getItem('heartTimers');
-    const savedLastHeartRecoveryTime = localStorage.getItem('lastHeartRecoveryTime');
     const savedNextHeartTime = parseInt(localStorage.getItem('nextHeartTime'));
+    const now = Date.now();
+
+    // Загружаем сохраненные таймеры
+    heartTimers = savedHeartTimers ? JSON.parse(savedHeartTimers) : [];
 
     if (savedAvailableGames !== null) {
         availableGames = parseInt(savedAvailableGames);
         
         // Проверяем офлайн-восстановление
-        if (savedNextHeartTime && availableGames < 5) {
-            const now = Date.now();
-            const timePassed = now - savedNextHeartTime;
-            const heartsToRecover = Math.floor(timePassed / 300000); // Делим на 5 минут
+        if (availableGames < 5) {
+            // Проверяем все сохраненные таймеры
+            const recoveredHearts = heartTimers.filter(time => now >= time).length;
             
-            if (heartsToRecover > 0) {
-                availableGames = Math.min(5, availableGames + heartsToRecover);
+            if (recoveredHearts > 0) {
+                // Обновляем количество сердец
+                availableGames = Math.min(5, availableGames + recoveredHearts);
                 
-                // Если все еще нужно восстанавливать сердца
-                if (availableGames < 5) {
-                    nextHeartTime = now + 300000; // Следующее сердце через 5 минут
-                } else {
-                    nextHeartTime = 0; // Все сердца восстановлены
+                // Очищаем использованные таймеры
+                heartTimers = heartTimers.filter(time => now < time);
+                
+                // Если нужно восстановить еще сердца
+                if (availableGames < 5 && heartTimers.length === 0) {
+                    nextHeartTime = now + 20000; // 20 секунд для тестирования
+                    heartTimers.push(nextHeartTime);
+                } else if (availableGames === 5) {
+                    nextHeartTime = 0;
+                    heartTimers = [];
                 }
                 
                 // Сохраняем обновленные значения
                 localStorage.setItem('availableGames', availableGames);
                 localStorage.setItem('nextHeartTime', nextHeartTime);
+                localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
             }
         }
     } else {
+        // Инициализация при первом запуске
         availableGames = 5;
+        nextHeartTime = 0;
+        heartTimers = [];
         localStorage.setItem('availableGames', availableGames);
-    }
-
-    if (savedHeartTimers !== null) {
-        heartTimers = JSON.parse(savedHeartTimers);
-    }
-    if (savedLastHeartRecoveryTime !== null) {
-        lastHeartRecoveryTime = parseInt(savedLastHeartRecoveryTime);
+        localStorage.setItem('nextHeartTime', nextHeartTime);
+        localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
     }
 
     // Проверяем и обновляем состояние сразу после загрузки
-    updateTimer();
+    checkAndUpdateHearts();
     updateAvailableGamesDisplay();
 }
 
-// Экспортируем функцию обновления счета за задания, чтобы она была доступна в других файлах
-window.updateTaskEarningsDisplay = updateTaskEarningsDisplay;
+// Добавляем вызов функции при загрузке страницы
+document.addEventListener('DOMContentLoaded', loadGameState);
 
-// Добавьте эту функцию в начало файла
+// Добавляем проверку при возвращении на вкладку
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        loadGameState();
+    }
+});
+// Доавьте эту функцию в начало файла
 function updateGameTaskProgress() {
     const gameTask = tasks.daily.find(task => task.name === "Сыграть 5 раз");
     if (gameTask && gameTask.cooldown <= 0) {
@@ -751,14 +773,25 @@ function startGame() {
     if (availableGames > 0) {
         availableGames--;
         
-        // Если это первое использованное сердце, запускаем таймер
-        if (nextHeartTime === 0) {
-            nextHeartTime = Date.now() + 300000; // 5 минут
-            localStorage.setItem('nextHeartTime', nextHeartTime);
+        const now = Date.now();
+        
+        // Добавляем новый таймер для восстановления сердца
+        if (availableGames < 5) {
+            // Вычисляем время для нового таймера
+            let newHeartTime = now + 20000;
+            
+            // Если уже есть таймеры, добавляем время к последнему
+            if (heartTimers.length > 0) {
+                newHeartTime = heartTimers[heartTimers.length - 1] + 20000;
+            }
+            
+            heartTimers.push(newHeartTime);
+            nextHeartTime = heartTimers[0]; // Следующее восстановление - самый ранний таймер
         }
         
-        // Сохраняем обновленное количество сердец
         localStorage.setItem('availableGames', availableGames);
+        localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
+        localStorage.setItem('nextHeartTime', nextHeartTime);
         
         // Обновляем отображение
         updateAvailableGamesDisplay();
@@ -966,7 +999,7 @@ window.addEventListener('message', async (event) => {
                 window.updateTaskStatuses('daily');
             }
             
-            showPopup(`Вы заработали ${gameScore} DPS (x3)! Ваш новый баланс: ${totalDPS} DPS`);
+            showPopup(`Вы заработали ${gameScore} DPS (x3)! аш новый баланс: ${totalDPS} DPS`);
             
             // Отправляем сообщение в iframe о том, что реклама просмотрена
             if (gameIframe && gameIframe.contentWindow) {
@@ -1127,7 +1160,7 @@ window.purchaseSkin = async function(skinName, price) {
         }
         
         const data = await response.json();
-        console.log('Invoice data received:', data); // Отладочный лог
+        console.log('Invoice data received:', data); // Отладо��ный лог
         
         if (!data.slug) {
             throw new Error('No slug received from server');
