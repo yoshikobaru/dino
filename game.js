@@ -10,6 +10,7 @@ if (availableGames === null) {
     localStorage.setItem('availableGames', 0);
 }
 let nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || Date.now();
+let lastHeartCheckTime = parseInt(localStorage.getItem('lastHeartCheckTime')) || Date.now();
 let gameIframe = null;
 let startButton = document.getElementById('startButton');
 let livesDisplay = document.getElementById('lives');
@@ -29,6 +30,7 @@ shopButton?.addEventListener('click', openShopModal);
 // Функция для обновления таймера
 window.updateTimer = function() {
     const now = Date.now();
+    checkAndUpdateHearts();
     let updated = false;
 
     // Проверяем время восстановления сердца
@@ -106,6 +108,29 @@ function setupEventListeners() {
         gameContainer.addEventListener('click', handleJump, { passive: false });
     }
 }
+
+function checkAndUpdateHearts() {
+    const now = Date.now();
+    const timeSinceLastCheck = now - lastHeartCheckTime;
+    const heartsToAdd = Math.floor(timeSinceLastCheck / 300000); // 300000 мс = 5 минут
+    
+    if (heartsToAdd > 0 && availableGames < 5) {
+        availableGames = Math.min(5, availableGames + heartsToAdd);
+        localStorage.setItem('availableGames', availableGames);
+        
+        // Обновляем время следующего сердца
+        if (availableGames < 5) {
+            nextHeartTime = now + 300000;
+        } else {
+            nextHeartTime = 0;
+        }
+        localStorage.setItem('nextHeartTime', nextHeartTime);
+    }
+    
+    lastHeartCheckTime = now;
+    localStorage.setItem('lastHeartCheckTime', lastHeartCheckTime);
+}
+
 function updateAvailableGamesDisplay() {
     const timerData = updateTimer();
     
@@ -160,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Обновляем отображение
     createShopModal();
+    checkAndUpdateHearts();
     updateAvailableGamesDisplay();
     loadUserSkins();
 });
@@ -1187,7 +1213,12 @@ window.selectSkin = function(skinName) {
         showPopup('Скин успешно выбран!');
     }
 }
-
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        checkAndUpdateHearts();
+        updateAvailableGamesDisplay();
+    }
+});
 // Обновление кнопок в магазине
 function updateShopButtons() {
     const modal = document.getElementById('shopModal');
