@@ -714,6 +714,10 @@ video {
   height: 100%;
 }
 
+.h-8 {
+  height: 2rem;
+}
+
 .min-h-screen {
   min-height: 100vh;
 }
@@ -736,6 +740,10 @@ video {
 
 .w-full {
   width: 100%;
+}
+
+.w-8 {
+  width: 2rem;
 }
 
 .max-w-md {
@@ -770,6 +778,10 @@ video {
 
 .cursor-not-allowed {
   cursor: not-allowed;
+}
+
+.resize {
+  resize: both;
 }
 
 .grid-cols-2 {
@@ -974,6 +986,11 @@ video {
 
 .to-\[\#1E3A8A\] {
   --tw-gradient-to: #1E3A8A var(--tw-gradient-to-position);
+}
+
+.object-cover {
+  -o-object-fit: cover;
+     object-fit: cover;
 }
 
 .p-0\.5 {

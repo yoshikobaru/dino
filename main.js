@@ -1,6 +1,32 @@
 function initializeMainPage() {
-    console.log('Вызвана функция initializeMainPage');
-
+    
+    // Добавляем данные пользователя из Telegram WebApp
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        const user = window.Telegram.WebApp.initDataUnsafe.user;
+        const userNameElement = document.getElementById('userName');
+        const userAvatarElement = document.getElementById('userAvatar');
+        
+        // Устанавливаем имя пользователя
+        if (userNameElement) {
+            userNameElement.textContent = user.first_name || 'User';
+        }
+        
+        // Устанавливаем аватар пользователя
+        if (userAvatarElement && user.photo_url) {
+            const img = document.createElement('img');
+            img.src = user.photo_url;
+            img.alt = 'User avatar';
+            img.className = 'w-full h-full object-cover';
+            userAvatarElement.appendChild(img);
+        } else if (userAvatarElement) {
+            // Если аватара нет, показываем первую букву имени
+            userAvatarElement.innerHTML = `
+                <div class="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold">
+                    ${(user.first_name || 'U')[0].toUpperCase()}
+                </div>
+            `;
+        }
+    }
     document.querySelectorAll('footer button').forEach(btn => {
         btn.addEventListener('click', handleFooterButtonClick);
     });
