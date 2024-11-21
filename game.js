@@ -1015,8 +1015,8 @@ window.addEventListener('message', async (event) => {
 let currentSkin = localStorage.getItem('currentDinoSkin') || 'default';
 let availableSkins = JSON.parse(localStorage.getItem('availableSkins')) || {
     default: true,
-    red: false,
-    green: false
+    ninja: false,
+    robot: false
 };
 function setButtonLoading(button, isLoading) {
     if (isLoading) {
@@ -1044,22 +1044,25 @@ function createShopModal() {
             <div class="border border-yellow-400 rounded p-4 text-center bg-black">
                 <img src="assets/dino-default.jpg" alt="Default Dino" class="w-16 h-16 mx-auto mb-2">
                 <div class="font-bold text-yellow-400">Обычный</div>
+                <p class="text-gray-400 text-sm">Стандартная скорость и защита</p>
                 <button data-skin="default" class="mt-2 px-4 py-2 bg-gray-200 rounded" disabled>Выбран</button>
             </div>
             <div class="border border-yellow-400 rounded p-4 text-center bg-black">
-        <img src="assets/dino-red.jpg" alt="Red Dino" class="w-16 h-16 mx-auto mb-2">
-        <div class="font-bold text-yellow-400">Красный</div>
-        <button data-skin="red" data-price="100" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
-            Купить за <span class="text-white">100</span> ⭐️
-        </button>
-    </div>
-    <div class="border border-yellow-400 rounded p-4 text-center bg-black">
-        <img src="assets/dino-green.jpg" alt="Green Dino" class="w-16 h-16 mx-auto mb-2">
-        <div class="font-bold text-yellow-400">Зеленый</div>
-        <button data-skin="green" data-price="100" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
-            Купить за <span class="text-white">100</span> ⭐️
-        </button>
-    </div>
+                <img src="assets/ninja.jpg" alt="Ninja Dino" class="w-16 h-16 mx-auto mb-2">
+                <div class="font-bold text-yellow-400">Ниндзя</div>
+                <p class="text-gray-400 text-sm">🕒 Замедляет время на 30%</p>
+                <button data-skin="ninja" data-price="100" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
+                    Купить за <span class="text-white">100</span> ⭐️
+                </button>
+            </div>
+            <div class="border border-yellow-400 rounded p-4 text-center bg-black">
+                <img src="assets/robot.jpg" alt="Robot Dino" class="w-16 h-16 mx-auto mb-2">
+                <div class="font-bold text-yellow-400">Робот</div>
+                <p class="text-gray-400 text-sm">🛡️ Защита от одного столкновения</p>
+                <button data-skin="robot" data-price="100" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
+                    Купить за <span class="text-white">100</span> ⭐️
+                </button>
+            </div>
         </div>
     `;
 

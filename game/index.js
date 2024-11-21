@@ -40,9 +40,9 @@ let harmless_character_allocator = [
     ),
     new CharacterAllocator(
         new AllocatorCharacterArray()
-            .add_character(new CharacterMeta([cloud_layout], 0, new Position(100, COLUMNS), new Velocity(0, -1)), 0.9)
-            .add_character(new CharacterMeta([cloud_layout], 0, new Position(135, COLUMNS), new Velocity(0, -1)), 0.85)
-            .add_character(new CharacterMeta([cloud_layout], 0, new Position(150, COLUMNS), new Velocity(0, -1)), 0.8)
+            .add_character(new CharacterMeta([cloud_layout], 0, new Position(100, COLUMNS), new Velocity(0, -1), 'cloud'), 0.9)
+            .add_character(new CharacterMeta([cloud_layout], 0, new Position(135, COLUMNS), new Velocity(0, -1), 'cloud'), 0.85)
+            .add_character(new CharacterMeta([cloud_layout], 0, new Position(150, COLUMNS), new Velocity(0, -1), 'cloud'), 0.8)
         , 350, 300
     ),
     new CharacterAllocator(
@@ -70,13 +70,12 @@ let harmfull_character_allocator = [
             .add_character(new CharacterMeta([cactus_layout.medium_d1], 0, new Position(193, COLUMNS), FLOOR_VELOCITY), 0.5)
             .add_character(new CharacterMeta([cactus_layout.medium_s1], 0, new Position(193, COLUMNS), FLOOR_VELOCITY), 0.4)
             .add_character(new CharacterMeta([cactus_layout.medium_s2], 0, new Position(193, COLUMNS), FLOOR_VELOCITY), 0.3)
-
         , CACTUS_MIN_GAP, 150
     ),
     new CharacterAllocator(
         new AllocatorCharacterArray()
-            .add_character(new CharacterMeta(bird_layout.fly, 0, new Position(170, COLUMNS), FLOOR_VELOCITY.clone().add(new Velocity(0, -1))), 0.98)
-            .add_character(new CharacterMeta(bird_layout.fly, 0, new Position(190, COLUMNS), FLOOR_VELOCITY.clone().add(new Velocity(0, -1))), 0.9)
+            .add_character(new CharacterMeta(bird_layout.fly, 0, new Position(170, COLUMNS), FLOOR_VELOCITY.clone().add(new Velocity(0, -1)), 'bird'), 0.98)
+            .add_character(new CharacterMeta(bird_layout.fly, 0, new Position(190, COLUMNS), FLOOR_VELOCITY.clone().add(new Velocity(0, -1)), 'bird'), 0.9)
         , 500, 50
     )
 ]
@@ -121,6 +120,9 @@ function initialize() {
     lastJumpTime = Date.now(); // Сбрасываем lastJumpTime при инициализации
     current_theme = themes.classic;
     cumulative_velocity = new Velocity(0, 0);
+    
+    initSkinAbilities();
+
     game_over = false;
     game_score = 0;
     game_hi_score = parseInt(localStorage.getItem("project.github.chrome_dino.high_score")) || 0;
@@ -319,6 +321,19 @@ function event_loop(gravity) {
             HARMFULL_CHARACTER_LAYOUT.length,
             HARMFULL_CHARACTER_LAYOUT[0].length
         )) {
+            if (currentArmor > 0) {
+                // Если есть броня, уменьшаем её и продолжаем игру
+                currentArmor--;
+                
+                // Показываем визуальный эффект потери брони
+                showArmorBreakEffect();
+                
+                // Удаляем объект, с которым произошло столкновение
+                harmfull_characters_pool.splice(i, 1);
+                continue;
+            }
+
+            // Если нет брони, игра заканчивается
             paint_layout(dino_layout.dead, harmfull_characters_pool[0].get_position().get());
             
             if (game_hi_score < game_score) {
@@ -412,6 +427,41 @@ window.addEventListener('message', (event) => {
         main();
     }
 });
+function drawLayout(ctx, layout, position, colors) {
+    if (!layout || !colors) return;
+
+    // Определяем тип объекта по его метаданным
+    let useColors = colors;
+    
+    // Проверяем, является ли layout массивом птицы
+    const isBird = bird_layout.fly.includes(layout);
+    // Проверяем, является ли layout облаком
+    const isCloud = layout === cloud_layout;
+
+    // Выбираем правильные цвета в зависимости от типа объекта
+    if (isBird && current_theme && current_theme.bird) {
+        useColors = current_theme.bird;
+    } else if (isCloud && current_theme && current_theme.cloud) {
+        useColors = current_theme.cloud;
+    }
+
+    // Если colors это строка (например, для дороги), преобразуем в массив
+    const colorArray = typeof useColors === 'string' ? [false, 'transparent', useColors] : useColors;
+
+    for (let i = 0; i < layout.length; i++) {
+        for (let j = 0; j < layout[i].length; j++) {
+            if (layout[i][j] !== 0) {
+                ctx.fillStyle = colorArray[layout[i][j]];
+                ctx.fillRect(
+                    (position.y + j) * CELL_SIZE,
+                    (position.x + i) * CELL_SIZE,
+                    CELL_SIZE,
+                    CELL_SIZE
+                );
+            }
+        }
+    }
+}
 // Добавляем функцию для перерисовки начального состояния
 function redrawInitialState() {
     if (!game_over && is_first_time) {
@@ -445,12 +495,67 @@ window.addEventListener('message', (event) => {
                     dino_layout.stand,
                     ...dino_layout.run
                 ];
+                initSkinAbilities();
             }
             // Перерисовываем начальное состояние
             redrawInitialState();
         }
     }
 });
+
+const SKIN_ABILITIES = {
+    default: {
+        speed: 1,
+        armor: 0,
+        description: "Классический динозавр"
+    },
+    ninja: {
+        speed: 0.7,
+        armor: 0,
+        description: "Замедляет время для лучшей реакции"
+    },
+    robot: {
+        speed: 1,
+        armor: 1,
+        description: "Имеет защитную броню от одного столкновения"
+    }
+};
+
+// Добавляем новые переменные
+let currentArmor = 0;
+let gameSpeed = 1;
+
+// Добавляем функцию инициализации способностей
+function initSkinAbilities() {
+    const skinName = localStorage.getItem('currentDinoSkin') || 'default';
+    const abilities = SKIN_ABILITIES[skinName];
+    
+    gameSpeed = abilities.speed;
+    FLOOR_VELOCITY.y = -3.5 * gameSpeed;
+    step_velocity.y = -0.05 * gameSpeed;
+    
+    currentArmor = abilities.armor;
+}
+
+// Функция для добавления визуального эффекта брони
+function addArmorEffect(layout) {
+    // Создаем копию макета
+    const armoredLayout = layout.map(row => [...row]);
+    // Добавляем эффект брони (например, изменяем цвет контура)
+    // Здесь можно настроить визуальный эффект
+    return armoredLayout;
+}
+// Функция для визуального эффекта потери брони
+function showArmorBreakEffect() {
+    canvas_ctx.save();
+    canvas_ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    canvas_ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setTimeout(() => {
+        canvas_ctx.restore();
+    }, 100);
+}
+
+
 window.addEventListener('message', (event) => {
     if (event.data.type === 'jump') {
         // Проверяем условия для прыжка

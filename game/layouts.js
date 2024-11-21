@@ -19,6 +19,90 @@ const STAR_SMALL_S2 = [
     [0, 0, 0, 5, 0, 0, 0],
 ];
 
+const DINO_NINJA = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 4, 4, 4, 2, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0],
+    [2, 1, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 0, 0],
+    [2, 1, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0],
+    [2, 2, 1, 0, 0, 1, 2, 2, 2, 4, 4, 4, 2, 2, 2, 2, 1, 0, 0, 0, 0],
+    [2, 2, 2, 1, 1, 2, 2, 2, 4, 2, 4, 2, 4, 2, 1, 2, 1, 0, 0, 0, 0],
+    [2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 2, 1, 1, 1, 0, 0, 0, 0],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0],
+    [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 2, 2, 2, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 2, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+];
+
+const DINO_ROBOT = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 7, 5, 7, 5, 7, 5, 7, 5, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 5, 6, 6, 5, 5, 5, 5, 5, 5, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 7, 5, 5, 7, 5, 5, 7, 5, 5, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 7, 5, 5, 7, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 0, 0],
+    [5, 1, 0, 0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 0, 0],
+    [5, 1, 0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 0, 0, 0, 0],
+    [5, 5, 1, 0, 0, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 0, 0, 0, 0],
+    [5, 5, 5, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 5, 1, 0, 0, 0, 0],
+    [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 0, 0, 0, 0],
+    [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 0, 0, 0, 0, 0, 0],
+    [1, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 5, 5, 5, 1, 5, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 5, 5, 1, 1, 1, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 5, 1, 1, 1, 1, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 5, 5, 1, 1, 1, 5, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+];
+
+// Создаем версии для бега с правильным копированием массивов
+const DINO_NINJA_LEFT_LEG_UP = DINO_NINJA.map(row => [...row]);
+const DINO_NINJA_RIGHT_LEG_UP = DINO_NINJA.map(row => [...row]);
+const DINO_ROBOT_LEFT_LEG_UP = DINO_ROBOT.map(row => [...row]);
+const DINO_ROBOT_RIGHT_LEG_UP = DINO_ROBOT.map(row => [...row]);
+
+// Модифицируем ноги для бега ниндзя
+DINO_NINJA_LEFT_LEG_UP[19][5] = 0;
+DINO_NINJA_LEFT_LEG_UP[19][6] = 0;
+DINO_NINJA_LEFT_LEG_UP[20][5] = 0;
+DINO_NINJA_LEFT_LEG_UP[20][6] = 0;
+
+DINO_NINJA_RIGHT_LEG_UP[19][10] = 0;
+DINO_NINJA_RIGHT_LEG_UP[19][11] = 0;
+DINO_NINJA_RIGHT_LEG_UP[20][10] = 0;
+DINO_NINJA_RIGHT_LEG_UP[20][11] = 0;
+
+// Модифицируем ноги для бега робота
+DINO_ROBOT_LEFT_LEG_UP[19][5] = 0;
+DINO_ROBOT_LEFT_LEG_UP[19][6] = 0;
+DINO_ROBOT_LEFT_LEG_UP[20][5] = 0;
+DINO_ROBOT_LEFT_LEG_UP[20][6] = 0;
+
+DINO_ROBOT_RIGHT_LEG_UP[19][10] = 0;
+DINO_ROBOT_RIGHT_LEG_UP[19][11] = 0;
+DINO_ROBOT_RIGHT_LEG_UP[20][10] = 0;
+DINO_ROBOT_RIGHT_LEG_UP[20][11] = 0;
+
+// Создаем версии для смерти
+const DINO_NINJA_DEAD = DINO_NINJA.map(row => [...row]);
+const DINO_ROBOT_DEAD = DINO_ROBOT.map(row => [...row]);
+
+// Модифицируем глаза для версий DEAD
+DINO_NINJA_DEAD[3][12] = DINO_NINJA_DEAD[3][13] = 2; // Закрываем красные глаза
+DINO_ROBOT_DEAD[3][12] = DINO_ROBOT_DEAD[3][13] = 5; // Выключаем светящиеся глаза
+
 const DINO_STAND = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1],
@@ -376,21 +460,28 @@ function createDinoLayout(colorCode) {
 
 // Создаем объект со всеми скинами
 const dino_skins = {
-    default: createDinoLayout(2),  // Стандартный серый
-    red: createDinoLayout(3),      // Красный
-    green: createDinoLayout(4)     // Зеленый
+    default: {
+        stand: DINO_STAND,
+        dead: DINO_DEAD,
+        run: [DINO_LEFT_LEG_UP, DINO_RIGHT_LEG_UP],
+        jump: DINO_STAND
+    },
+    ninja: {
+        stand: DINO_NINJA,
+        dead: DINO_NINJA_DEAD,
+        run: [DINO_NINJA_LEFT_LEG_UP, DINO_NINJA_RIGHT_LEG_UP],
+        jump: DINO_NINJA
+    },
+    robot: {
+        stand: DINO_ROBOT,
+        dead: DINO_ROBOT_DEAD,
+        run: [DINO_ROBOT_LEFT_LEG_UP, DINO_ROBOT_RIGHT_LEG_UP],
+        jump: DINO_ROBOT
+    }
 };
 
 const gameLayouts = {
     dino_layout: dino_skins.default, // По умолчанию используем обычный скин
-    dino_layout: {
-        stand: DINO_STAND,
-        dead: DINO_DEAD,
-        run: [
-            DINO_LEFT_LEG_UP, DINO_RIGHT_LEG_UP
-        ],
-        jump: DINO_STAND
-    },
     road_layout: ROAD,
     cloud_layout: CLOUD,
     stone_layout: {
@@ -404,7 +495,8 @@ const gameLayouts = {
         down: PIT_DOWN
     },
     bird_layout: {
-        fly: [BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN]
+        fly: [BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, BIRD_WING_UP, 
+              BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN, BIRD_WING_DOWN]
     },
     cactus_layout: {
         small_s1: CACTUS_SMALL_S1,
@@ -426,7 +518,26 @@ const gameLayouts = {
             road: "#535353",
             score_text: "#747474",
             info_text: "#535353",
-            layout: [false, "transparent", "#535353", "#FF0000", "#00FF00", false]  // Добавляем красный и зеленый цвета
+            layout: [
+                false, 
+                "transparent", 
+                "#535353",    // Базовый цвет
+                "#FF0000",    // Красный (для глаз)
+                "#4169E1",    // Синий (для повязки ниндзя и сюрикена)
+                "#C0C0C0",    // Серебряный (для робота)
+                "#00FF00",    // Зеленый (для глаз робота)
+                "#FFD700"     // Золотой (для механической гривы)
+            ],
+            cloud: [
+                false,
+                "transparent",
+                "#535353"     // Цвет облаков
+            ],
+            bird: [
+                false,
+                "transparent",
+                "#535353"     // Цвет птиц
+            ]
         },
         dark: {
             id: 2,
@@ -434,7 +545,26 @@ const gameLayouts = {
             road: "#acacac",
             score_text: "#909191",
             info_text: "#acacac",
-            layout: [false, "transparent", "#acacac", "#FF0000", "#00FF00", "#3e3f3f"]  // Добавляем красный и зеленый цвета
+            layout: [
+                false, 
+                "transparent", 
+                "#acacac",    // Базовый цвет
+                "#FF0000",    // Красный (для глаз)
+                "#4169E1",    // Синий (для повязки ниндзя и сюрикена)
+                "#E8E8E8",    // Серебряный (для робота)
+                "#00FF00",    // Зеленый (для глаз робота)
+                "#FFD700"     // Золотой (для механической гривы)
+            ],
+            cloud: [
+                false,
+                "transparent",
+                "#acacac"     // Цвет облаков
+            ],
+            bird: [
+                false,
+                "transparent",
+                "#acacac"     // Цвет птиц
+            ]
         }
     }
 };
