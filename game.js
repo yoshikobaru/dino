@@ -322,14 +322,14 @@ startButton.addEventListener('click', () => {
             
             // Если это первое использованное сердце
             if (availableGames === 4 && heartTimers.length === 0) {
-                nextHeartTime = now + 20000;
+                nextHeartTime = now + 300000;
                 heartTimers.push(nextHeartTime);
             } else if (availableGames < 5) {
                 // Для последующих сердец
                 const lastTimer = heartTimers.length > 0 ? 
                     Math.max(...heartTimers) : 
                     now;
-                const newTimer = Math.max(lastTimer + 20000, now + 20000);
+                const newTimer = Math.max(lastTimer + 300000, now + 300000);
                 heartTimers.push(newTimer);
             }
             
@@ -727,7 +727,7 @@ function loadGameState() {
                 
                 // Если нужно восстановить еще сердца
                 if (availableGames < 5 && heartTimers.length === 0) {
-                    nextHeartTime = now + 20000; // 20 секунд для тестирования
+                    nextHeartTime = now + 300000; // 20 секунд для тестирования
                     heartTimers.push(nextHeartTime);
                 } else if (availableGames === 5) {
                     nextHeartTime = 0;
@@ -791,11 +791,11 @@ function startGame() {
         // Добавляем новый таймер для восстановления сердца
         if (availableGames < 5) {
             // Вычисляем время для нового таймера
-            let newHeartTime = now + 20000;
+            let newHeartTime = now + 300000;
             
             // Если уже есть таймеры, добавляем время к последнему
             if (heartTimers.length > 0) {
-                newHeartTime = heartTimers[heartTimers.length - 1] + 20000;
+                newHeartTime = heartTimers[heartTimers.length - 1] + 300000;
             }
             
             heartTimers.push(newHeartTime);

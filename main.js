@@ -647,32 +647,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (task.name === "Сыграть 5 раз") {
             const gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
             const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
-            
-            // Проверяем, не на кулдауне ли задача
-            if (taskCooldown > Date.now()) {
-                return;
-            }
-            
-            if (gameProgress >= 5) {
+            const currentTime = Date.now();
+
+            // Проверяем, что прогресс достиг 5 и нажата кнопка получения награды
+            if (gameProgress >= 5 && taskCooldown <= currentTime) {
                 totalDPS += task.dps;
                 totalTaskEarnings += task.dps;
                 
-                // Сбрасываем прогресс и время
+                // Только здесь устанавливаем кулдаун, когда игрок получает награду
+                localStorage.setItem('gameTaskCooldown', (currentTime + 43200000).toString()); // 12 часов
                 localStorage.setItem('gameProgress', '0');
                 localStorage.setItem('gameTaskStartTime', '0');
-                
-                // Устанавливаем кулдаун и сразу сбрасываем прогресс
-                // Изменяем время кулдауна с 10000 на 43200000 (12 часов)
-                localStorage.setItem('gameTaskCooldown', (Date.now() + 43200000).toString());
-                localStorage.setItem('gameProgress', '0');
                 
                 localStorage.setItem('totalDPS', totalDPS.toString());
                 localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
                 
                 updateAllBalances();
                 renderTasks(category);
-                
-                showPopup(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
             }
         } else if (task.name === "Сыграть 25 раз") {
             let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
@@ -1046,7 +1037,7 @@ function loadDailyTasks() {
     renderTasks('daily');
 }
 
-// Функция для сохранения задч в localStorage
+// Функция для сохране��ия задч в localStorage
 function saveDailyTasks() {
     localStorage.setItem('dailyTasks', JSON.stringify(tasks.daily));
     localStorage.setItem('playedCount', playedCount.toString());
