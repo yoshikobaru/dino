@@ -1,5 +1,4 @@
 function initializeMainPage() {
-    
     // Добавляем данные пользователя из Telegram WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
         const user = window.Telegram.WebApp.initDataUnsafe.user;
@@ -11,22 +10,47 @@ function initializeMainPage() {
             userNameElement.textContent = user.first_name || 'User';
         }
         
-        // Устанавливаем аватар пользователя
-        if (userAvatarElement && user.photo_url) {
-            const img = document.createElement('img');
-            img.src = user.photo_url;
-            img.alt = 'User avatar';
-            img.className = 'w-full h-full object-cover';
-            userAvatarElement.appendChild(img);
-        } else if (userAvatarElement) {
-            // Если аватара нет, показываем первую букву имени
-            userAvatarElement.innerHTML = `
-                <div class="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold">
-                    ${(user.first_name || 'U')[0].toUpperCase()}
-                </div>
-            `;
+        // Устанавливаем аватар пользователя с обработкой ошибок
+        if (userAvatarElement) {
+            if (user.photo_url) {
+                // Создаем временный объект Image для проверки загрузки
+                const tempImage = new Image();
+                
+                // Показываем плейсхолдер пока загружается
+                userAvatarElement.innerHTML = `
+                    <div class="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold">
+                        ${(user.first_name || 'U')[0].toUpperCase()}
+                    </div>
+                `;
+                
+                tempImage.onload = function() {
+                    // Если изображение успешно загрузилось, показываем его
+                    userAvatarElement.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = user.photo_url;
+                    img.alt = 'User avatar';
+                    img.className = 'w-full h-full object-cover';
+                    userAvatarElement.appendChild(img);
+                };
+                
+                tempImage.onerror = function() {
+                    // Если произошла ошибка, оставляем плейсхолдер
+                    console.log('Failed to load user avatar, using placeholder');
+                };
+                
+                // Начинаем загрузку изображения
+                tempImage.src = user.photo_url;
+            } else {
+                // Если нет photo_url, показываем плейсхолдер
+                userAvatarElement.innerHTML = `
+                    <div class="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold">
+                        ${(user.first_name || 'U')[0].toUpperCase()}
+                    </div>
+                `;
+            }
         }
     }
+    
     document.querySelectorAll('footer button').forEach(btn => {
         btn.addEventListener('click', handleFooterButtonClick);
     });

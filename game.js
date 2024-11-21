@@ -1030,44 +1030,48 @@ function setButtonLoading(button, isLoading) {
 // Создаем модальное окно магазина
 function createShopModal() {
     const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center hidden';
+    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50';
     modal.id = 'shopModal';
 
     const content = document.createElement('div');
-    content.className = 'bg-black rounded-lg p-6 max-w-md w-full mx-4 border border-yellow-400';
+    content.className = 'bg-black rounded-lg p-6 max-w-md w-full mx-4 border border-yellow-400/50 shadow-lg';
     content.innerHTML = `
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-yellow-400">Магазин скинов</h2>
-            <button class="text-yellow-400 hover:text-yellow-500" onclick="closeShopModal()">✕</button>
+            <h2 class="text-xl font-bold text-yellow-400">Skins</h2>
+            <button class="w-8 h-8 rounded-full border border-yellow-400/50 text-yellow-400 flex items-center justify-center hover:bg-yellow-400/10 transition-colors" onclick="closeShopModal()">✕</button>
         </div>
         <div class="grid grid-cols-2 gap-4">
-            <div class="border border-yellow-400 rounded p-4 text-center bg-black">
-                <img src="assets/dino-default.jpg" alt="Default Dino" class="w-16 h-16 mx-auto mb-2">
-                <div class="font-bold text-yellow-400">Обычный</div>
-                <p class="text-gray-400 text-sm">Стандартная скорость и защита</p>
-                <button data-skin="default" class="mt-2 px-4 py-2 bg-gray-200 rounded" disabled>Выбран</button>
+            <div class="border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
+                <img src="assets/dino-default.jpg" alt="Default Dino" class="w-16 h-16 mx-auto mb-2 rounded-lg">
+                <div class="font-bold text-yellow-400">Default</div>
+                <p class="text-gray-400 text-sm mb-4">Standard speed and protection</p>
+                <button data-skin="default" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 text-yellow-400 bg-black hover:bg-yellow-400/10 transition-all"></button>
             </div>
-            <div class="border border-yellow-400 rounded p-4 text-center bg-black">
-                <img src="assets/ninja.jpg" alt="Ninja Dino" class="w-16 h-16 mx-auto mb-2">
-                <div class="font-bold text-yellow-400">Ниндзя</div>
-                <p class="text-gray-400 text-sm">🕒 Замедляет время на 30%</p>
-                <button data-skin="ninja" data-price="100" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
-                    Купить за <span class="text-white">100</span> ⭐️
-                </button>
+            <div class="border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
+                <img src="assets/ninja.jpg" alt="Ninja Dino" class="w-16 h-16 mx-auto mb-2 rounded-lg">
+                <div class="font-bold text-yellow-400">Ninja</div>
+                <p class="text-gray-400 text-sm mb-4">🕒 Slows time by 30%</p>
+                <button data-skin="ninja" data-price="100" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 bg-black text-yellow-400 hover:bg-yellow-400/10 transition-all"></button>
             </div>
-            <div class="border border-yellow-400 rounded p-4 text-center bg-black">
-                <img src="assets/robot.jpg" alt="Robot Dino" class="w-16 h-16 mx-auto mb-2">
-                <div class="font-bold text-yellow-400">Робот</div>
-                <p class="text-gray-400 text-sm">🛡️ Защита от одного столкновения</p>
-                <button data-skin="robot" data-price="100" class="mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors">
-                    Купить за <span class="text-white">100</span> ⭐️
-                </button>
+            <div class="border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
+                <img src="assets/robot.jpg" alt="Robot Dino" class="w-16 h-16 mx-auto mb-2 rounded-lg">
+                <div class="font-bold text-yellow-400">Robot</div>
+                <p class="text-gray-400 text-sm mb-4">🛡️ One-hit protection</p>
+                <button data-skin="robot" data-price="100" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 bg-black text-yellow-400 hover:bg-yellow-400/10 transition-all"></button>
             </div>
         </div>
     `;
 
     modal.appendChild(content);
     document.body.appendChild(modal);
+    
+    // Добавляем обработчик клика для закрытия по фону
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeShopModal();
+        }
+    });
+    
     updateShopButtons();
 }
 
@@ -1267,24 +1271,20 @@ function updateShopButtons() {
         
         if (skinName) {
             if (availableSkins[skinName]) {
-                // Если скин куплен
                 if (currentSkin === skinName) {
-                    button.textContent = 'Выбран';
+                    button.innerHTML = 'Selected';
                     button.disabled = true;
-                    button.className = 'mt-2 px-4 py-2 bg-gray-200 text-gray-600 rounded cursor-not-allowed';
+                    button.className = 'w-full px-4 py-2 rounded-lg border border-yellow-400 text-yellow-400 bg-yellow-400/10 transition-all';
                 } else {
-                    button.textContent = 'Выбрать';
+                    button.innerHTML = 'Select';
                     button.disabled = false;
-                    button.className = 'mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors';
+                    button.className = 'w-full px-4 py-2 rounded-lg border border-yellow-400/50 text-yellow-400 bg-black hover:bg-yellow-400/10 transition-all';
                     button.onclick = () => selectSkin(skinName);
                 }
             } else {
-                button.innerHTML = `Купить за <span class="text-white">${price}</span> ⭐️`;
-                button.className = 'mt-2 px-4 py-2 bg-black text-yellow-400 border border-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors';
-                button.onclick = () => {
-                    console.log(`Purchase button clicked with price: ${price}`);
-                    purchaseSkin(skinName, price);
-                };
+                button.className = 'w-full px-4 py-2 rounded-lg border border-yellow-400/50 bg-black text-yellow-400 hover:bg-yellow-400/10 transition-all';
+                button.innerHTML = `<span class="flex items-center justify-center"><span class="mr-2">${price}</span><span>⭐️</span></span>`;
+                button.onclick = () => purchaseSkin(skinName, price);
             }
         }
     });
