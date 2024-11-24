@@ -1,3 +1,17 @@
+// Глобальные переменные через window
+window.totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
+window.totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
+window.totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
+window.totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
+
+// Глобальный объект tasks
+window.tasks = {
+    daily: [],
+    social: [],
+    media: [],
+    refs: []
+};
+
 function initializeMainPage() {
     // Добавляем данные пользователя из Telegram WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
@@ -68,85 +82,70 @@ async function syncUserData() {
         });
         const data = await response.json();
         
-        // Обновляем все балансы из данных сервера
-        totalDPS = data.balance;
-        totalTaskEarnings = data.taskEarnings;
-        totalGameEarnings = data.gameEarnings;
-        totalInviteEarnings = data.inviteEarnings;
+        // Используем глобальные переменные
+        window.totalDPS = data.balance;
+        window.totalTaskEarnings = data.taskEarnings;
+        window.totalGameEarnings = data.gameEarnings;
+        window.totalInviteEarnings = data.inviteEarnings;
         
-        // Сохраняем в localStorage
-        localStorage.setItem('totalDPS', totalDPS);
-        localStorage.setItem('totalTaskEarnings', totalTaskEarnings);
-        localStorage.setItem('totalGameEarnings', totalGameEarnings);
-        localStorage.setItem('totalInviteEarnings', totalInviteEarnings);
+        localStorage.setItem('totalDPS', window.totalDPS);
+        localStorage.setItem('totalTaskEarnings', window.totalTaskEarnings);
+        localStorage.setItem('totalGameEarnings', window.totalGameEarnings);
+        localStorage.setItem('totalInviteEarnings', window.totalInviteEarnings);
         
-        // Обновляем отображение
         updateAllBalances();
-        
         return data;
     } catch (error) {
         console.error('Error syncing user data:', error);
     }
 }
   
-  // Функция для отправки обновлений на сервер
-  async function updateServerBalance() {
+async function updateServerBalance() {
     try {
-      const initData = window.Telegram.WebApp.initData;
-      const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
-      
-      const response = await fetch('/update-balance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Telegram-Init-Data': initData
-        },
-        body: JSON.stringify({
-          telegramId,
-          balance: totalDPS,
-          taskEarnings: totalTaskEarnings,
-          gameEarnings: totalGameEarnings,
-          inviteEarnings: totalInviteEarnings
-        })
-      });
-      
-      if (!response.ok) throw new Error('Update failed');
-      return true;
+        const response = await fetch('/update-balance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Telegram-Init-Data': window.Telegram.WebApp.initData
+            },
+            body: JSON.stringify({
+                telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
+                balance: window.totalDPS,
+                taskEarnings: window.totalTaskEarnings,
+                gameEarnings: window.totalGameEarnings,
+                inviteEarnings: window.totalInviteEarnings
+            })
+        });
+        
+        if (!response.ok) throw new Error('Update failed');
+        return true;
     } catch (error) {
-      console.error('Error updating server:', error);
-      return false;
+        console.error('Error updating server:', error);
+        return false;
     }
-  }
+}
   window.updateBalance = async function(amount, source) {
     try {
-        // Обновляем локальные значения в зависимости от источника
         switch(source) {
             case 'task':
-                totalTaskEarnings += amount;
-                totalDPS += amount;
-                localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+                window.totalTaskEarnings += amount;
+                window.totalDPS += amount;
+                localStorage.setItem('totalTaskEarnings', window.totalTaskEarnings.toString());
                 break;
             case 'game':
-                totalGameEarnings += amount;
-                totalDPS += amount;
-                localStorage.setItem('totalGameEarnings', totalGameEarnings.toString());
+                window.totalGameEarnings += amount;
+                window.totalDPS += amount;
+                localStorage.setItem('totalGameEarnings', window.totalGameEarnings.toString());
                 break;
             case 'invite':
-                totalInviteEarnings += amount;
-                totalDPS += amount;
-                localStorage.setItem('totalInviteEarnings', totalInviteEarnings.toString());
+                window.totalInviteEarnings += amount;
+                window.totalDPS += amount;
+                localStorage.setItem('totalInviteEarnings', window.totalInviteEarnings.toString());
                 break;
         }
-
-        // Сохраняем общий баланс
-        localStorage.setItem('totalDPS', totalDPS.toString());
-
-        // Обновляем отображение
+        localStorage.setItem('totalDPS', window.totalDPS.toString());
         updateAllBalances();
-
-        // Синхронизируем с сервером
         await updateServerBalance();
-
         return true;
     } catch (error) {
         console.error('Error updating balance:', error);
@@ -216,12 +215,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadDailyTasks();
     loadTaskState();
     loadPlayedCount();
-    
-    // Загрузка сохраненных значений
-    totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-    totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
-    totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
-    
     // Обновление всех отображений
     updateAllBalances();
     renderTasks('daily');
@@ -242,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const taskButtons = document.querySelectorAll('.flex.mb-4.space-x-2.overflow-x-auto button');
     const taskContainer = document.querySelector('.space-y-2');
     const totalScoreElement = document.querySelector('#totalScore');
-    let totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
    
     // Функция для обновления отображения общего счета
     function updateTotalScore() {
@@ -255,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     updateTotalScore();
 
-    tasks = {
+    window.tasks = {
         daily: [
             { name: "Ежедневный бонус", dps: 150, progress: 1, maxProgress: 7, cooldown: 0, bonusTime: 0 },
             { name: "Сыграть 5 раз", dps: 350, progress: 0, maxProgress: 5, cooldown: 0, timer: 0, isTimerRunning: false },
@@ -636,13 +628,6 @@ if (task.name === "Набрать 500 DPS за игру" || task.name === "На�
     // Запускаем таймер обновления только для ежедневных задач
     setInterval(updateDailyTask, 1000);
     
-    
-
-    // Д авляем перемнную для отслеживания заработанных денег за задачи
-    let totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
-
-    // ункция для обновния заработанных денег за задачи
-   
 
     // Функция для обновления отображения заработанных денег за задачи
     function updateTaskEarningsDisplay() {
@@ -786,13 +771,14 @@ if (task.name === "Набрать 500 DPS за игру" || task.name === "На�
         playButton.addEventListener('click', playGame);
     }
 
-    // Добавляем обработчик для обновления счета при возвращении а главную страницу
     document.querySelector('button[data-page="main"]').addEventListener('click', () => {
-        totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-        totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
-        updateTotalScore();
+        updateGameScoreDisplay();
         updateTaskScoreDisplay();
-        updateTaskEarningsDisplay();
+        updateInviteEarningsDisplay();
+        window.totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
+        window.totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
+        window.totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
+        updateAllBalances();
     });
 
     setInterval(() => {
@@ -802,8 +788,6 @@ if (task.name === "Набрать 500 DPS за игру" || task.name === "На�
         renderTasks(currentCategory); 
     }, 500);
 });
-let totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0; // Заработанные деньги за задания
-let totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0; // Заработанные деньги за приглашения
 
 async function updateInviteEarnings(amount) {
     await updateBalance(amount, 'invite');
@@ -812,23 +796,22 @@ async function updateInviteEarnings(amount) {
 function updateInviteEarningsDisplay() {
     const inviteEarningsElement = document.getElementById('inviteEarnings');
     if (inviteEarningsElement) {
-        const totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
-        inviteEarningsElement.textContent = `+${totalInviteEarnings} DPS`;
+        // Используем глобальную переменную вместо localStorage
+        inviteEarningsElement.textContent = `+${window.totalInviteEarnings} DPS`;
     }
 }
 
 function updateTaskScoreDisplay() {
     const earnedDPSElement = document.getElementById('earnedDPS');
     if (earnedDPSElement) {
-        earnedDPSElement.textContent = `+${totalTaskEarnings} DPS`;
+        earnedDPSElement.textContent = `+${window.totalTaskEarnings} DPS`;
     }
-    
 }
 
 function updateTotalScore() {
     const totalScoreElement = document.querySelector('.text-3xl.font-bold.text-black');
     if (totalScoreElement) {
-        totalScoreElement.textContent = `${totalDPS} DPS`;
+        totalScoreElement.textContent = `${window.totalDPS} DPS`;
     }
     updateTaskScoreDisplay();
     updateTaskEarningsDisplay();
@@ -836,25 +819,14 @@ function updateTotalScore() {
 
 function updateGameScoreDisplay() {
     const gameScoreElement = document.getElementById('gameScore');
-    const totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0; 
+    // Используем глобальную переменную вместо localStorage
     if (gameScoreElement) {
-        gameScoreElement.textContent = `+${totalGameEarnings} DPS`; 
+        gameScoreElement.textContent = `+${window.totalGameEarnings} DPS`; 
     }
 }
 function saveAllData() {
     updateAllBalances();
 }
-
-// Добавляем обработчик для обновления счета при возвращении на главую страницу
-document.querySelector('button[data-page="main"]').addEventListener('click', () => {
-    updateGameScoreDisplay(); // Обновляем отображение очков за игру при переходе на главную страницу
-    updateTaskScoreDisplay();
-    updateInviteEarningsDisplay();
-    totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-    totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
-    totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
-    updateAllBalances();
-});
 
 function updateAllBalances() {
     updateTotalScore();

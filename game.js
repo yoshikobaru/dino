@@ -1,6 +1,3 @@
-// Объявляем глобальные переменные один раз в начале файла
-let totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-let totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
 let availableGames = parseInt(localStorage.getItem('availableGames'));
 if (availableGames === null) {
     availableGames = 5;
@@ -22,7 +19,6 @@ let gameContainer;
 let timerActive = false;
 let heartTimers = JSON.parse(localStorage.getItem('heartTimers')) || [];
 let lastHeartRecoveryTime = 0;
-let tasks = JSON.parse(localStorage.getItem('dailyTasks')) || { daily: [] };
 let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
 let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
 let gameTaskTimer = null;
@@ -993,8 +989,6 @@ window.addEventListener('message', async (event) => {
             // Начисляем очки с множителем x3 после просмотра рекламы
             const currentScore = event.data.currentScore;
             const gameScore = currentScore * 3;
-            
-            // Заменяем прямое изменение на updateBalance
             await updateBalance(gameScore, 'game');
             
             updatePlayedCountTask();
@@ -1004,7 +998,7 @@ window.addEventListener('message', async (event) => {
                 window.updateTaskStatuses('daily');
             }
             
-            showPopup(`Вы заработали ${gameScore} DPS (x3)! Ваш новый баланс: ${totalDPS} DPS`);
+            showPopup(`Вы заработали ${gameScore} DPS (x3)! Ваш новый баланс: ${window.totalDPS} DPS`);
             
             // Отправляем сообщение в iframe о том, что реклама просмотрена
             if (gameIframe && gameIframe.contentWindow) {
