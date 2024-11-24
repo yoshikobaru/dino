@@ -43,6 +43,18 @@ const User = sequelize.define('User', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
+  taskEarnings: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  gameEarnings: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  inviteEarnings: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
   adWatchCount: {
     type: DataTypes.INTEGER,
     defaultValue: 0
@@ -145,8 +157,66 @@ bot.on('successful_payment', async (ctx) => {
     console.error('Error in successful_payment:', error);
   }
 });
+
+function validateInitData(initData) {
+  const urlParams = new URLSearchParams(initData);
+  const hash = urlParams.get('hash');
+  urlParams.delete('hash');
+  
+  // Сортируем оставшиеся параметры
+  const params = Array.from(urlParams.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+    
+  // Создаем HMAC
+  const secret = crypto.createHmac('sha256', 'WebAppData')
+    .update(process.env.DINO_BOT_TOKEN)
+    .digest();
+    
+  const generatedHash = crypto.createHmac('sha256', secret)
+    .update(params)
+    .digest('hex');
+    
+  return generatedHash === hash;
+}
+
+async function authMiddleware(req, res) {
+  const initData = req.headers['x-telegram-init-data'];
+  if (!initData || !validateInitData(initData)) {
+    return { status: 401, body: { error: 'Unauthorized' } };
+  }
+  return null;
+}
+
 const routes = {
   GET: {
+    '/sync-user-data': async (req, res, query) => {
+      const authError = await authMiddleware(req, res);
+      if (authError) return authError;
+
+      const { telegramId } = query;
+      try {
+        const user = await User.findOne({ where: { telegramId } });
+        if (!user) {
+          return { status: 404, body: { error: 'User not found' } };
+        }
+
+        return {
+          status: 200,
+          body: {
+            balance: user.balance,
+            taskEarnings: user.taskEarnings,
+            gameEarnings: user.gameEarnings,
+            inviteEarnings: user.inviteEarnings,
+            skins: user.skins
+          }
+        };
+      } catch (error) {
+        console.error('Error syncing user data:', error);
+        return { status: 500, body: { error: 'Internal server error' } };
+      }
+    },
     '/get-referral-link': async (req, res, query) => {
       console.log('Получен запрос на /get-referral-link');
       const telegramId = query.telegramId;
@@ -326,7 +396,44 @@ const routes = {
     }
     }
   },
-  POST: {}
+  POST: {
+    '/update-balance': async (req, res) => {
+      const authError = await authMiddleware(req, res);
+      if (authError) return authError;
+
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      
+      return new Promise((resolve) => {
+        req.on('end', async () => {
+          try {
+            const { telegramId, balance, taskEarnings, gameEarnings, inviteEarnings } = JSON.parse(body);
+            const user = await User.findOne({ where: { telegramId } });
+            
+            if (!user) {
+              resolve({ status: 404, body: { error: 'User not found' } });
+              return;
+            }
+
+            await user.update({
+              balance,
+              taskEarnings,
+              gameEarnings,
+              inviteEarnings
+            });
+
+            resolve({
+              status: 200,
+              body: { success: true }
+            });
+          } catch (error) {
+            console.error('Error updating balance:', error);
+            resolve({ status: 500, body: { error: 'Internal server error' } });
+          }
+        });
+      });
+    }
+  }
 };
 
 // Функция для обработки статических файлов

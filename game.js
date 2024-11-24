@@ -16,6 +16,8 @@ let startButton = document.getElementById('startButton');
 let livesDisplay = document.getElementById('lives');
 let timerDisplay;
 let gamePage;
+let canvas;
+let canvas_ctx;
 let gameContainer;
 let timerActive = false;
 let heartTimers = JSON.parse(localStorage.getItem('heartTimers')) || [];
@@ -892,7 +894,7 @@ function updatePlayedCountTask() {
 }
 
 // Исправленная функция для проверки и выполнения заданий на рекорд DPS
-function checkAndCompleteRecordTask(taskName) {
+async function checkAndCompleteRecordTask(taskName) {
     const task = tasks.daily.find(t => t.name === taskName);
     if (!task || task.isCompleted) return;
 
@@ -914,7 +916,6 @@ function checkAndCompleteRecordTask(taskName) {
 
     // Дополнительная проверка для задачи на 1000 DPS
     if (requiredScore === 1000) {
-        // Проверяем, выполнена ли предыдущая задача на 500 DPS
         if (localStorage.getItem('record500DPSCompleted') !== 'true') {
             showPopup('Сначала выполните задание "Набрать 500 DPS за игру"!');
             return;
@@ -924,14 +925,10 @@ function checkAndCompleteRecordTask(taskName) {
     // Если все проверки пройдены - начисляем награду
     task.isCompleted = true;
     localStorage.setItem(taskCompletedKey, 'true');
-    totalDPS += task.dps;
-    totalTaskEarnings += task.dps;
     
-    localStorage.setItem('totalDPS', totalDPS.toString());
-    localStorage.setItem('totalTaskEarnings', totalTaskEarnings.toString());
+    // Используем новую функцию updateBalance вместо прямого изменения
+    await updateBalance(task.dps, 'task');
     
-    updateTotalScore();
-    updateTaskEarningsDisplay();
     renderTasks('daily');
     saveTasks();
     
@@ -997,14 +994,9 @@ window.addEventListener('message', async (event) => {
             const currentScore = event.data.currentScore;
             const gameScore = currentScore * 3;
             
-            totalDPS += gameScore;
-            totalGameEarnings += gameScore;
-            localStorage.setItem('totalDPS', totalDPS);
-            localStorage.setItem('totalGameEarnings', totalGameEarnings);
+            // Заменяем прямое изменение на updateBalance
+            await updateBalance(gameScore, 'game');
             
-            updateTotalScore();
-            updateGameEarningsDisplay();
-            updateGameScoreDisplay();
             updatePlayedCountTask();
             
             // Добавляем обновление отображения задач
@@ -1012,7 +1004,7 @@ window.addEventListener('message', async (event) => {
                 window.updateTaskStatuses('daily');
             }
             
-            showPopup(`Вы заработали ${gameScore} DPS (x3)! аш новый баланс: ${totalDPS} DPS`);
+            showPopup(`Вы заработали ${gameScore} DPS (x3)! Ваш новый баланс: ${totalDPS} DPS`);
             
             // Отправляем сообщение в iframe о том, что реклама просмотрена
             if (gameIframe && gameIframe.contentWindow) {
@@ -1033,6 +1025,10 @@ window.addEventListener('message', async (event) => {
     } else if (event.data.type === 'gameOver') {
         // Проверяем, не была ли уже начислена награда
         if (!startButton.dataset.pendingScore) {
+            const score = parseInt(event.data.score);
+            // Заменяем прямое изменение на updateBalance
+            await updateBalance(score, 'game');
+            
             startButton.style.display = 'block';
             startButton.classList.add('claim-mode');
             startButton.innerHTML = 'Claim x1 DPS';
