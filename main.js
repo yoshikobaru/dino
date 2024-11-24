@@ -11,7 +11,12 @@ window.tasks = {
     media: [],
     refs: []
 };
-
+function ensureTaskArrays() {
+    if (!Array.isArray(window.tasks.daily)) window.tasks.daily = [];
+    if (!Array.isArray(window.tasks.social)) window.tasks.social = [];
+    if (!Array.isArray(window.tasks.media)) window.tasks.media = [];
+    if (!Array.isArray(window.tasks.refs)) window.tasks.refs = [];
+}
 function initializeMainPage() {
     // Добавляем данные пользователя из Telegram WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
@@ -232,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+    ensureTaskArrays();
     const taskButtons = document.querySelectorAll('.flex.mb-4.space-x-2.overflow-x-auto button');
     const taskContainer = document.querySelector('.space-y-2');
     const totalScoreElement = document.querySelector('#totalScore');
