@@ -557,25 +557,22 @@ if (task.name === "Набрать 500 DPS за игру" || task.name === "На�
         saveDailyTask();
     }
 
-    function saveDailyTask() {
-        localStorage.setItem('dailyTask', JSON.stringify(tasks.daily[0]));
-        localStorage.setItem('lastUpdateTime', Date.now().toString());
-    }
-
     function updateDailyTask() {
-        const task = tasks.daily[0];
+        const task = window.tasks.daily[0];
+        if (!task) return; // Если задачи нет, прекращаем выполнение
+    
         const now = Date.now();
         const lastUpdateTime = parseInt(localStorage.getItem('lastUpdateTime')) || now;
         const timePassed = Math.floor((now - lastUpdateTime) / 1000);
-
-        if (task.cooldown > 0) {
+    
+        if (task.cooldown !== undefined && task.cooldown > 0) {
             task.cooldown = Math.max(0, task.cooldown - timePassed);
             if (task.cooldown === 0) {
                 task.bonusTime = 86400; // 24 часа в секундах
                 localStorage.setItem('bonusTimeStart', now.toString());
                 localStorage.setItem('bonusTimeRemaining', task.bonusTime.toString());
             }
-        } else if (task.bonusTime > 0) {
+        } else if (task.bonusTime !== undefined && task.bonusTime > 0) {
             const bonusTimeStart = parseInt(localStorage.getItem('bonusTimeStart'));
             const elapsedBonusTime = Math.floor((now - bonusTimeStart) / 1000);
             task.bonusTime = Math.max(0, parseInt(localStorage.getItem('bonusTimeRemaining')) - elapsedBonusTime);
@@ -589,13 +586,21 @@ if (task.name === "Набрать 500 DPS за игру" || task.name === "На�
                 localStorage.removeItem('bonusTimeRemaining');
             }
         }
-
+    
         localStorage.setItem('lastUpdateTime', now.toString());
         saveDailyTask();
         
-        if (currentCategory === 'daily') {
+        if (window.currentCategory === 'daily') {
             updateTaskDisplay(task);
         }
+    }
+    
+    function saveDailyTask() {
+        const task = window.tasks.daily[0];
+        if (!task) return;
+        
+        localStorage.setItem('dailyTask', JSON.stringify(task));
+        localStorage.setItem('lastUpdateTime', Date.now().toString());
     }
 
     function updateTaskDisplay(task) {
@@ -624,21 +629,8 @@ if (task.name === "Набрать 500 DPS за игру" || task.name === "На�
     }
 
     loadDailyTask();
-
     // Запускаем таймер обновления только для ежедневных задач
     setInterval(updateDailyTask, 1000);
-    
-
-    // Функция для обновления отображения заработанных денег за задачи
-    function updateTaskEarningsDisplay() {
-        requestAnimationFrame(() => {
-            const taskEarningsElement = document.getElementById('earnedDPS');
-            if (taskEarningsElement) {
-                taskEarningsElement.textContent = `+${totalTaskEarnings} DPS`;
-            }
-        });
-    }
-
     // Именяем функцию completeTask
     async function completeTask(category, index) {
         const task = tasks[category][index];
@@ -826,6 +818,13 @@ function updateGameScoreDisplay() {
 }
 function saveAllData() {
     updateAllBalances();
+}
+
+function updateTaskEarningsDisplay() {
+    const taskEarningsElement = document.getElementById('earnedDPS');
+    if (taskEarningsElement) {
+        taskEarningsElement.textContent = `+${window.totalTaskEarnings} DPS`;
+    }
 }
 
 function updateAllBalances() {
