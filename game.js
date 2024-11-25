@@ -150,10 +150,12 @@ function updateAvailableGamesDisplay() {
 function loadGame() {
     if (!gameContainer) return;
     
-    gameIframe = createGameIframe();
-    
-    // Добавляем обработчики после создания iframe
-    setupEventListeners();
+    // Проверяем, существует ли уже iframe
+    if (!gameIframe) {
+        gameIframe = createGameIframe();
+        // Добавляем обработчики только при первом создании iframe
+        setupEventListeners();
+    }
     
     updateAvailableGamesDisplay();
 }
@@ -174,10 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Восстанавливаем состояние из localStorage
     nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || 0;
     
-    // Загружаем игру
-    if (gameContainer) {
-        loadGame();
-    }
     // Обновляем отображение
     createShopModal();
     checkAndUpdateHearts();
