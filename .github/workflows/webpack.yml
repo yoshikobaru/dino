@@ -29,7 +29,7 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd /path/to/dino
+          cd /root/dino
           git pull
           npm install
           npm run build
