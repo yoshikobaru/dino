@@ -32,13 +32,6 @@ jobs:
           cd /root/dino
           git pull
           npm install
-          mkdir -p src dist
-          # Проверяем наличие файлов
-          ls -la
-          ls -la src/
-          # Запускаем сборку с выводом ошибок
-          npm run build:css || true
-          npm run build:server
-          # Проверяем результат
+          npm run build
           ls -la dist/
           pm2 restart dino --update-env

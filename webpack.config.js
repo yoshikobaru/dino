@@ -1,5 +1,6 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 // Конфигурация для сервера
 const serverConfig = {
@@ -35,18 +36,23 @@ const clientConfig = {
         main: './main.js',
         game: './game.js',
         friends: './friends.js',
-        tasks: './tasks.js'
+        tasks: './tasks.js',
+        styles: './src/input.css'
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
         chunkFilename: '[id].js',
         publicPath: '/dist/',
-        clean: true // Очищает папку dist перед сборкой
+        clean: true
     },
-    // Добавим resolve
+    plugins: [
+        new MiniCssExtractPlugin({
+            filename: 'output.css'
+        })
+    ],
     resolve: {
-        extensions: ['.js'],
+        extensions: ['.js', '.css'],
         modules: ['node_modules']
     },
     optimization: {
@@ -79,6 +85,14 @@ const clientConfig = {
                         plugins: ['@babel/plugin-transform-runtime']
                     }
                 }
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    'postcss-loader'
+                ]
             }
         ]
     }
