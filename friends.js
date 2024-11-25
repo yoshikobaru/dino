@@ -36,19 +36,22 @@ function handleRewardClick() {
     // Сохраняем время получения награды
     localStorage.setItem('friendsRewardCooldown', Date.now().toString());
     
-    // Получаем текущие значения
-    const currentDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
-    const currentInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
-    
-    // Обновляем значения
-    localStorage.setItem('totalDPS', (currentDPS + rewardAmount).toString());
-    localStorage.setItem('totalInviteEarnings', (currentInviteEarnings + rewardAmount).toString());
-    
-    // Обновляем отображение
-    updateRewardSection();
-    updateAllBalances();
-    
-    window.showPopup(`Вы получили ${rewardAmount} DPS!`, 5000);
+    // Используем глобальную систему начисления наград
+    if (window.updateBalance) {
+        window.updateBalance(rewardAmount, 'invite')
+            .then(() => {
+                // Обновляем отображение после успешного начисления
+                updateRewardSection();
+                window.showPopup(`Вы получили ${rewardAmount} DPS!`, 5000);
+            })
+            .catch(error => {
+                console.error('Ошибка при начислении награды:', error);
+                window.showPopup('Произошла ошибка при получении награды', 5000);
+            });
+    } else {
+        console.error('Функция updateBalance не найдена');
+        window.showPopup('Произошла ошибка при получении награды', 5000);
+    }
 }
 
 function initializeFriendsPage() {
