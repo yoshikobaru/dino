@@ -419,13 +419,25 @@ class TaskManager {
                     this.tasks.media.find(t => t.id === taskId);
         
         if (task && !task.isCompleted) {
-            if (window.Telegram?.WebApp?.openLink) {
-                // Используем openLink для всех типов ссылок
-                window.Telegram.WebApp.openLink(task.link);
-                
-                task.isCompleted = true;
-                this.handleTaskCompletion(task);
-                this.saveTasks();
+            if (window.Telegram?.WebApp) {
+                try {
+                    // Для ботов используем openTelegramLink
+                    if (task.link.includes('BOT') || task.link.includes('bot')) {
+                        window.Telegram.WebApp.openTelegramLink(task.link);
+                    } 
+                    // Для каналов используем openLink
+                    else {
+                        window.Telegram.WebApp.openLink(task.link);
+                    }
+                    
+                    task.isCompleted = true;
+                    this.handleTaskCompletion(task);
+                    this.saveTasks();
+                } catch (error) {
+                    console.error('Error opening link:', error);
+                    // Fallback: открываем ссылку обычным способом
+                    window.open(task.link, '_blank');
+                }
             }
         }
         return null;
