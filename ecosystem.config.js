@@ -1,11 +1,10 @@
 module.exports = {
     apps: [{
       name: 'dino',
-      script: 'dist/server.js',
-      cwd: '/root/dino', // Указываем рабочую директорию
-      watch: false,
+      script: './dist/server.js',
+      watch: ['dist'],
       env: {
         NODE_ENV: 'production'
       }
     }]
-  };
+  }
