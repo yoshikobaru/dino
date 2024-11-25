@@ -7,7 +7,7 @@
     "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css",
     "build:server": "webpack --config webpack.config.js",
     "build": "npm run build:css && npm run build:server",
-    "start": "node dist/server.js",
+    "start": "cd /root/dino && node dist/server.js",
     "dev": "npm run build:css -- --watch"
   },
   "author": "",

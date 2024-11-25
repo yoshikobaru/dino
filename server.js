@@ -8,7 +8,7 @@ require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
 const defaultCharset = 'utf-8';
-
+const rootDir = process.cwd();
 // Создаем подключение к базе данных
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -464,29 +464,37 @@ const serveStaticFile = (filePath, res) => {
       '.jpg': 'image/jpg',
       '.gif': 'image/gif',
       '.svg': 'image/svg+xml',
-      '.txt': 'text/plain', // Добавим для .LICENSE.txt файлов
+      '.txt': 'text/plain'
   }[extname] || 'application/octet-stream';
 
+  console.log('Current working directory:', process.cwd()); // Добавим для отладки
   console.log('Trying to serve file:', filePath);
-  
-  // Для main.html проверяем сначала в корневой директории
-  if (filePath.endsWith('main.html')) {
-      const mainHtmlPath = path.join(rootDir, 'main.html');
-      if (fs.existsSync(mainHtmlPath)) {
-          filePath = mainHtmlPath;
+
+  // Проверяем существование файла
+  if (!fs.existsSync(filePath)) {
+      console.error('File does not exist:', filePath);
+      if (filePath.endsWith('main.html')) {
+          const mainHtmlPath = path.join(process.cwd(), 'main.html');
+          console.log('Trying alternative path:', mainHtmlPath); // Добавим для отладки
+          if (fs.existsSync(mainHtmlPath)) {
+              filePath = mainHtmlPath;
+          } else {
+              res.writeHead(404);
+              res.end('File not found');
+              return;
+          }
+      } else {
+          res.writeHead(404);
+          res.end('File not found');
+          return;
       }
   }
 
   fs.readFile(filePath, (error, content) => {
       if (error) {
           console.error('Error reading file:', error);
-          if (error.code === 'ENOENT') {
-              res.writeHead(404);
-              res.end('File not found');
-          } else {
-              res.writeHead(500);
-              res.end('Server Error: ' + error.code);
-          }
+          res.writeHead(500);
+          res.end('Server Error: ' + error.code);
       } else {
           res.writeHead(200, { 
               'Content-Type': `${contentType}; charset=${defaultCharset}`,
@@ -501,8 +509,6 @@ const options = {
     key: fs.readFileSync('/etc/letsencrypt/live/dino-app.ru/privkey.pem'),
     cert: fs.readFileSync('/etc/letsencrypt/live/dino-app.ru/fullchain.pem')
 };
-
-const rootDir = path.join(__dirname, '..');  // Путь к корневой директории проекта
 
 const server = https.createServer(options, async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
