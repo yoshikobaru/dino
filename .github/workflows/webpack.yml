@@ -29,8 +29,16 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd /root/dino
-          git pull
-          npm install
-          npm run build
-          pm2 restart dino --update-env
+  cd /root/dino
+  git pull
+  npm install
+  mkdir -p src dist
+  # Проверяем наличие файлов
+  ls -la
+  ls -la src/
+  # Запускаем сборку с выводом ошибок
+  npm run build:css || true
+  npm run build:server
+  # Проверяем результат
+  ls -la dist/
+  pm2 restart dino --update-env

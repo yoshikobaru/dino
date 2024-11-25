@@ -4,7 +4,7 @@
   "description": "SUDO",
   "main": "dist/server.js",
   "scripts": {
-    "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css",
+    "build:css": "mkdir -p dist && tailwindcss -i ./src/input.css -o ./dist/output.css --minify",
     "build:server": "webpack --config webpack.config.js",
     "build": "npm run build:css && npm run build:server",
     "start": "cd /root/dino && node dist/server.js",
