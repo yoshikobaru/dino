@@ -41,7 +41,8 @@ const clientConfig = {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
         chunkFilename: '[id].js',
-        publicPath: '/dist/' // Важно! Указываем правильный путь
+        publicPath: '/dist/',
+        clean: true // Очищает папку dist перед сборкой
     },
     // Добавим resolve
     resolve: {
@@ -49,7 +50,7 @@ const clientConfig = {
         modules: ['node_modules']
     },
     optimization: {
-        minimize: true,
+        minimize: false,
         splitChunks: {
             chunks: 'all',
             name: false,

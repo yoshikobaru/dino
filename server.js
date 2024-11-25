@@ -9,6 +9,15 @@ const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
 const defaultCharset = 'utf-8';
 const rootDir = process.cwd();
+
+const requiredFiles = [
+  '/main.html',
+  '/dist/main.js',
+  '/dist/game.js',
+  '/dist/friends.js',
+  '/dist/tasks.js',
+  '/dist/output.css'
+];
 // Создаем подключение к базе данных
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -158,7 +167,17 @@ bot.on('successful_payment', async (ctx) => {
     console.error('Error in successful_payment:', error);
   }
 });
-
+const checkRequiredFiles = () => {
+  console.log('Checking required files...');
+  requiredFiles.forEach(file => {
+      const filePath = path.join(process.cwd(), file);
+      if (fs.existsSync(filePath)) {
+          console.log(`✅ ${file} exists`);
+      } else {
+          console.error(`❌ ${file} is missing!`);
+      }
+  });
+};
 function validateInitData(initData) {
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get('hash');
@@ -491,18 +510,26 @@ const serveStaticFile = (filePath, res) => {
   }
 
   fs.readFile(filePath, (error, content) => {
-      if (error) {
-          console.error('Error reading file:', error);
-          res.writeHead(500);
-          res.end('Server Error: ' + error.code);
-      } else {
-          res.writeHead(200, { 
-              'Content-Type': `${contentType}; charset=${defaultCharset}`,
-              'Cache-Control': 'no-cache'
-          });
-          res.end(content, 'utf-8');
-      }
-  });
+    if (error) {
+        console.error('Error reading file:', error);
+        res.writeHead(500);
+        res.end('Server Error: ' + error.code);
+    } else {
+        const headers = {
+            'Content-Type': `${contentType}; charset=${defaultCharset}`,
+            'Cache-Control': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+        };
+        
+        // Добавляем заголовок для .js файлов
+        if (contentType === 'text/javascript') {
+            headers['Content-Type'] = 'application/javascript; charset=UTF-8';
+        }
+        
+        res.writeHead(200, headers);
+        res.end(content, 'utf-8');
+    }
+});
 };
 
 const options = {
@@ -516,7 +543,10 @@ const server = https.createServer(options, async (req, res) => {
   const method = req.method;
 
   console.log('Incoming request:', method, pathname);
-
+ // Добавим CORS заголовки
+ res.setHeader('Access-Control-Allow-Origin', '*');
+ res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+ res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (pathname === '/') {
       pathname = '/main.html';
   }
@@ -551,6 +581,7 @@ const httpsPort = 5000;
 const httpPort = 5001;
 
 server.listen(httpsPort, () => {
+  checkRequiredFiles();
   console.log(`HTTPS Сервер запущен на порту ${httpsPort}`);
   console.log('Telegram бот запущен');
   console.log(`HTTPS Сервер запущен на https://dino-app.ru`);
