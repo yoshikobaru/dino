@@ -1,6 +1,5 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 // Конфигурация для сервера
 const serverConfig = {
@@ -36,42 +35,11 @@ const clientConfig = {
         main: './main.js',
         game: './game.js',
         friends: './friends.js',
-        tasks: './tasks.js',
-        styles: './src/input.css'
+        tasks: './tasks.js'
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name].js',
-        chunkFilename: '[id].js',
-        publicPath: '/dist/',
-        clean: true
-    },
-    plugins: [
-        new MiniCssExtractPlugin({
-            filename: 'output.css'
-        })
-    ],
-    resolve: {
-        extensions: ['.js', '.css'],
-        modules: ['node_modules']
-    },
-    optimization: {
-        minimize: false,
-        splitChunks: {
-            chunks: 'all',
-            name: false,
-            cacheGroups: {
-                vendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    priority: -10
-                },
-                default: {
-                    minChunks: 2,
-                    priority: -20,
-                    reuseExistingChunk: true
-                }
-            }
-        }
+        filename: '[name].js'
     },
     module: {
         rules: [
@@ -81,18 +49,9 @@ const clientConfig = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['@babel/preset-env'],
-                        plugins: ['@babel/plugin-transform-runtime']
+                        presets: ['@babel/preset-env']
                     }
                 }
-            },
-            {
-                test: /\.css$/,
-                use: [
-                    MiniCssExtractPlugin.loader,
-                    'css-loader',
-                    'postcss-loader'
-                ]
             }
         ]
     }
