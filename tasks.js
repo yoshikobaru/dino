@@ -419,8 +419,10 @@ class TaskManager {
                     this.tasks.media.find(t => t.id === taskId);
         
         if (task && !task.isCompleted) {
-            if (window.Telegram?.WebApp) {
+            if (window.Telegram?.WebApp?.ready) {
                 try {
+                    // Дожидаемся готовности WebApp
+                    window.Telegram.WebApp.ready();
                     // Используем openLink для всех ссылок
                     window.Telegram.WebApp.openLink(task.link);
                     
@@ -432,6 +434,9 @@ class TaskManager {
                     // В случае ошибки просто открываем ссылку в новом окне
                     window.open(task.link, '_blank');
                 }
+            } else {
+                // Если WebApp не готов, используем обычное открытие ссылки
+                window.open(task.link, '_blank');
             }
         }
         return null;
