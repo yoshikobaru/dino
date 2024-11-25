@@ -1264,6 +1264,11 @@ function updateShopButtons() {
         }
     });
 }
+
+window.loadGame = loadGame;
+window.updateAvailableGamesDisplay = updateAvailableGamesDisplay;
+window.updateTimer = updateTimer;
+
 export {
     loadGame,
     updateAvailableGamesDisplay,
