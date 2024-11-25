@@ -1,4 +1,5 @@
 import taskManager from './tasks.js';
+import { loadGame, updateAvailableGamesDisplay, updateTimer } from './game.js';
 
 // Глобальные переменные через window
 window.totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
@@ -270,9 +271,9 @@ function showPage(pageName) {
         if (shopButton) {
             shopButton.classList.remove('hidden');
         }
-        window.loadGame();
-        window.updateAvailableGamesDisplay();
-        const timerData = window.updateTimer();
+        loadGame();
+        updateAvailableGamesDisplay();
+        const timerData = updateTimer();
         
         const timerElement = document.getElementById('timer');
         if (timerElement) {
@@ -282,7 +283,6 @@ function showPage(pageName) {
     }
 }
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('DOM loaded'); // Добавим для отладки
     try {
         await syncUserData();
         initializeMainPage();

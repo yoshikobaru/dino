@@ -176,6 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Восстанавливаем состояние из localStorage
     nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || 0;
     
+    // Загружаем игру
+    if (gameContainer) {
+        loadGame();
+    }
     // Обновляем отображение
     createShopModal();
     checkAndUpdateHearts();
@@ -1264,11 +1268,6 @@ function updateShopButtons() {
         }
     });
 }
-
-window.loadGame = loadGame;
-window.updateAvailableGamesDisplay = updateAvailableGamesDisplay;
-window.updateTimer = updateTimer;
-
 export {
     loadGame,
     updateAvailableGamesDisplay,
