@@ -455,36 +455,47 @@ const routes = {
 const serveStaticFile = (filePath, res) => {
   const extname = String(path.extname(filePath)).toLowerCase();
   const contentType = {
-    '.html': 'text/html',
-    '.js': 'text/javascript',
-    '.css': 'text/css',
-    '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpg',
-    '.gif': 'image/gif',
-    '.svg': 'image/svg+xml',
+      '.html': 'text/html',
+      '.js': 'text/javascript',
+      '.css': 'text/css',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
   }[extname] || 'application/octet-stream';
 
+  // Добавим логирование
+  console.log('Trying to serve file:', filePath);
+
   fs.readFile(filePath, (error, content) => {
-    if (error) {
-      if(error.code === 'ENOENT') {
-        fs.readFile(path.join(__dirname, '..', 'client', 'main.html'), (error, content) => {
-          if (error) {
-            res.writeHead(404);
-            res.end('Файл не найден');
+      if (error) {
+          console.error('File read error:', error);
+          if (error.code === 'ENOENT') {
+              // Если файл не найден, пробуем отдать main.html
+              const mainHtmlPath = path.join(__dirname, '..', 'main.html');
+              console.log('Trying fallback to:', mainHtmlPath);
+              
+              fs.readFile(mainHtmlPath, (error, content) => {
+                  if (error) {
+                      res.writeHead(404);
+                      res.end('File not found');
+                  } else {
+                      res.writeHead(200, { 'Content-Type': 'text/html' });
+                      res.end(content, 'utf-8');
+                  }
+              });
           } else {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(content, 'utf-8');
+              res.writeHead(500);
+              res.end('Server error: ' + error.code);
           }
-        });
       } else {
-        res.writeHead(500);
-        res.end('Ошибка сервера: ' + error.code);
+        res.writeHead(200, { 
+          'Content-Type': `${contentType}; charset=${defaultCharset}`,
+          'Cache-Control': 'no-cache'
+      });
+          res.end(content, 'utf-8');
       }
-    } else {
-      res.writeHead(200, { 'Content-Type': contentType });
-      res.end(content, 'utf-8');
-    }
   });
 };
 
@@ -498,17 +509,28 @@ const server = https.createServer(options, async (req, res) => {
   const pathname = parsedUrl.pathname;
   const method = req.method;
 
+  // Добавим логирование
+  console.log('Incoming request:', method, pathname);
+
   if (routes[method] && routes[method][pathname]) {
-    const handler = routes[method][pathname];
-    const result = await handler(req, res, parsedUrl.query);
-    res.writeHead(result.status, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(result.body));
+      const handler = routes[method][pathname];
+      const result = await handler(req, res, parsedUrl.query);
+      res.writeHead(result.status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result.body));
   } else {
-    let filePath = path.join(__dirname, '..', req.url === '/' ? 'main.html' : req.url);
-if (req.url.startsWith('/dist/')) {
-    filePath = path.join(__dirname, '..', req.url);
-}
-serveStaticFile(filePath, res);
+      let filePath;
+      if (pathname === '/' || pathname === '') {
+          filePath = path.join(__dirname, '..', 'main.html');
+      } else if (pathname.startsWith('/dist/')) {
+          filePath = path.join(__dirname, '..', pathname);
+      } else {
+          filePath = path.join(__dirname, '..', pathname);
+      }
+      
+      // Логируем итоговый путь
+      console.log('Resolved file path:', filePath);
+      
+      serveStaticFile(filePath, res);
   }
 });
 
