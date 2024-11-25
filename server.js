@@ -504,8 +504,11 @@ const server = https.createServer(options, async (req, res) => {
     res.writeHead(result.status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(result.body));
   } else {
-    let filePath = path.join(__dirname, '..', 'dino', req.url === '/' ? 'main.html' : req.url);
-    serveStaticFile(filePath, res);
+    let filePath = path.join(__dirname, '..', req.url === '/' ? 'main.html' : req.url);
+if (req.url.startsWith('/dist/')) {
+    filePath = path.join(__dirname, '..', req.url);
+}
+serveStaticFile(filePath, res);
   }
 });
 

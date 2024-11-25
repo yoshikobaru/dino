@@ -282,6 +282,7 @@ function showPage(pageName) {
     }
 }
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('DOM loaded'); // Добавим для отладки
     try {
         await syncUserData();
         initializeMainPage();

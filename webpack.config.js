@@ -40,7 +40,12 @@ const clientConfig = {
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
-        publicPath: '/dist/' // Добавим это
+        publicPath: '/' // Изменим на корневой путь
+    },
+    // Добавим resolve
+    resolve: {
+        extensions: ['.js'],
+        modules: ['node_modules']
     },
     optimization: {
         minimize: true,
