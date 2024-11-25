@@ -1,3 +1,6 @@
+import taskManager from './tasks.js';
+
+
 let availableGames = parseInt(localStorage.getItem('availableGames'));
 if (availableGames === null) {
     availableGames = 5;
@@ -26,7 +29,7 @@ let gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0
 const shopButton = document.getElementById('shopButton');
 shopButton?.addEventListener('click', openShopModal);
 
-window.updateTimer = function() {
+function updateTimer() {
     const now = Date.now();
     let updated = false;
 
@@ -34,9 +37,8 @@ window.updateTimer = function() {
     while (heartTimers.length > 0 && now >= heartTimers[0] && availableGames < 5) {
         availableGames++;
         updated = true;
-        heartTimers.shift(); // Удаляем использованный таймер
+        heartTimers.shift();
         
-        // Обновляем nextHeartTime
         nextHeartTime = heartTimers[0] || 0;
         
         localStorage.setItem('availableGames', availableGames);
@@ -44,7 +46,6 @@ window.updateTimer = function() {
         localStorage.setItem('nextHeartTime', nextHeartTime);
     }
 
-    // Вычисляем оставшееся время для следующего сердца
     let remainingTime = 0;
     if (heartTimers.length > 0 && availableGames < 5) {
         remainingTime = Math.max(0, Math.ceil((heartTimers[0] - now) / 1000));
@@ -58,9 +59,8 @@ window.updateTimer = function() {
         availableGames: availableGames,
         updated: updated
     };
-};
+}
 
-// Запускаем таймер обновления независимо от состояния DOM
 let timerInterval = setInterval(() => {
     const timerData = updateTimer();
     
@@ -268,6 +268,7 @@ startButton.addEventListener('click', () => {
         
         // Возвращаем кнопку в режим Start
         startButton.classList.remove('claim-mode');
+        delete startButton.dataset.pendingScore; // Добавляем эту строку
         updateStartButtonState();
     } else {
         if (availableGames > 0) {
@@ -598,57 +599,83 @@ function updateStartButtonState() {
     }
 }
 
-window.addEventListener('message', (event) => {
+window.addEventListener('message', async (event) => {
     if (event.data.type === 'gameOver') {
-     // Показываем обратно все элементы
-     const elementsToShow = [
-        document.querySelector('h1'),
-        document.getElementById('lives'),
-        document.getElementById('timer'),
-        document.getElementById('achievementsButton'),
-        document.getElementById('shopButton')
-    ];
-    
-    elementsToShow.forEach(el => {
-        if (el) el.style.display = '';
-    });
-    
-    // Удаляем все обработчики прыжка
-    document.removeEventListener('click', handleJump);
-    document.removeEventListener('touchstart', handleJump);
-    document.removeEventListener('keydown', handleJump);
-        // Показываем кнопку в режиме claim
-        startButton.style.display = 'block';
-        startButton.classList.add('claim-mode');
-        startButton.innerHTML = 'Claim x1 DPS';
-        startButton.dataset.pendingScore = event.data.score;
-        startButton.classList.remove('bg-yellow-400', 'text-black');
-        startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+        // Показываем обратно все элементы
+        const elementsToShow = [
+            document.querySelector('h1'),
+            document.getElementById('lives'),
+            document.getElementById('timer'),
+            document.getElementById('achievementsButton'),
+            document.getElementById('shopButton')
+        ];
         
-        if (availableGames === 0) {
-            livesDisplay.innerHTML = 'Игры закончились';
-        }
-                
-            // Проверяем, не установлен ли новый рекорд
-            const gameScore = event.data.score;
+        elementsToShow.forEach(el => {
+            if (el) el.style.display = '';
+        });
+        
+        // Удаляем все обработчики прыжка
+        document.removeEventListener('click', handleJump);
+        document.removeEventListener('touchstart', handleJump);
+        document.removeEventListener('keydown', handleJump);
+
+        // Проверяем, не была ли уже начислена награда
+        if (!startButton.dataset.pendingScore) {
+            const score = parseInt(event.data.score);
+            
+            // Обновляем счетчик игр ПЕРЕД вызовом updatePlayCount
+            let dailyPlayCount = parseInt(localStorage.getItem('dailyPlayCount') || '0');
+            dailyPlayCount++;
+            console.log('Updating dailyPlayCount to:', dailyPlayCount);
+            localStorage.setItem('dailyPlayCount', dailyPlayCount.toString());
+            
+            // Обновляем баланс и таски
+            taskManager.updatePlayCount();
+            
+            // Обновляем общий счетчик игр
+            playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
+            playedCount++;
+            localStorage.setItem('playedCount', playedCount.toString());
+            
+            // Обновляем UI кнопки
+            startButton.style.display = 'block';
+            startButton.classList.add('claim-mode');
+            startButton.innerHTML = 'Claim x1 DPS';
+            startButton.dataset.pendingScore = event.data.score;
+            startButton.classList.remove('bg-yellow-400', 'text-black');
+            startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
+            startButton.disabled = false;
+
+            // Проверяем рекорды
             const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
-            if (gameScore > highScore) {
-                localStorage.setItem('project.github.chrome_dino.high_score', gameScore.toString());
+            if (score > highScore) {
+                localStorage.setItem('project.github.chrome_dino.high_score', score.toString());
+                
                 // Проверяем достижение 500 и 1000 DPS
-                if (gameScore >= 1000) {
+                if (score >= 1000) {
                     const record1000DPSCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
                     if (!record1000DPSCompleted) {
                         showPopup('Поздравляем! Вы набрали 1000 DPS за игру. Получите награду в заданиях!');
                     }
-                } else if (gameScore >= 500) {
+                } else if (score >= 500) {
                     const record500DPSCompleted = localStorage.getItem('record500DPSCompleted') === 'true';
                     if (!record500DPSCompleted) {
                         showPopup('Поздравляем! Вы набрали 500 DPS за игру. Получите награду в заданиях!');
                     }
                 }
+                
+                taskManager.updateGameProgress(score);
             }
         }
-    });
+        
+        // Обновляем отображение сердец
+        if (availableGames === 0) {
+            livesDisplay.innerHTML = 'Игры закончились';
+        }
+        updateAvailableGamesDisplay();
+        updateStartButtonState();
+    }
+});
 
     document.querySelector('button[data-page="game"]').addEventListener('click', () => {
         if (gamePage.style.display !== 'none') {
@@ -764,7 +791,7 @@ document.addEventListener('visibilitychange', () => {
 });
 // Доавьте эту функцию в начало файла
 function updateGameTaskProgress() {
-    const gameTask = tasks.daily.find(task => task.name === "Сыграть 5 раз");
+    const gameTask = taskManager.tasks.daily.find(task => task.name === "Сыграть 5 раз");
     if (gameTask && gameTask.cooldown <= 0) {
         if (!gameTask.isTimerRunning) {
             startGameTaskTimer();
@@ -773,9 +800,10 @@ function updateGameTaskProgress() {
         if (gameTask.progress === gameTask.maxProgress) {
             clearTimeout(gameTask.timer);
             gameTask.isTimerRunning = false;
+            taskManager.handleTaskCompletion(gameTask);
         }
-        renderTasks('daily');
-        saveDailyTasks();
+        taskManager.renderTasks('daily');
+        taskManager.saveTasks();
     }
 }
 
@@ -815,24 +843,6 @@ function startGame() {
     }
 }
 
-// Добавляем функцию для запуска таймера задания
-function startGameTaskTimer() {
-    if (gameTaskTimer) {
-        clearTimeout(gameTaskTimer);
-    }
-    
-    gameTaskTimer = setTimeout(() => {
-        // Сбрасываем прогресс после истечения минуты
-        gameProgress = 0;
-        localStorage.setItem('gameProgress', gameProgress);
-        gameTaskStartTime = 0;
-        localStorage.setItem('gameTaskStartTime', gameTaskStartTime);
-        
-        // Обновляем отображение
-        renderTasks('daily');
-    }, 60000); // 1 минута
-}
-
 // Добавляем функцию для проверки времени
 function checkGameTaskTime() {
     if (gameTaskStartTime > 0) {
@@ -851,19 +861,18 @@ function checkGameTaskTime() {
     }
 }
 
-// Добавьте эту функцию
 function startGameTaskTimer() {
-    const gameTask = tasks.daily.find(task => task.name === "Сыграть 5 раз");
+    const gameTask = taskManager.tasks.daily.find(task => task.name === "Сыграть 5 раз");
     if (gameTask && !gameTask.isTimerRunning) {
         gameTask.isTimerRunning = true;
         gameTask.timerStartTime = Date.now();
         gameTask.timer = setTimeout(() => {
             gameTask.isTimerRunning = false;
             gameTask.progress = 0;
-            renderTasks('daily');
-            saveDailyTasks();
+            taskManager.renderTasks('daily');
+            taskManager.saveTasks();
         }, 60000); // 1 минута
-        saveDailyTasks();
+        taskManager.saveTasks();
     }
 }
 
@@ -878,57 +887,19 @@ function saveDailyTasks() {
 
 // Добавьте новую функцию:
 function updatePlayedCountTask() {
-    const playedCountTask = tasks.daily.find(task => task.name === "Сыграть 25 раз");
-    if (playedCountTask) {
-        playedCountTask.playedCount = playedCount;
-        if (playedCount >= 25) {
-            playedCountTask.isCompleted = true;
+    const dailyTasks = taskManager.getTasks('daily');
+    const play25Task = dailyTasks.find(task => task.name === "Сыграть 25 раз");
+    if (play25Task && !play25Task.isCompleted) {
+        const dailyPlayCount = parseInt(localStorage.getItem('dailyPlayCount')) || 0;
+        play25Task.progress = Math.min(dailyPlayCount, play25Task.maxProgress);
+        
+        if (play25Task.progress >= play25Task.maxProgress) {
+            play25Task.isCompleted = true;
+            taskManager.handleTaskCompletion(play25Task);
         }
-        renderTasks('daily');!
-        saveDailyTasks();
+        taskManager.renderTasks('daily');
+        taskManager.saveTasks();
     }
-}
-
-// Исправленная функция для проверки и выполнения заданий на рекорд DPS
-async function checkAndCompleteRecordTask(taskName) {
-    const task = tasks.daily.find(t => t.name === taskName);
-    if (!task || task.isCompleted) return;
-
-    const requiredScore = taskName === "Набрать 500 DPS за игру" ? 500 : 1000;
-    const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
-    const taskCompletedKey = `record${requiredScore}DPSCompleted`;
-
-    // Проверяем, не было ли уже выполнено задание
-    if (localStorage.getItem(taskCompletedKey) === 'true') {
-        showPopup('Это задание уже выполнено!');
-        return;
-    }
-
-    // Строгая проверка рекорда
-    if (highScore < requiredScore) {
-        showPopup(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь ${requiredScore} DPS!`);
-        return;
-    }
-
-    // Дополнительная проверка для задачи на 1000 DPS
-    if (requiredScore === 1000) {
-        if (localStorage.getItem('record500DPSCompleted') !== 'true') {
-            showPopup('Сначала выполните задание "Набрать 500 DPS за игру"!');
-            return;
-        }
-    }
-
-    // Если все проверки пройдены - начисляем награду
-    task.isCompleted = true;
-    localStorage.setItem(taskCompletedKey, 'true');
-    
-    // Используем новую функцию updateBalance вместо прямого изменения
-    await updateBalance(task.dps, 'task');
-    
-    renderTasks('daily');
-    saveTasks();
-    
-    showPopup(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания "${taskName}"!`);
 }
 // Добавляем инициализацию Adsgram
 function loadAdsgramScript() {
@@ -1016,36 +987,6 @@ window.addEventListener('message', async (event) => {
         } catch (error) {
             console.error('Ошибка при показе рекламы:', error);
         }
-    } else if (event.data.type === 'gameOver') {
-        // Проверяем, не была ли уже начислена награда
-        if (!startButton.dataset.pendingScore) {
-            const score = parseInt(event.data.score);
-            // Заменяем прямое изменение на updateBalance
-            await updateBalance(score, 'game');
-            
-            startButton.style.display = 'block';
-            startButton.classList.add('claim-mode');
-            startButton.innerHTML = 'Claim x1 DPS';
-            startButton.dataset.pendingScore = event.data.score;
-            startButton.classList.remove('bg-yellow-400', 'text-black');
-            startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
-            
-            // Увеличиваем счетчик сыгранных игр
-            playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
-            playedCount++;
-            localStorage.setItem('playedCount', playedCount);
-            
-            // Обновляем отображение задач
-            if (window.updateTaskStatuses) {
-                window.updateTaskStatuses('daily');
-            }
-        }
-        
-        // Обновляем отображение сердец отдельно
-        if (availableGames === 0) {
-            livesDisplay.innerHTML = 'Игры закончились';
-        }
-        updateAvailableGamesDisplay();
     }
 });
 let currentSkin = localStorage.getItem('currentDinoSkin') || 'default';
@@ -1117,7 +1058,7 @@ function openShopModal() {
     modal.classList.remove('hidden');
 }
 
-function closeShopModal() {
+window.closeShopModal = function() {
     const modal = document.getElementById('shopModal');
     modal.classList.add('hidden');
 }
@@ -1325,4 +1266,10 @@ function updateShopButtons() {
         }
     });
 }
-
+export {
+    loadGame,
+    updateAvailableGamesDisplay,
+    updateTimer,
+    updateGameTaskProgress,
+    startGameTaskTimer
+};

@@ -1,21 +1,18 @@
+import taskManager from './tasks.js';
+import { loadGame, updateAvailableGamesDisplay, updateTimer } from './game.js';
+
 // Глобальные переменные через window
 window.totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
 window.totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || 0;
 window.totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || 0;
 window.totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
 
-// Глобальный объект tasks
-window.tasks = {
-    daily: [],
-    social: [],
-    media: [],
-    refs: []
-};
-function ensureTaskArrays() {
-    if (!Array.isArray(window.tasks.daily)) window.tasks.daily = [];
-    if (!Array.isArray(window.tasks.social)) window.tasks.social = [];
-    if (!Array.isArray(window.tasks.media)) window.tasks.media = [];
-    if (!Array.isArray(window.tasks.refs)) window.tasks.refs = [];
+// Инициализация счетчиков игр
+if (!localStorage.getItem('dailyPlayCount')) {
+    localStorage.setItem('dailyPlayCount', '0');
+}
+if (!localStorage.getItem('lastPlayCountResetDate')) {
+    localStorage.setItem('lastPlayCountResetDate', new Date().toDateString());
 }
 function initializeMainPage() {
     // Добавляем данные пользователя из Telegram WebApp
@@ -69,12 +66,125 @@ function initializeMainPage() {
             }
         }
     }
-    
-    document.querySelectorAll('footer button').forEach(btn => {
-        btn.addEventListener('click', handleFooterButtonClick);
+}
+// Таски
+// Функция для отображения тасков
+window.updateTaskStatuses = function(category) {
+    taskManager.renderTasks(category);
+};
+function renderTasks(category) {
+    const taskContainer = document.getElementById('taskContainer');
+    if (!taskContainer) return;
+
+    const tasks = taskManager.getTasks(category);
+    taskContainer.innerHTML = '';
+
+    tasks.forEach(task => {
+        const taskElement = createTaskElement(task);
+        taskContainer.appendChild(taskElement);
     });
 }
 
+// Создание элемента таска
+function createTaskElement(task) {
+    const taskDiv = document.createElement('div');
+    taskDiv.className = 'bg-gray-800 rounded-lg p-4 flex justify-between items-center';
+    
+    taskDiv.innerHTML = `
+        <div class="flex items-center">
+            <div class="ml-3">
+                <div class="text-sm font-medium">${task.name}</div>
+                ${task.progress !== undefined ? 
+                    `<div class="text-xs text-gray-400">${task.progress}/${task.maxProgress}</div>` : 
+                    ''}
+            </div>
+        </div>
+        <div class="flex items-center">
+            <div class="text-yellow-400 text-sm font-bold mr-3">+${task.dps} DPS</div>
+            <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold ${
+                task.isCompleted ? 'opacity-50 cursor-not-allowed' : ''
+            }" ${task.isCompleted ? 'disabled' : ''} onclick="handleTaskClick('${task.id}')">
+                ${task.isCompleted ? 'Completed' : 'Complete'}
+            </button>
+        </div>
+    `;
+    
+    return taskDiv;
+}
+
+// Обработчик клика по таску
+window.handleTaskClick = async function(taskId) {
+    const task = taskManager.getTasks('daily')
+        .concat(taskManager.getTasks('social'))
+        .concat(taskManager.getTasks('media'))
+        .concat(taskManager.getTasks('refs'))
+        .find(t => t.id === taskId);
+
+    if (!task || task.isCompleted) {
+        return;
+    }
+
+    switch(task.type) {
+        case 'daily':
+            await taskManager.handleDailyTask(task);
+            break;
+        case 'social':
+            await taskManager.handleSocialTask(task);
+            break;
+        case 'media':
+            await taskManager.handleMediaTask(task);
+            break;
+        case 'refs':
+            await taskManager.handleRefsTask(task);
+            break;
+    }
+    
+    updateAllBalances();
+    taskManager.renderTasks(task.type);
+};
+
+// Функция для обновления баланса
+window.updateBalance = async function(amount, source) {
+    try {
+        switch(source) {
+            case 'task':
+                window.totalTaskEarnings += amount;
+                window.totalDPS += amount;
+                localStorage.setItem('totalTaskEarnings', window.totalTaskEarnings.toString());
+                break;
+            case 'game':
+                window.totalGameEarnings += amount;
+                window.totalDPS += amount;
+                localStorage.setItem('totalGameEarnings', window.totalGameEarnings.toString());
+                break;
+            case 'invite':
+                window.totalInviteEarnings += amount;
+                window.totalDPS += amount;
+                localStorage.setItem('totalInviteEarnings', window.totalInviteEarnings.toString());
+                break;
+        }
+        localStorage.setItem('totalDPS', window.totalDPS.toString());
+        updateAllBalances();
+        await updateServerBalance();
+        return true;
+    } catch (error) {
+        console.error('Error updating balance:', error);
+        return false;
+    }
+}
+
+function createSeparator() {
+    const separator = document.createElement('img');
+    separator.src = 'assets/Line.png';
+    separator.alt = 'Разделитель';
+    separator.className = 'w-full';
+    return separator;
+}
+
+document.querySelectorAll('footer button').forEach(btn => {
+    btn.addEventListener('click', handleFooterButtonClick);
+});
+// Функции синхронизации данных
 async function syncUserData() {
     if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return;
     
@@ -104,7 +214,6 @@ async function syncUserData() {
         console.error('Error syncing user data:', error);
     }
 }
-  
 async function updateServerBalance() {
     try {
         const response = await fetch('/update-balance', {
@@ -129,34 +238,7 @@ async function updateServerBalance() {
         return false;
     }
 }
-  window.updateBalance = async function(amount, source) {
-    try {
-        switch(source) {
-            case 'task':
-                window.totalTaskEarnings += amount;
-                window.totalDPS += amount;
-                localStorage.setItem('totalTaskEarnings', window.totalTaskEarnings.toString());
-                break;
-            case 'game':
-                window.totalGameEarnings += amount;
-                window.totalDPS += amount;
-                localStorage.setItem('totalGameEarnings', window.totalGameEarnings.toString());
-                break;
-            case 'invite':
-                window.totalInviteEarnings += amount;
-                window.totalDPS += amount;
-                localStorage.setItem('totalInviteEarnings', window.totalInviteEarnings.toString());
-                break;
-        }
-        localStorage.setItem('totalDPS', window.totalDPS.toString());
-        updateAllBalances();
-        await updateServerBalance();
-        return true;
-    } catch (error) {
-        console.error('Error updating balance:', error);
-        return false;
-    }
-}
+
 function handleFooterButtonClick(event) {
     const page = event.currentTarget.getAttribute('data-page');
     showPage(page);
@@ -169,8 +251,6 @@ function showPage(pageName) {
     const pageToShow = document.getElementById(`${pageName}-page`);
     if (pageToShow) {
         pageToShow.style.display = 'block';
-    } else {
-        console.error(`Страница ${pageName} не найдена`);
     }
 
     // Обновляем активную кнопку в футере
@@ -184,589 +264,61 @@ function showPage(pageName) {
         activeButton.classList.add('text-yellow-400');
     }
 
-    // Управляем видимостью кнопки магазина
-    const shopButton = document.getElementById('shopButton');
-    if (shopButton) {
-        if (pageName === 'game') {
+    if (pageName === 'game') {
+        const shopButton = document.getElementById('shopButton');
+        if (shopButton) {
             shopButton.classList.remove('hidden');
-            loadGame();
-            updateAvailableGamesDisplay();
-            updateTimer();
-            updateStartButtonState();
-        } else {
-            shopButton.classList.add('hidden');
+        }
+        loadGame();
+        updateAvailableGamesDisplay();
+        const timerData = updateTimer();
+        
+        const timerElement = document.getElementById('timer');
+        if (timerElement) {
+            timerElement.textContent = timerData.availableGames < 5 ? 
+                `Следующее сердце через: ${timerData.time}` : '';
         }
     }
 }
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await syncUserData();
-    // Инициализация Telegram WebApp
-    initializeMainPage();
-    showPage('main');
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.setHeaderColor('#000000');
-        window.Telegram.WebApp.setBackgroundColor('#000000');
-        window.Telegram.WebApp.expand();
-    }
-    
-    // Инициализация элементов DOM
-    const taskButtons = document.querySelectorAll('.flex.mb-4.space-x-2.overflow-x-auto button');
-    const taskContainer = document.querySelector('.space-y-2');
-    const totalScoreElement = document.querySelector('#totalScore');
-    
-    // Загрузка задач и состояний
-    loadDailyTasks();
-    loadTaskState();
-    loadPlayedCount();
-    // Обновление всех отображений
-    updateAllBalances();
-    renderTasks('daily');
-});
-
-// Добавьте обработчик клика для кнопок футера
-document.addEventListener('DOMContentLoaded', function() {
-    const footerButtons = document.querySelectorAll('.footer-btn');
-    footerButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            footerButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    ensureTaskArrays();
-    const taskButtons = document.querySelectorAll('.flex.mb-4.space-x-2.overflow-x-auto button');
-    const taskContainer = document.querySelector('.space-y-2');
-    const totalScoreElement = document.querySelector('#totalScore');
-   
-    // Функция для обновления отображения общего счета
-    function updateTotalScore() {
-        const totalScoreElement = document.querySelector('.text-3xl.font-bold.text-black');
-        if (totalScoreElement) {
-            totalScoreElement.textContent = `${totalDPS} DPS`;
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        await syncUserData();
+        initializeMainPage();
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.setHeaderColor('#000000');
+            window.Telegram.WebApp.setBackgroundColor('#000000');
+            window.Telegram.WebApp.expand();
         }
-        updateTaskScoreDisplay();
-        
-    }
-    updateTotalScore();
 
-    window.tasks = {
-        daily: [
-            { name: "Ежедневный бонус", dps: 150, progress: 1, maxProgress: 7, cooldown: 0, bonusTime: 0 },
-            { name: "Сыграть 5 раз", dps: 350, progress: 0, maxProgress: 5, cooldown: 0, timer: 0, isTimerRunning: false },
-            { name: "Сыграть 25 раз", dps: 750, playedCount: 0, maxProgress: 25, isCompleted: false },
-            { name: "Набрать 500 DPS за игру", dps: 550, isCompleted: false },
-            { name: "Набрать 1000 DPS за игру", dps: 1750, isCompleted: false } // Изменен с 1100 на 1750
-        ],
-        social: [
-            
-            { 
-                name: "Сыграть в LITWIN", 
-                dps: 350, 
-                link: "tg://resolve?domain=LITWIN_TAP_BOT&start=b8683c8c",
-                webLink: "https://t.me/LITWIN_TAP_BOT?start=b8683c8c",
-                isCompleted: false
-            },
-            { 
-                name: "Сыграть в Method", 
-                dps: 450, 
-                link: "tg://resolve?domain=MethodTon_Bot&start=p203ynnif7",
-                webLink: "https://t.me/MethodTon_Bot?start=p203ynnif7",
-                isCompleted: false
-            }
-        ],
-        media: [
-            { 
-                name: "Посмотреть новый пост в method", 
-                dps: 300,
-                link: "https://t.me/method_community",
-                webLink: "https://t.me/method_community",
-                isCompleted: false
-            },
-            { 
-                name: "Посмотреть пост в LITWIN", 
-                dps: 250,
-                link: "https://t.me/litwin_community",
-                webLink: "https://t.me/litwin_community",
-                isCompleted: false
-            }
-        ],
-        refs: [
-            { 
-                name: "Пригласить 3 друзей", 
-                dps: 500,
-                progress: 0,
-                maxProgress: 3,
-                isCompleted: false,
-                type: 'friends',
-                description: 'Пригласите друзей и получите бонус',
-                displayProgress: true
-            }
-           
-        ]
-    };
-
-    let currentCategory = 'daily';
-
-    async function renderTasks(category) {
-        currentCategory = category;
-        taskContainer.innerHTML = '';
-        tasks[category].forEach((task, index) => {  // Убираем async из forEach
-            const taskElement = document.createElement('div');
-            taskElement.className = 'bg-gray-800 rounded-lg p-3 flex justify-between items-center';
-            let buttonText = 'Start';
-            let buttonClass = 'bg-yellow-400 text-black';
-            let statusText = '';
-            
-            if (task.name === "Пригласить 3 друзей") {
-                const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
-                statusText = `${friendsCount}/${task.maxProgress}`;
+        // Инициализация кнопок категорий
+        const categoryButtons = document.querySelectorAll('.flex.mb-4.space-x-2.overflow-x-auto button');
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                categoryButtons.forEach(btn => {
+                    btn.classList.remove('bg-yellow-400', 'text-black');
+                    btn.classList.add('bg-gray-700', 'text-white');
+                });
                 
-                const isTaskCompleted = localStorage.getItem('friendsTaskCompleted') === 'true';
+                this.classList.remove('bg-gray-700', 'text-white');
+                this.classList.add('bg-yellow-400', 'text-black');
                 
-                if (friendsCount >= task.maxProgress) {
-                    if (!isTaskCompleted) {
-                        buttonText = 'Получить награду';
-                        buttonClass = 'bg-yellow-400 text-black';
-                    } else {
-                        buttonText = 'Выполнено';
-                        buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-                        task.isCompleted = true;
-                    }
-                } else {
-                    buttonText = 'В процессе';
-                    buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-                }
-            }
-            else if (task.cooldown > 0) {
-                statusText = 'Cooldown';
-                buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-            } else if (task.bonusTime > 0) {
-                statusText = 'Bonus Time!';
-            }
-            
-            if (task.name === "Сыграть 5 раз") {
-                let gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
-                const gameTaskStartTime = parseInt(localStorage.getItem('gameTaskStartTime')) || 0;
-                const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
-                
-                // Проверяем, не истекла ли минута
-                if (gameTaskStartTime > 0) {
-                    const now = Date.now();
-                    const timeElapsed = now - gameTaskStartTime;
-                    
-                    // Если прошла минута, сбрасываем прогресс
-                    if (timeElapsed >= 43200000) {
-                        gameProgress = 0;
-                        localStorage.setItem('gameProgress', '0');
-                        localStorage.setItem('gameTaskStartTime', '0');
-                    }
-                }
-                
-                // Проверяем кулдаун
-                if (taskCooldown > Date.now()) {
-                    const cooldownLeft = Math.ceil((taskCooldown - Date.now()) / 3600000);
-                    statusText = `Кулдаун: ${cooldownLeft}ч`;
-                    buttonText = 'Подождите';
-                    buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-                } else {
-                    let timeLeft = '';
-                    if (gameTaskStartTime > 0) {
-                        const now = Date.now();
-                        const timeElapsed = now - gameTaskStartTime;
-                        const remainingTime = Math.max(0, Math.ceil((43200000 - timeElapsed) / 3600000));
-                        timeLeft = ` (${remainingTime}ч)`;
-                    }
-                    
-                    statusText = `${gameProgress}/5${timeLeft}`;
-                    
-                    if (gameProgress >= 5) {
-                        buttonText = 'Получить награду';
-                        buttonClass = 'bg-yellow-400 text-black';
-                    } else if (gameTaskStartTime > 0) {
-                        buttonText = 'В процессе';
-                        buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-                    } else {
-                        buttonText = 'Начать';
-                        buttonClass = 'bg-yellow-400 text-black';
-                    }
-                }
-            }
-            
-            if (task.name === "Сыграть 25 раз") {
-                let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
-                statusText = `${playedCount}/${task.maxProgress}`;
-                if (playedCount < task.maxProgress) {
-                    buttonText = 'В процессе';
-                    buttonClass = 'bg-gray-500 text-white cursor-not-allowed';
-                } else {
-                    buttonText = 'Получить награду';
-                    buttonClass = 'bg-yellow-400 text-black';
-                }
-            }
-            
-            if (task.name === "Сыграть в LITWIN" || task.name === "Сыграть в Method") {
-                const taskKey = task.name === "Сыграть в LITWIN" ? 'litwinTaskCompleted' : 'methodTaskCompleted';
-                const isCompleted = localStorage.getItem(taskKey) === 'true';
-                buttonText = isCompleted ? 'Выполнено' : 'Играть';
-                buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
-                task.isCompleted = isCompleted;
-            }
-            
-            if (task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") {
-                const requiredScore = task.name === "Набрать 500 DPS за игру" ? 500 : 1000;
-                const isCompleted = localStorage.getItem(`record${requiredScore}DPSCompleted`) === 'true';
-                buttonText = isCompleted ? 'Выполнено' : 'Получить награду';
-                buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
-                task.isCompleted = isCompleted;
-            }
-            
-            if (task.name === "Посмотреть новый пост в method" || task.name === "Посмотреть пост в LITWIN") {
-                const storageKey = task.name === "Посмотреть новый пот в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
-                const isCompleted = localStorage.getItem(storageKey) === 'true';
-                buttonText = isCompleted ? 'Выполнено' : 'Start';
-                buttonClass = isCompleted ? 'bg-gray-500 text-white cursor-not-allowed' : 'bg-yellow-400 text-black';
-                task.isCompleted = isCompleted;
-            }
-            
-            taskElement.innerHTML = `
-    <div>
-        <div class="text-sm">${task.name}</div>
-        <div class="text-xs text-yellow-400">+${task.dps} DPS</div>
-        <div class="text-xs text-white">${statusText}</div>
-    </div>
-    <button class="task-button ${buttonClass} px-4 py-1 rounded-full text-sm font-bold" data-category="${category}" data-index="${index}" ${task.cooldown > 0 ? 'disabled' : ''}>${buttonText}</button>
-`;
-const taskButton = taskElement.querySelector('.task-button');
-taskButton.addEventListener('click', async function() { // Делаем обработчик асинхронным
-    if (!this.disabled) {
-        const category = this.getAttribute('data-category');
-        const index = parseInt(this.getAttribute('data-index'));
-        
-        if (task.name === "Пригласить 3 друзей") {
-            const friendsCount = parseInt(localStorage.getItem('referredFriendsCount')) || 0;
-            if (friendsCount >= task.maxProgress && !task.isCompleted) {
-                task.isCompleted = true;
-                localStorage.setItem('friendsTaskCompleted', 'true');
-                await updateBalance(task.dps, 'task');
-                renderTasks(category);
-            }
-        } else if (category === 'social') {
-            // Открываем ссылку
-            const isTelegramWebApp = window.Telegram && window.Telegram.WebApp;
-            const linkToUse = isTelegramWebApp ? task.link : task.webLink;
-            
-            // Начисляем DPS и сохраняем статус
-            if (task.name === "Сыграть в LITWIN") {
-                await updateBalance(task.dps, 'task');
-                localStorage.setItem('litwinTaskCompleted', 'true');
-                task.isCompleted = true;
-            } else if (task.name === "Сыграть в Method") {
-                await updateBalance(task.dps, 'task');
-                localStorage.setItem('methodTaskCompleted', 'true');
-                task.isCompleted = true;
-            }
-            
-            renderTasks(category);
-            window.open(linkToUse, '_blank');
-            return;
-        } else if (category === 'media') {
-            const task = tasks[category][index];
-            if ((task.name === "Посмотреть новый пост в method" || task.name === "Посмотреть пост в LITWIN") && !task.isCompleted) {
-                await updateBalance(task.dps, 'task');
-                
-                const storageKey = task.name === "Посмотреть новый пост в method" ? 'methodPostTaskCompleted' : 'litwinPostTaskCompleted';
-                localStorage.setItem(storageKey, 'true');
-                task.isCompleted = true;
-                
-                renderTasks(category);
-                
-                const isTelegramWebApp = window.Telegram && window.Telegram.WebApp;
-                const linkToUse = isTelegramWebApp ? task.link : task.webLink;
-                window.open(linkToUse, '_blank');
-            }
-        } else {
-            await completeTask(category, index);
-        }
-    }
-});
-
-taskContainer.appendChild(taskElement);
-taskContainer.appendChild(createSeparator());
-
-if (task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") {
-    taskButton.addEventListener('click', () => checkAndCompleteRecordTask(task.name));
-}
-        });
-    }
-    async function checkAndCompleteRecordTask(taskName) {
-        const task = tasks.daily.find(t => t.name === taskName);
-        if (!task || task.isCompleted) return;
-    
-        const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
-        const requiredScore = taskName === "Набрать 500 DPS за игру" ? 500 : 1000;
-        
-        if (highScore >= requiredScore) {
-            await updateBalance(task.dps, 'task');
-            
-            task.isCompleted = true;
-            localStorage.setItem(
-                taskName === "Набрать 500 DPS за игру" ? 'record500DPSCompleted' : 'record1000DPSCompleted',
-                'true'
-            );
-            
-            renderTasks('daily');
-            saveTasks();
-            
-            showPopup(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
-        } else {
-            showPopup(`Ваш текущий рекорд: ${highScore} DPS. Продолжайте играть, чтобы достичь ${requiredScore} DPS!`);
-        }
-    }
-    function createSeparator() {
-        const separator = document.createElement('img');
-        separator.src = 'assets/Line.png';
-        separator.alt = 'Разделитель';
-        separator.className = 'w-full';
-        return separator;
-    }
-
-    function loadDailyTask() {
-        const savedTask = localStorage.getItem('dailyTask');
-        const lastUpdateTime = localStorage.getItem('lastUpdateTime');
-        
-        if (savedTask && lastUpdateTime) {
-            const task = JSON.parse(savedTask);
-            const now = Date.now();
-            
-            // Восстанавливаем бонусное время
-            const bonusTimeStart = parseInt(localStorage.getItem('bonusTimeStart'));
-            const bonusTimeRemaining = parseInt(localStorage.getItem('bonusTimeRemaining'));
-            
-            if (bonusTimeStart && bonusTimeRemaining) {
-                const elapsedBonusTime = Math.floor((now - bonusTimeStart) / 1000);
-                task.bonusTime = Math.max(0, bonusTimeRemaining - elapsedBonusTime);
-                
-                if (task.bonusTime === 0) {
-                    task.progress = 1;
-                    task.dps = 150;
-                    localStorage.removeItem('bonusTimeStart');
-                    localStorage.removeItem('bonusTimeRemaining');
-                }
-            }
-            
-            tasks.daily[0] = task;
-        }
-        saveDailyTask();
-    }
-
-    function updateDailyTask() {
-        const task = window.tasks.daily[0];
-        if (!task) return; // Если задачи нет, прекращаем выполнение
-    
-        const now = Date.now();
-        const lastUpdateTime = parseInt(localStorage.getItem('lastUpdateTime')) || now;
-        const timePassed = Math.floor((now - lastUpdateTime) / 1000);
-    
-        if (task.cooldown !== undefined && task.cooldown > 0) {
-            task.cooldown = Math.max(0, task.cooldown - timePassed);
-            if (task.cooldown === 0) {
-                task.bonusTime = 86400; // 24 часа в секундах
-                localStorage.setItem('bonusTimeStart', now.toString());
-                localStorage.setItem('bonusTimeRemaining', task.bonusTime.toString());
-            }
-        } else if (task.bonusTime !== undefined && task.bonusTime > 0) {
-            const bonusTimeStart = parseInt(localStorage.getItem('bonusTimeStart'));
-            const elapsedBonusTime = Math.floor((now - bonusTimeStart) / 1000);
-            task.bonusTime = Math.max(0, parseInt(localStorage.getItem('bonusTimeRemaining')) - elapsedBonusTime);
-            
-            localStorage.setItem('bonusTimeRemaining', task.bonusTime.toString());
-            
-            if (task.bonusTime === 0) {
-                task.progress = 1;
-                task.dps = 150;
-                localStorage.removeItem('bonusTimeStart');
-                localStorage.removeItem('bonusTimeRemaining');
-            }
-        }
-    
-        localStorage.setItem('lastUpdateTime', now.toString());
-        saveDailyTask();
-        
-        if (window.currentCategory === 'daily') {
-            updateTaskDisplay(task);
-        }
-    }
-    
-    function saveDailyTask() {
-        const task = window.tasks.daily[0];
-        if (!task) return;
-        
-        localStorage.setItem('dailyTask', JSON.stringify(task));
-        localStorage.setItem('lastUpdateTime', Date.now().toString());
-    }
-
-    function updateTaskDisplay(task) {
-        const taskElement = document.querySelector(`[data-category="daily"][data-index="0"]`).closest('.bg-gray-800');
-        if (taskElement) {
-            const statusElement = taskElement.querySelector('.text-xs.text-white');
-            const buttonElement = taskElement.querySelector('.task-button');
-            
-            if (task.cooldown > 0) {
-                statusElement.textContent = ''; // Убрано отображение секунд
-                buttonElement.disabled = true;
-                buttonElement.classList.add('bg-gray-500', 'text-white', 'cursor-not-allowed');
-                buttonElement.classList.remove('bg-yellow-400', 'text-black');
-            } else if (task.bonusTime > 0) {
-                statusElement.textContent = ''; // Убрано отображение таймера
-                buttonElement.disabled = false;
-                buttonElement.classList.remove('bg-gray-500', 'text-white', 'cursor-not-allowed');
-                buttonElement.classList.add('bg-yellow-400', 'text-black');
-            } else {
-                statusElement.textContent = '';
-                buttonElement.disabled = false;
-                buttonElement.classList.remove('bg-gray-500', 'text-white', 'cursor-not-allowed');
-                buttonElement.classList.add('bg-yellow-400', 'text-black');
-            }
-        }
-    }
-
-    loadDailyTask();
-    // Запускаем таймер обновления только для ежедневных задач
-    setInterval(updateDailyTask, 1000);
-    // Именяем функцию completeTask
-    async function completeTask(category, index) {
-        const task = tasks[category][index];
-        
-        // Специальная обработка для ежедневного бонуса
-        if (task.name === "Ежедневный бонус") {
-            await updateBalance(task.dps, 'task');
-            
-            // Обновляем состояние задания
-            task.progress++;
-            if (task.progress > task.maxProgress) {
-                task.progress = 1;
-                task.dps = 150;
-            } else {
-                task.dps += 150;
-            }
-            task.cooldown = 86400;
-            
-            // Обновляем интерфейс
-            requestAnimationFrame(() => {
-                renderTasks(category);
-                saveDailyTask();
+                const category = this.textContent.toLowerCase();
+                taskManager.renderTasks(category);
             });
-            return;
-        }
-        
-        if (category === 'social') {
-            if (task.name === "Сыграть в LITWIN") {
-                await updateBalance(task.dps, 'task');
-                localStorage.setItem('litwinTaskCompleted', 'true');
-                task.isCompleted = true;
-            } else if (task.name === "Сыграть в Method") {
-                await updateBalance(task.dps, 'task');
-                localStorage.setItem('methodTaskCompleted', 'true');
-                task.isCompleted = true;
-            }
-            
-            renderTasks(category);
-            window.open(task.link, '_blank');
-            return;
-        }
-        
-        if (task.name === "Сыграть 5 раз") {
-            const gameProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
-            const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
-            const currentTime = Date.now();
-        
-            // Проверяем, что прогресс достиг 5 и нет активного кулдауна
-            if (gameProgress >= 5 && taskCooldown <= currentTime) {
-                await updateBalance(task.dps, 'task');
-                
-                // Устанавливаем кулдаун на 12 часов
-                localStorage.setItem('gameTaskCooldown', (currentTime + 43200000).toString());
-                localStorage.setItem('gameProgress', '0');
-                localStorage.setItem('gameTaskStartTime', '0');
-                
-                renderTasks(category);
-                showPopup(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
-            }
-            return;
-        } else if (task.name === "Сыграть 25 раз") {
-            let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
-            if (playedCount >= task.maxProgress && !task.isCompleted) {
-                await updateBalance(task.dps, 'task');
-                
-                task.isCompleted = true;
-                localStorage.setItem('playedCount', '0');
-                
-                renderTasks(category);
-                showPopup(`Поздравляем! Вы получили ${task.dps} DPS за выполнение задания!`);
-            }
-        } else if ((task.name === "Набрать 500 DPS за игру" || task.name === "Набрать 1000 DPS за игру") && !task.isCompleted) {
-            await checkAndCompleteRecordTask(task.name);
-        } else {
-            const earnedDPS = task.dps;
-            // Заменяем прямое изменение на updateBalance
-            await updateBalance(earnedDPS, 'task');
-            
-            task.progress++;
-            if (task.progress > task.maxProgress) {
-                task.progress = 1;
-                task.dps = 150;
-            } else {
-                task.dps += 150;
-            }
-    
-            task.cooldown = 20;
-            
-            renderTasks(category);
-            saveDailyTask();
-        }
-    }
-
-    taskButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const category = this.textContent.toLowerCase();
-            taskButtons.forEach(btn => btn.classList.remove('bg-yellow-400', 'text-black'));
-            taskButtons.forEach(btn => btn.classList.add('bg-gray-700', 'text-white'));
-            this.classList.remove('bg-gray-700', 'text-white');
-            this.classList.add('bg-yellow-400', 'text-black');
-            
-            if (category === 'daily') {
-                loadDailyTask();
-            }
-            renderTasks(category);
-            
-            // Обновляем отображение после смены категории
-            updateTaskScoreDisplay();
-            updateTaskEarningsDisplay();
         });
-    });
 
-    // Инициализация с задачами "Daily"
-    renderTasks('daily');
+        // Инициализация футера
+        document.querySelectorAll('footer button').forEach(btn => {
+            btn.addEventListener('click', handleFooterButtonClick);
+        });
 
-    // ункция для симуляции игры  обновления баланса
-    function playGame() {
-        const score = Math.floor(Math.random() * 100) + 1; // Случайный счет от 1 до 100
-        totalDPS += score;
-        totalGameEarnings += score;
-        localStorage.setItem('totalGameEarnings', totalGameEarnings);
-        updateGameEarningsDisplay();
-        updateTotalScore();
-        showPopup(`Вы аработали ${score} DPS! Ваш новый баланс: ${totalDPS} DPS`);
-    }
+        showPage('main');
+        taskManager.renderTasks('daily');
+        updateAllBalances();
 
-    // Добавляем обработчик для кнопк "Play Game" (предполагается, что такая кнопка есть в HTML)
-    const playButton = document.querySelector('#playGameButton');
-    if (playButton) {
-        playButton.addEventListener('click', playGame);
+    } catch (error) {
+        console.error('Error during initialization:', error);
     }
 
     document.querySelector('button[data-page="main"]').addEventListener('click', () => {
@@ -778,18 +330,7 @@ if (task.name === "Набрать 500 DPS за игру" || task.name === "На�
         window.totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || 0;
         updateAllBalances();
     });
-
-    setInterval(() => {
-        if (currentCategory === 'daily') {
-            updateDailyTask();
-        }
-        renderTasks(currentCategory); 
-    }, 500);
 });
-
-async function updateInviteEarnings(amount) {
-    await updateBalance(amount, 'invite');
-}
 
 function updateInviteEarningsDisplay() {
     const inviteEarningsElement = document.getElementById('inviteEarnings');
@@ -822,9 +363,6 @@ function updateGameScoreDisplay() {
         gameScoreElement.textContent = `+${window.totalGameEarnings} DPS`; 
     }
 }
-function saveAllData() {
-    updateAllBalances();
-}
 
 function updateTaskEarningsDisplay() {
     const taskEarningsElement = document.getElementById('earnedDPS');
@@ -840,242 +378,10 @@ function updateAllBalances() {
     updateInviteEarningsDisplay();
 }
 
-tasks.daily.push({
-    name: "Сыграть 5 раз",
-    dps: 350,
-    progress: 0,
-    maxProgress: 5,
-    cooldown: 0,
-    timer: 0,
-    isTimerRunning: false
-});
-
-// Функция для обновления прогресса игровой задачи
-function updateGameTaskProgress() {
-    const gameTask = tasks.daily.find(task => task.name === "Сыграть 5 раз");
-    if (gameTask && !gameTask.isTimerRunning && gameTask.cooldown <= 0) {
-        gameTask.progress++;
-        if (gameTask.progress === 1) {
-            startGameTaskTimer();
-        }
-        if (gameTask.progress === gameTask.maxProgress) {
-            gameTask.isTimerRunning = false;
-            clearTimeout(gameTask.timer);
-        }
-        renderTasks('daily');
-        saveDailyTasks();
-    }
-}
-
-// Функция для запуска таймера игровой задачи
-function startGameTaskTimer() {
-    const gameTask = tasks.daily.find(task => task.name === "Сыграть 5 раз");
-    if (gameTask && !gameTask.isTimerRunning) {
-        gameTask.isTimerRunning = true;
-        gameTask.timer = setTimeout(() => {
-            gameTask.isTimerRunning = false;
-            gameTask.progress = 0;
-            renderTasks('daily');
-            saveDailyTasks();
-        }, 60000); // 1 минута
-    }
-}
-
-
-
-function loadDailyTasks() {
-    const savedTasks = JSON.parse(localStorage.getItem('dailyTasks'));
-    if (savedTasks) {
-        tasks.daily = savedTasks;
-    } else {
-        addGameTask(); 
-    }
-    loadPlayedCount(); 
-    renderTasks('daily');
-}
-
-// Функция для сохране��ия задч в localStorage
-function saveDailyTasks() {
-    localStorage.setItem('dailyTasks', JSON.stringify(tasks.daily));
-    localStorage.setItem('playedCount', playedCount.toString());
-}
-
-// Функция для запуска кулдауна
-function startCooldown(category, index) {
-    const task = tasks[category][index];
-    task.cooldown = 20;
-    
-    const cooldownInterval = setInterval(() => {
-        task.cooldown--;
-        if (task.cooldown <= 0) {
-            clearInterval(cooldownInterval);
-        }
-        renderTasks(category);
-        saveDailyTasks();
-    }, 1000);
-}
-
-// Функция для выполнения задачи "Сыграть 5 раз"
-async function completePlayGameTask(index) {
-    const task = tasks.daily[index];
-    if (task.name === "Сыграть 5 раз" && task.progress === task.maxProgress) {
-        await updateBalance(task.dps, 'task');
-        
-        // Сбрасываем состояние задания
-        task.progress = 0;
-        task.isTimerRunning = false;
-        clearTimeout(task.timer);
-        
-        // Обновляем интерфейс
-        renderTasks('daily');
-        saveDailyTask();
-    }
-}
-
-// Обновляем функцию addGameTask
-function addGameTask() {
-    const gameTask = tasks.daily.find(task => task.name === "Сыграть 5 раз");
-    if (!gameTask) {
-        tasks.daily.push({
-            name: "Сыграть 5 раз",
-            description: "Сыграйте в игру 5 раз за 1 минуту",
-            dps: 100,
-            progress: 0,
-            maxProgress: 5,
-            isTimerRunning: false,
-            cooldown: 0,
-            timer: null
-        });
-    }
-}
-
-// Обновляем функцию updateGameTaskProgress
-function updateGameTaskProgress() {
-    const gameTask = tasks.daily.find(task => task.name === "Сыграть 5 раз");
-    if (gameTask && !gameTask.isTimerRunning && gameTask.cooldown <= 0) {
-        gameTask.progress++;
-        if (gameTask.progress === 1) {
-            startGameTaskTimer();
-        }
-        if (gameTask.progress === gameTask.maxProgress) {
-            gameTask.isTimerRunning = false;
-            clearTimeout(gameTask.timer);
-        }
-        renderTasks('daily');
-        saveDailyTasks();
-    }
-}
-
-// Обновляем фукцию startGameTaskTimer
-function startGameTaskTimer() {
-    const gameTask = tasks.daily.find(task => task.name === "Сыграть 5 раз");
-    if (gameTask && !gameTask.isTimerRunning) {
-        gameTask.isTimerRunning = true;
-        gameTask.timer = setTimeout(() => {
-            gameTask.isTimerRunning = false;
-            gameTask.progress = 0;
-            renderTasks('daily');
-            saveDailyTasks();
-        }, 60000); // 1 минуа
-    }
-}
-
-function loseLife() {
-
-    updateGameTaskProgress();
-}
-
-async function completePlayedCountTask(index) {
-    const task = tasks.daily[index];
-    if (task.name === "Сыграть 25 раз") {
-        let playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
-        if (playedCount >= task.maxProgress) {
-            await updateBalance(task.dps, 'task');
-            localStorage.setItem('playedCount', '0');
-            
-            renderTasks('daily');
-            saveDailyTasks();
-        }
-    }
-}
-
-function loadPlayedCount() {
-    playedCount = parseInt(localStorage.getItem('playedCount')) || 0;
-    const playedCountTask = tasks.daily.find(task => task.name === "Сыграть 25 раз");
-    if (playedCountTask) {
-        playedCountTask.playedCount = playedCount;
-        if (playedCount >= playedCountTask.maxProgress) {
-            playedCountTask.isCompleted = true;
-        }
-    }
-}
-
-function loadTaskState() {
-    const litwinTask = tasks.social.find(task => task.name === "Сыграть в LITWIN");
-    const methodTask = tasks.social.find(task => task.name === "Сыграть в Method");
-    if (litwinTask) {
-        litwinTask.isCompleted = localStorage.getItem('litwinTaskCompleted') === 'true';
-    }
-    if (methodTask) {
-        methodTask.isCompleted = localStorage.getItem('methodTaskCompleted') === 'true';
-    }
-    const record500DPSTask = tasks.daily.find(task => task.name === "Набрать 500 DPS за игру");
-    const record1000DPSTask = tasks.daily.find(task => task.name === "Набрать 1000 DPS за игру");
-    if (record500DPSTask) {
-        record500DPSTask.isCompleted = localStorage.getItem('record500DPSCompleted') === 'true';
-    }
-    if (record1000DPSTask) {
-        record1000DPSTask.isCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
-    }
-    const methodPostTask = tasks.media.find(task => task.name === "Посмотреть новый пост в method");
-    const litwinPostTask = tasks.media.find(task => task.name === "Посмотреть пост в LITWIN");
-    
-    if (methodPostTask) {
-        methodPostTask.isCompleted = localStorage.getItem('methodPostTaskCompleted') === 'true';
-    }
-    if (litwinPostTask) {
-        litwinPostTask.isCompleted = localStorage.getItem('litwinPostTaskCompleted') === 'true';
-    }
-    const friendsTask = tasks.refs.find(task => task.name === "Пригласить 3 друзей");
-    if (friendsTask) {
-        friendsTask.isCompleted = localStorage.getItem('friendsTaskCompleted') === 'true';
-    }
-}
-
-// Добавим функцию проверки кулдауна
-function isTaskOnCooldown() {
-    const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
-    return taskCooldown > Date.now();
-}
-function incrementGameProgress() {
-    const taskCooldown = parseInt(localStorage.getItem('gameTaskCooldown')) || 0;
-    const currentTime = Date.now();
-
-    // Если кулдаун только что закончился, сбрасываем прогресс
-    if (taskCooldown > 0 && currentTime > taskCooldown) {
-        localStorage.setItem('gameProgress', '0');
-        localStorage.setItem('gameTaskStartTime', '0');
-        localStorage.setItem('gameTaskCooldown', '0');
-        return; // Прерываем выполнение функции, чтобы не увеличивать прогресс сразу
-    }
-
-    // Проверяем, нет ли активного кулдауна
-    if (taskCooldown > currentTime) {
-        return; // Если кулдаун активен, не увеличиваем прогресс
-    }
-
-    const currentProgress = parseInt(localStorage.getItem('gameProgress')) || 0;
-    if (currentProgress < 5) {
-        localStorage.setItem('gameProgress', Math.min(currentProgress + 1, 5).toString());
-        if (currentProgress === 0) {
-            localStorage.setItem('gameTaskStartTime', Date.now().toString());
-        }
-    }
-}
-
-
-
-
-
-
-
+export { 
+    syncUserData, 
+    updateServerBalance, 
+    showPage, 
+    handleFooterButtonClick,
+    updateAllBalances 
+};
