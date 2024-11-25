@@ -398,43 +398,58 @@ const routes = {
   },
   POST: {
     '/update-balance': async (req, res) => {
-      const authError = await authMiddleware(req, res);
-      if (authError) return authError;
+        const authError = await authMiddleware(req, res);
+        if (authError) return authError;
 
-      let body = '';
-      req.on('data', chunk => { body += chunk; });
-      
-      return new Promise((resolve) => {
-        req.on('end', async () => {
-          try {
-            const { telegramId, balance, taskEarnings, gameEarnings, inviteEarnings } = JSON.parse(body);
-            const user = await User.findOne({ where: { telegramId } });
-            
-            if (!user) {
-              resolve({ status: 404, body: { error: 'User not found' } });
-              return;
-            }
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        
+        return new Promise((resolve) => {
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    // Преобразуем telegramId в строку
+                    const telegramId = data.telegramId.toString();
+                    const { balance, taskEarnings, gameEarnings, inviteEarnings } = data;
+                    
+                    console.log('Updating balance for user:', telegramId, {
+                      balance,
+                      taskEarnings,
+                      gameEarnings,
+                      inviteEarnings
+                  });
+                    
+                    const user = await User.findOne({ 
+                        where: { telegramId: telegramId }
+                    });
+                    
+                    if (!user) {
+                        console.log('User not found:', telegramId);
+                        resolve({ status: 404, body: { error: 'User not found' } });
+                        return;
+                    }
 
-            await user.update({
-              balance,
-              taskEarnings,
-              gameEarnings,
-              inviteEarnings
+                    await user.update({
+                        balance,
+                        taskEarnings,
+                        gameEarnings,
+                        inviteEarnings
+                    });
+
+                    console.log('Balance updated successfully');
+                    resolve({
+                        status: 200,
+                        body: { success: true }
+                    });
+                } catch (error) {
+                    console.error('Error updating balance:', error);
+                    resolve({ status: 500, body: { error: 'Internal server error: ' + error.message } });
+                }
             });
-
-            resolve({
-              status: 200,
-              body: { success: true }
-            });
-          } catch (error) {
-            console.error('Error updating balance:', error);
-            resolve({ status: 500, body: { error: 'Internal server error' } });
-          }
         });
-      });
     }
   }
-};
+}
 
 // Функция для обработки статических файлов
 const serveStaticFile = (filePath, res) => {

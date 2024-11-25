@@ -223,7 +223,7 @@ async function updateServerBalance() {
                 'X-Telegram-Init-Data': window.Telegram.WebApp.initData
             },
             body: JSON.stringify({
-                telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
+                telegramId: window.Telegram.WebApp.initDataUnsafe.user.id.toString(), // преобразуем в строку
                 balance: window.totalDPS,
                 taskEarnings: window.totalTaskEarnings,
                 gameEarnings: window.totalGameEarnings,
@@ -231,14 +231,16 @@ async function updateServerBalance() {
             })
         });
         
-        if (!response.ok) throw new Error('Update failed');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Update failed: ${errorData.error || response.statusText}`);
+        }
         return true;
     } catch (error) {
         console.error('Error updating server:', error);
         return false;
     }
 }
-
 function handleFooterButtonClick(event) {
     const page = event.currentTarget.getAttribute('data-page');
     showPage(page);
