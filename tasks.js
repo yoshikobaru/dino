@@ -71,8 +71,7 @@ class TaskManager {
                     id: 'litwin_game',
                     name: "Сыграть в LITWIN",
                     dps: 350,
-                    link: "tg://resolve?domain=LITWIN_TAP_BOT&start=b8683c8c",
-                    webLink: "https://t.me/LITWIN_TAP_BOT?start=b8683c8c",
+                    link: "https://t.me/LITWIN_TAP_BOT?start=b8683c8c", // меняем формат ссылки
                     isCompleted: false,
                     type: 'social'
                 },
@@ -80,8 +79,7 @@ class TaskManager {
                     id: 'method_game',
                     name: "Сыграть в Method",
                     dps: 450,
-                    link: "tg://resolve?domain=MethodTon_Bot&start=p203ynnif7",
-                    webLink: "https://t.me/MethodTon_Bot?start=p203ynnif7",
+                    link: "https://t.me/MethodTon_Bot?start=p203ynnif7", // меняем формат ссылки
                     isCompleted: false,
                     type: 'social'
                 }
@@ -91,7 +89,7 @@ class TaskManager {
                     id: 'method_post',
                     name: "Посмотреть новый пост в method",
                     dps: 300,
-                    link: "https://t.me/method_community", // только одна ссылка
+                    link: "https://t.me/method_community",
                     isCompleted: false,
                     type: 'media'
                 },
@@ -99,7 +97,7 @@ class TaskManager {
                     id: 'litwin_post',
                     name: "Посмотреть пост в LITWIN",
                     dps: 250,
-                    link: "https://t.me/litwin_community", // только одна ссылка
+                    link: "https://t.me/litwin_community",
                     isCompleted: false,
                     type: 'media'
                 }
@@ -422,13 +420,8 @@ class TaskManager {
         
         if (task && !task.isCompleted) {
             if (window.Telegram?.WebApp?.openLink) {
-                if (task.type === 'social') {
-                    // Для социальных тасков используем специальный формат ссылок
-                    window.Telegram.WebApp.openTelegramLink(task.link);
-                } else {
-                    // Для медиа тасков используем обычное открытие ссылок
-                    window.Telegram.WebApp.openLink(task.link);
-                }
+                // Используем openLink для всех типов ссылок
+                window.Telegram.WebApp.openLink(task.link);
                 
                 task.isCompleted = true;
                 this.handleTaskCompletion(task);
