@@ -91,8 +91,7 @@ class TaskManager {
                     id: 'method_post',
                     name: "Посмотреть новый пост в method",
                     dps: 300,
-                    link: "https://t.me/method_community",
-                    webLink: "https://t.me/method_community",
+                    link: "https://t.me/method_community", // только одна ссылка
                     isCompleted: false,
                     type: 'media'
                 },
@@ -100,8 +99,7 @@ class TaskManager {
                     id: 'litwin_post',
                     name: "Посмотреть пост в LITWIN",
                     dps: 250,
-                    link: "https://t.me/litwin_community",
-                    webLink: "https://t.me/litwin_community",
+                    link: "https://t.me/litwin_community", // только одна ссылка
                     isCompleted: false,
                     type: 'media'
                 }
@@ -423,9 +421,19 @@ class TaskManager {
                     this.tasks.media.find(t => t.id === taskId);
         
         if (task && !task.isCompleted) {
-            task.isCompleted = true;
-            this.handleTaskCompletion(task);
-            return task.link || task.webLink;
+            if (window.Telegram?.WebApp?.openLink) {
+                if (task.type === 'social') {
+                    // Для социальных тасков используем специальный формат ссылок
+                    window.Telegram.WebApp.openTelegramLink(task.link);
+                } else {
+                    // Для медиа тасков используем обычное открытие ссылок
+                    window.Telegram.WebApp.openLink(task.link);
+                }
+                
+                task.isCompleted = true;
+                this.handleTaskCompletion(task);
+                this.saveTasks();
+            }
         }
         return null;
     }
