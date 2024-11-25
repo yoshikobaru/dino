@@ -464,28 +464,29 @@ const serveStaticFile = (filePath, res) => {
       '.jpg': 'image/jpg',
       '.gif': 'image/gif',
       '.svg': 'image/svg+xml',
+      '.txt': 'text/plain', // Добавим для .LICENSE.txt файлов
   }[extname] || 'application/octet-stream';
 
   console.log('Trying to serve file:', filePath);
-
-  // Проверяем существование файла перед чтением
-  if (!fs.existsSync(filePath)) {
-      console.error('File does not exist:', filePath);
-      if (filePath.endsWith('main.html') || filePath === path.join(__dirname, '..', '/')) {
-          // Для main.html используем абсолютный путь
-          filePath = path.join(__dirname, '..', 'main.html');
-      } else {
-          res.writeHead(404);
-          res.end('File not found');
-          return;
+  
+  // Для main.html проверяем сначала в корневой директории
+  if (filePath.endsWith('main.html')) {
+      const mainHtmlPath = path.join(rootDir, 'main.html');
+      if (fs.existsSync(mainHtmlPath)) {
+          filePath = mainHtmlPath;
       }
   }
 
   fs.readFile(filePath, (error, content) => {
       if (error) {
           console.error('Error reading file:', error);
-          res.writeHead(500);
-          res.end('Server Error: ' + error.code);
+          if (error.code === 'ENOENT') {
+              res.writeHead(404);
+              res.end('File not found');
+          } else {
+              res.writeHead(500);
+              res.end('Server Error: ' + error.code);
+          }
       } else {
           res.writeHead(200, { 
               'Content-Type': `${contentType}; charset=${defaultCharset}`,
@@ -501,6 +502,8 @@ const options = {
     cert: fs.readFileSync('/etc/letsencrypt/live/dino-app.ru/fullchain.pem')
 };
 
+const rootDir = path.join(__dirname, '..');  // Путь к корневой директории проекта
+
 const server = https.createServer(options, async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   let pathname = parsedUrl.pathname;
@@ -508,32 +511,34 @@ const server = https.createServer(options, async (req, res) => {
 
   console.log('Incoming request:', method, pathname);
 
-  // Добавим обработку корневого пути
   if (pathname === '/') {
       pathname = '/main.html';
   }
 
+  // Проверяем API запросы
   if (routes[method] && routes[method][pathname]) {
       const handler = routes[method][pathname];
       const result = await handler(req, res, parsedUrl.query);
       res.writeHead(result.status, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result.body));
-  } else {
-      let filePath;
-      if (pathname.startsWith('/assets/')) {
-          // Для файлов в папке assets
-          filePath = path.join(__dirname, '..', pathname);
-      } else if (pathname.startsWith('/dist/')) {
-          // Для скомпилированных файлов
-          filePath = path.join(__dirname, '..', pathname);
-      } else {
-          // Для остальных файлов
-          filePath = path.join(__dirname, '..', pathname);
-      }
-      
-      console.log('Resolved file path:', filePath);
-      serveStaticFile(filePath, res);
+      return;
   }
+
+  // Обработка статических файлов
+  let filePath;
+  if (pathname.startsWith('/dist/')) {
+      // Для файлов в dist (включая чанки и лицензии)
+      filePath = path.join(rootDir, pathname);
+  } else if (pathname.startsWith('/assets/')) {
+      // Для файлов в assets
+      filePath = path.join(rootDir, pathname);
+  } else {
+      // Для остальных файлов
+      filePath = path.join(rootDir, pathname);
+  }
+  
+  console.log('Resolved file path:', filePath);
+  serveStaticFile(filePath, res);
 });
 
 const httpsPort = 5000;

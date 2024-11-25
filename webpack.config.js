@@ -40,7 +40,8 @@ const clientConfig = {
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
-        publicPath: '/' // Изменим на корневой путь
+        chunkFilename: '[id].js',
+        publicPath: '/dist/' // Важно! Указываем правильный путь
     },
     // Добавим resolve
     resolve: {
@@ -51,7 +52,18 @@ const clientConfig = {
         minimize: true,
         splitChunks: {
             chunks: 'all',
-            name: false
+            name: false,
+            cacheGroups: {
+                vendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    priority: -10
+                },
+                default: {
+                    minChunks: 2,
+                    priority: -20,
+                    reuseExistingChunk: true
+                }
+            }
         }
     },
     module: {
