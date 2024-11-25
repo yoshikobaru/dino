@@ -7,6 +7,7 @@ const crypto = require('crypto');
 require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
+const defaultCharset = 'utf-8';
 
 // Создаем подключение к базе данных
 const sequelize = new Sequelize(
@@ -465,35 +466,31 @@ const serveStaticFile = (filePath, res) => {
       '.svg': 'image/svg+xml',
   }[extname] || 'application/octet-stream';
 
-  // Добавим логирование
   console.log('Trying to serve file:', filePath);
+
+  // Проверяем существование файла перед чтением
+  if (!fs.existsSync(filePath)) {
+      console.error('File does not exist:', filePath);
+      if (filePath.endsWith('main.html') || filePath === path.join(__dirname, '..', '/')) {
+          // Для main.html используем абсолютный путь
+          filePath = path.join(__dirname, '..', 'main.html');
+      } else {
+          res.writeHead(404);
+          res.end('File not found');
+          return;
+      }
+  }
 
   fs.readFile(filePath, (error, content) => {
       if (error) {
-          console.error('File read error:', error);
-          if (error.code === 'ENOENT') {
-              // Если файл не найден, пробуем отдать main.html
-              const mainHtmlPath = path.join(__dirname, '..', 'main.html');
-              console.log('Trying fallback to:', mainHtmlPath);
-              
-              fs.readFile(mainHtmlPath, (error, content) => {
-                  if (error) {
-                      res.writeHead(404);
-                      res.end('File not found');
-                  } else {
-                      res.writeHead(200, { 'Content-Type': 'text/html' });
-                      res.end(content, 'utf-8');
-                  }
-              });
-          } else {
-              res.writeHead(500);
-              res.end('Server error: ' + error.code);
-          }
+          console.error('Error reading file:', error);
+          res.writeHead(500);
+          res.end('Server Error: ' + error.code);
       } else {
-        res.writeHead(200, { 
-          'Content-Type': `${contentType}; charset=${defaultCharset}`,
-          'Cache-Control': 'no-cache'
-      });
+          res.writeHead(200, { 
+              'Content-Type': `${contentType}; charset=${defaultCharset}`,
+              'Cache-Control': 'no-cache'
+          });
           res.end(content, 'utf-8');
       }
   });
@@ -506,11 +503,15 @@ const options = {
 
 const server = https.createServer(options, async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+  let pathname = parsedUrl.pathname;
   const method = req.method;
 
-  // Добавим логирование
   console.log('Incoming request:', method, pathname);
+
+  // Добавим обработку корневого пути
+  if (pathname === '/') {
+      pathname = '/main.html';
+  }
 
   if (routes[method] && routes[method][pathname]) {
       const handler = routes[method][pathname];
@@ -519,17 +520,18 @@ const server = https.createServer(options, async (req, res) => {
       res.end(JSON.stringify(result.body));
   } else {
       let filePath;
-      if (pathname === '/' || pathname === '') {
-          filePath = path.join(__dirname, '..', 'main.html');
+      if (pathname.startsWith('/assets/')) {
+          // Для файлов в папке assets
+          filePath = path.join(__dirname, '..', pathname);
       } else if (pathname.startsWith('/dist/')) {
+          // Для скомпилированных файлов
           filePath = path.join(__dirname, '..', pathname);
       } else {
+          // Для остальных файлов
           filePath = path.join(__dirname, '..', pathname);
       }
       
-      // Логируем итоговый путь
       console.log('Resolved file path:', filePath);
-      
       serveStaticFile(filePath, res);
   }
 });
