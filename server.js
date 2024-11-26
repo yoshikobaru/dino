@@ -8,6 +8,11 @@ require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
 
+// Редис для уведомлений
+const Redis = require('ioredis');
+const redis = new Redis();
+const schedule = require('node-schedule');
+
 // Создаем подключение к базе данных
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -71,6 +76,10 @@ const User = sequelize.define('User', {
     type: DataTypes.JSON,
     defaultValue: ['default'], // По умолчанию доступен только базовый скин
     allowNull: false
+  },
+  lastHeartNotification: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 });
 
@@ -84,7 +93,8 @@ const webAppUrl = 'https://dino-app.ru';
 // Обработчик команды /start
 bot.command('start', async (ctx) => {
   const telegramId = ctx.from.id.toString();
-  const username = ctx.from.username;
+  // Используем first_name если username отсутствует
+  const username = ctx.from.username || ctx.from.first_name || `user_${telegramId}`;
   const referralCode = ctx.message.text.split(' ')[1];
 
   try {
@@ -95,7 +105,7 @@ bot.command('start', async (ctx) => {
       
       user = await User.create({
         telegramId,
-        username, // Сохраняем username
+        username,
         referralCode: newReferralCode,
         referredBy: referralCode || null
       });
@@ -103,8 +113,21 @@ bot.command('start', async (ctx) => {
       if (referralCode) {
         const referrer = await User.findOne({ where: { referralCode } });
         if (referrer) {
-          // Здесь можно добавить логику начисления бонусов рефереру
           console.log(`User ${telegramId} was referred by ${referrer.telegramId}`);
+        }
+      }
+    } else {
+      // Обновляем username если он изменился
+      if (user.username !== username) {
+        await user.update({ username });
+      }
+      
+      // Если пользователь уже существует, но не имеет реферера и предоставлен реферальный код
+      if (!user.referredBy && referralCode) {
+        const referrer = await User.findOne({ where: { referralCode } });
+        if (referrer && referrer.telegramId !== telegramId) { // Проверяем что это не самореферал
+          await user.update({ referredBy: referralCode });
+          console.log(`Existing user ${telegramId} was referred by ${referrer.telegramId}`);
         }
       }
     }
@@ -157,7 +180,20 @@ bot.on('successful_payment', async (ctx) => {
     console.error('Error in successful_payment:', error);
   }
 });
+// редис для уведомлений функция
+async function scheduleHeartNotification(telegramId) {
+  try {
+    const user = await User.findOne({ where: { telegramId } });
+    if (!user || user.lastHeartNotification) return;
 
+    // Планируем уведомление через 25 минут
+    const notificationTime = Date.now() + (25 * 60 * 1000);
+    await redis.zadd('heart_notifications', notificationTime, telegramId);
+    await user.update({ lastHeartNotification: new Date(notificationTime) });
+  } catch (error) {
+    console.error('Error scheduling heart notification:', error);
+  }
+}
 function validateInitData(initData) {
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get('hash');
@@ -197,14 +233,36 @@ const routes = {
 
       const { telegramId } = query;
       try {
-        const user = await User.findOne({ where: { telegramId } });
-        if (!user) {
-          return { status: 404, body: { error: 'User not found' } };
+        const initData = req.headers['x-telegram-init-data'];
+        const urlParams = new URLSearchParams(initData);
+        const userDataStr = urlParams.get('user');
+        const userData = userDataStr ? JSON.parse(userDataStr) : {};
+        
+        // Используем first_name если username отсутствует
+        const username = userData.username || userData.first_name || `user_${telegramId}`;
+
+        let user = await User.findOne({ where: { telegramId } });
+        const isNewUser = !user;
+
+        if (isNewUser) {
+          const newReferralCode = crypto.randomBytes(4).toString('hex');
+          user = await User.create({
+            telegramId,
+            username,
+            referralCode: newReferralCode,
+            referredBy: null
+          });
+        } else {
+          // Обновляем username если он изменился
+          if (user.username !== username) {
+            await user.update({ username });
+          }
         }
 
         return {
           status: 200,
           body: {
+            isNewUser,
             balance: user.balance,
             taskEarnings: user.taskEarnings,
             gameEarnings: user.gameEarnings,
@@ -417,7 +475,7 @@ const routes = {
                       taskEarnings,
                       gameEarnings,
                       inviteEarnings
-                  });
+                    });
                     
                     const user = await User.findOne({ 
                         where: { telegramId: telegramId }
@@ -447,10 +505,63 @@ const routes = {
                 }
             });
         });
+    },
+    '/schedule-heart-notification': async (req, res) => {
+        const authError = await authMiddleware(req, res);
+        if (authError) return authError;
+
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        
+        return new Promise((resolve) => {
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const telegramId = data.telegramId.toString();
+                    await scheduleHeartNotification(telegramId);
+                    
+                    resolve({
+                        status: 200,
+                        body: { success: true }
+                    });
+                } catch (error) {
+                    console.error('Error scheduling notification:', error);
+                    resolve({ 
+                        status: 500, 
+                        body: { error: 'Internal server error: ' + error.message } 
+                    });
+                }
+            });
+        });
     }
   }
-}
-
+};
+// Проверка и отправка уведомлений каждую минуту
+schedule.scheduleJob('*/1 * * * *', async () => {
+  try {
+    const now = Date.now();
+    const notifications = await redis.zrangebyscore('heart_notifications', 0, now);
+    
+    for (const telegramId of notifications) {
+      // Отправляем уведомление
+      await bot.telegram.sendMessage(
+        telegramId,
+        '🦖 Все сердца восстановились!\n\nПора вернуться в игру и установить новый рекорд! 🏆'
+      );
+      
+      // Удаляем отправленное уведомление
+      await redis.zrem('heart_notifications', telegramId);
+      
+      // Обновляем статус уведомления в БД
+      await User.update(
+        { lastHeartNotification: null },
+        { where: { telegramId } }
+      );
+    }
+  } catch (error) {
+    console.error('Error processing heart notifications:', error);
+  }
+});
 // Функция для обработки статических файлов
 const serveStaticFile = (filePath, res) => {
   const extname = String(path.extname(filePath)).toLowerCase();

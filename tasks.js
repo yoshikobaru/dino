@@ -363,7 +363,14 @@ class TaskManager {
     }
     async handleDailyTask(task) {
         if (task.isCompleted) return;
-    
+     // Специальная обработка для ежедневного бонуса
+     if (task.id === 'daily_bonus') {
+        // Сразу отмечаем как выполненное и начисляем награду
+        task.isCompleted = true;
+        await this.handleTaskCompletion(task);
+        this.saveTasks();
+        return;
+    }
         // Специальная обработка для тасков на количество игр
         if (task.id === 'play_5' || task.id === 'play_25') {
             const dailyPlayCount = parseInt(localStorage.getItem('dailyPlayCount')) || 0;

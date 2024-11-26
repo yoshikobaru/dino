@@ -86,6 +86,23 @@ function handleJump(event) {
         }, '*');
     }
 }
+async function scheduleHeartNotification() {
+    if (availableGames === 0) { // Проверяем, что это последнее сердце
+        try {
+            const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
+            await fetch('/schedule-heart-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Telegram-Init-Data': window.Telegram.WebApp.initData
+                },
+                body: JSON.stringify({ telegramId })
+            });
+        } catch (error) {
+            console.error('Error scheduling heart notification:', error);
+        }
+    }
+}
 function setupEventListeners() {
     // Добавляем обработчики для всего документа
     document.addEventListener('keydown', (event) => {
@@ -239,7 +256,7 @@ window.showPopup = function(message, duration = 3000) {
         }, duration);
     });
 }
-startButton.addEventListener('click', () => {
+startButton.addEventListener('click', async () => {
     if (startButton.classList.contains('claim-mode')) {
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
@@ -317,6 +334,7 @@ startButton.addEventListener('click', () => {
    });
     startButton.style.display = 'none';
             availableGames--;
+            await scheduleHeartNotification();
             
             // Обновленная логика для heartTimers
             const now = Date.now();
@@ -457,27 +475,6 @@ function showAchievementNotification(achievement) {
     setTimeout(() => {
         achievementNotification.style.display = 'none';
     }, 3000);
-}
-
-// Функция проверки достижений
-function checkAchievements(score, combo, timeAlive, theme) {
-    const unlockedAchievements = JSON.parse(localStorage.getItem('achievements') || '[]');
-    
-    Object.values(ACHIEVEMENTS).forEach(achievement => {
-        if (!unlockedAchievements.includes(achievement.id) && 
-            achievement.condition(score, combo, timeAlive, theme)) {
-            
-            unlockedAchievements.push(achievement.id);
-            localStorage.setItem('achievements', JSON.stringify(unlockedAchievements));
-            
-            // Вибрация
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-            }
-            
-            showAchievementNotification(achievement);
-        }
-    });
 }
 
 // Обработчик сообщений от iframe
@@ -720,13 +717,6 @@ function updateGameScoreDisplay() {
     }
 }
 
-function saveGameState() {
-    localStorage.setItem('availableGames', availableGames);
-    localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
-    localStorage.setItem('lastHeartRecoveryTime', lastHeartRecoveryTime);
-    updateAvailableGamesDisplay(); 
-}
-
 // Изменяем функцию loadGameState
 function loadGameState() {
     const savedAvailableGames = localStorage.getItem('availableGames');
@@ -809,60 +799,6 @@ function updateGameTaskProgress() {
     }
 }
 
-// Измените функцию startGame
-function startGame() {
-    if (availableGames > 0) {
-        availableGames--;
-        
-        const now = Date.now();
-        
-        // Добавляем новый таймер для восстановления сердца
-        if (availableGames < 5) {
-            // Вычисляем время для нового таймера
-            let newHeartTime = now + 300000;
-            
-            // Если уже есть таймеры, добавляем время к последнему
-            if (heartTimers.length > 0) {
-                newHeartTime = heartTimers[heartTimers.length - 1] + 300000;
-            }
-            
-            heartTimers.push(newHeartTime);
-            nextHeartTime = heartTimers[0]; // Следующее восстановление - самый ранний таймер
-        }
-        
-        localStorage.setItem('availableGames', availableGames);
-        localStorage.setItem('heartTimers', JSON.stringify(heartTimers));
-        localStorage.setItem('nextHeartTime', nextHeartTime);
-        
-        // Обновляем отображение
-        updateAvailableGamesDisplay();
-        if (startButton) startButton.style.display = 'none';
-        
-        // Запускаем игру
-        if (gameIframe && gameIframe.contentWindow) {
-            gameIframe.contentWindow.postMessage({ type: 'start' }, '*');
-        }
-    }
-}
-
-// Добавляем функцию для проверки времени
-function checkGameTaskTime() {
-    if (gameTaskStartTime > 0) {
-        const now = Date.now();
-        const timeElapsed = now - gameTaskStartTime;
-        
-        if (timeElapsed >= 60000) { // Прошла минута
-            gameProgress = 0;
-            localStorage.setItem('gameProgress', gameProgress);
-            gameTaskStartTime = 0;
-            localStorage.setItem('gameTaskStartTime', gameTaskStartTime);
-            if (gameTaskTimer) {
-                clearTimeout(gameTaskTimer);
-            }
-        }
-    }
-}
-
 function startGameTaskTimer() {
     const gameTask = taskManager.tasks.daily.find(task => task.name === "Сыграть 5 раз");
     if (gameTask && !gameTask.isTimerRunning) {
@@ -878,13 +814,8 @@ function startGameTaskTimer() {
     }
 }
 
-// Добавьте эти функции, если их нет в game.js
 function renderTasks(category) {
     // Реализация может быть пустой, если отображение происходит в main.js
-}
-
-function saveDailyTasks() {
-    localStorage.setItem('dailyTasks', JSON.stringify(tasks));
 }
 
 // Добавьте новую функцию:
@@ -932,21 +863,6 @@ async function initAdsgram() {
 // Инициализируем Adsgram при загрузке страницы
 document.addEventListener('DOMContentLoaded', initAdsgram);
 
-function updateStartButtonText(isClaim = false) {
-    if (startButton) {
-        if (isClaim) {
-            startButton.innerHTML = 'Claim x1 DPS 😢';
-            startButton.classList.add('claim-mode');
-            startButton.classList.remove('bg-yellow-400', 'text-black');
-            startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
-        } else {
-            startButton.innerHTML = 'Start';
-            startButton.classList.remove('claim-mode');
-            startButton.classList.remove('bg-gray-200', 'text-gray-600', 'opacity-80', 'hover:opacity-100');
-            startButton.classList.add('bg-yellow-400', 'text-black');
-        }
-    }
-}
 // Обновляем обработчик сообщений от игры
 window.addEventListener('message', async (event) => {
     if (event.data.type === 'showAd') {
@@ -997,15 +913,6 @@ let availableSkins = JSON.parse(localStorage.getItem('availableSkins')) || {
     ninja: false,
     robot: false
 };
-function setButtonLoading(button, isLoading) {
-    if (isLoading) {
-        button.disabled = true;
-        button.innerHTML = 'Загрузка...';
-    } else {
-        button.disabled = false;
-        updateShopButtons(); // Восстанавливаем правильный текст кнопки
-    }
-}
 // Создаем модальное окно магазина
 function createShopModal() {
     const modal = document.createElement('div');

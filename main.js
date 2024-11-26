@@ -197,6 +197,21 @@ async function syncUserData() {
         });
         const data = await response.json();
         
+        // Если это первый запуск (пользователь только что создан)
+        if (data.isNewUser) {
+            // Получаем параметры URL для проверки реферального кода
+            const urlParams = new URLSearchParams(window.location.search);
+            const startParam = urlParams.get('start'); // Получаем реферальный код из URL если есть
+            
+            // Формируем команду start с реферальным кодом если он есть
+            const startCommand = startParam ? `/start ${startParam}` : '/start';
+            
+            // Отправляем команду в бот
+            if (window.Telegram?.WebApp?.sendData) {
+                window.Telegram.WebApp.sendData(startCommand);
+            }
+        }
+        
         // Используем глобальные переменные
         window.totalDPS = data.balance;
         window.totalTaskEarnings = data.taskEarnings;
