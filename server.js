@@ -8,10 +8,31 @@ require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
 
+
 // Редис для уведомлений
+const ADMIN_ID = process.env.ADMIN_TELEGRAM_ID;
 const Redis = require('ioredis');
-const redis = new Redis();
+const redis = new Redis({
+    host: '127.0.0.1',
+    port: 6379,
+    retryStrategy: function(times) {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+    },
+    maxRetriesPerRequest: null
+});
+
+redis.on('error', (err) => {
+    console.error('Redis connection error:', err);
+});
+
+redis.on('connect', () => {
+    console.log('Successfully connected to Redis');
+});
 const schedule = require('node-schedule');
+const isAdmin = (telegramId) => {
+  return telegramId.toString() === ADMIN_ID;
+};
 
 // Создаем подключение к базе данных
 const sequelize = new Sequelize(
@@ -454,88 +475,170 @@ const routes = {
     }
     }
   },
-  POST: {
-    '/update-balance': async (req, res) => {
-        const authError = await authMiddleware(req, res);
-        if (authError) return authError;
-
-        let body = '';
-        req.on('data', chunk => { body += chunk; });
-        
-        return new Promise((resolve) => {
-            req.on('end', async () => {
-                try {
-                    const data = JSON.parse(body);
-                    // Преобразуем telegramId в строку
-                    const telegramId = data.telegramId.toString();
-                    const { balance, taskEarnings, gameEarnings, inviteEarnings } = data;
-                    
-                    console.log('Updating balance for user:', telegramId, {
-                      balance,
-                      taskEarnings,
-                      gameEarnings,
-                      inviteEarnings
-                    });
-                    
-                    const user = await User.findOne({ 
-                        where: { telegramId: telegramId }
-                    });
-                    
-                    if (!user) {
-                        console.log('User not found:', telegramId);
-                        resolve({ status: 404, body: { error: 'User not found' } });
-                        return;
-                    }
-
-                    await user.update({
+    POST: {
+      '/update-balance': async (req, res) => {
+          const authError = await authMiddleware(req, res);
+          if (authError) return authError;
+  
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          
+          return new Promise((resolve) => {
+              req.on('end', async () => {
+                  try {
+                      const data = JSON.parse(body);
+                      // Преобразуем telegramId в строку
+                      const telegramId = data.telegramId.toString();
+                      const { balance, taskEarnings, gameEarnings, inviteEarnings } = data;
+                      
+                      console.log('Updating balance for user:', telegramId, {
                         balance,
                         taskEarnings,
                         gameEarnings,
                         inviteEarnings
-                    });
-
-                    console.log('Balance updated successfully');
+                      });
+                      
+                      const user = await User.findOne({ 
+                          where: { telegramId: telegramId }
+                      });
+                      
+                      if (!user) {
+                          console.log('User not found:', telegramId);
+                          resolve({ status: 404, body: { error: 'User not found' } });
+                          return;
+                      }
+  
+                      await user.update({
+                          balance,
+                          taskEarnings,
+                          gameEarnings,
+                          inviteEarnings
+                      });
+  
+                      console.log('Balance updated successfully');
+                      resolve({
+                          status: 200,
+                          body: { success: true }
+                      });
+                  } catch (error) {
+                      console.error('Error updating balance:', error);
+                      resolve({ status: 500, body: { error: 'Internal server error: ' + error.message } });
+                  }
+              });
+          });
+      },
+      '/schedule-heart-notification': async (req, res) => {
+          const authError = await authMiddleware(req, res);
+          if (authError) return authError;
+  
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          
+          return new Promise((resolve) => {
+              req.on('end', async () => {
+                  try {
+                      const data = JSON.parse(body);
+                      const telegramId = data.telegramId.toString();
+                      await scheduleHeartNotification(telegramId);
+                      
+                      resolve({
+                          status: 200,
+                          body: { success: true }
+                      });
+                  } catch (error) {
+                      console.error('Error scheduling notification:', error);
+                      resolve({ 
+                          status: 500, 
+                          body: { error: 'Internal server error: ' + error.message } 
+                      });
+                  }
+              });
+          });
+      },
+      '/admin/broadcast': async (req, res) => {
+    const authError = await authMiddleware(req, res);
+    if (authError) return authError;
+    
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    
+    return new Promise((resolve) => {
+        req.on('end', async () => {
+            try {
+                const data = JSON.parse(body);
+                const adminId = data.adminId.toString();
+                
+                if (!isAdmin(adminId)) {  // Используем функцию isAdmin
                     resolve({
-                        status: 200,
-                        body: { success: true }
+                        status: 403,
+                        body: { error: 'Unauthorized: Admin access required' }
                     });
-                } catch (error) {
-                    console.error('Error updating balance:', error);
-                    resolve({ status: 500, body: { error: 'Internal server error: ' + error.message } });
+                    return;
                 }
-            });
-        });
-    },
-    '/schedule-heart-notification': async (req, res) => {
-        const authError = await authMiddleware(req, res);
-        if (authError) return authError;
-
-        let body = '';
-        req.on('data', chunk => { body += chunk; });
-        
-        return new Promise((resolve) => {
-            req.on('end', async () => {
-                try {
-                    const data = JSON.parse(body);
-                    const telegramId = data.telegramId.toString();
-                    await scheduleHeartNotification(telegramId);
-                    
-                    resolve({
-                        status: 200,
-                        body: { success: true }
-                    });
-                } catch (error) {
-                    console.error('Error scheduling notification:', error);
-                    resolve({ 
-                        status: 500, 
-                        body: { error: 'Internal server error: ' + error.message } 
-                    });
-                }
-            });
-        });
+  
+                      const { message, button } = data;
+                      
+                      // Получаем всех пользователей
+                      const users = await User.findAll();
+                      const results = {
+                          total: users.length,
+                          success: 0,
+                          failed: 0
+                      };
+  
+                      // Отправляем сообщение каждому пользователю
+                      for (const user of users) {
+                          try {
+                              const messageData = {
+                                  chat_id: user.telegramId,
+                                  text: message,
+                                  parse_mode: 'HTML'
+                              };
+  
+                              // Если есть кнопка, добавляем её
+                              if (button) {
+                                  messageData.reply_markup = {
+                                      inline_keyboard: [[{
+                                          text: button.text,
+                                          web_app: { url: button.url }
+                                      }]]
+                                  };
+                              }
+  
+                              await bot.telegram.sendMessage(
+                                  user.telegramId,
+                                  message,
+                                  messageData
+                              );
+                              results.success++;
+                          } catch (error) {
+                              console.error(`Failed to send message to ${user.telegramId}:`, error);
+                              results.failed++;
+                          }
+                          
+                          // Добавляем задержку между сообщениями
+                          await new Promise(resolve => setTimeout(resolve, 50));
+                      }
+  
+                      resolve({
+                          status: 200,
+                          body: { 
+                              success: true,
+                              results
+                          }
+                      });
+                  } catch (error) {
+                      console.error('Error in broadcast:', error);
+                      resolve({ 
+                          status: 500, 
+                          body: { error: 'Internal server error: ' + error.message }
+                      });
+                  }
+              });
+          });
+      }
     }
-  }
-};
+  };
 // Проверка и отправка уведомлений каждую минуту
 schedule.scheduleJob('*/1 * * * *', async () => {
   try {
