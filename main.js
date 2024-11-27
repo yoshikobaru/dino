@@ -184,7 +184,6 @@ function createSeparator() {
 document.querySelectorAll('footer button').forEach(btn => {
     btn.addEventListener('click', handleFooterButtonClick);
 });
-// Функции синхронизации данных
 async function syncUserData() {
     if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
         console.log('No user data available yet');
@@ -207,7 +206,7 @@ async function syncUserData() {
         
         // Если это первый запуск (пользователь только что создан)
         if (data.isNewUser) {
-            // Инициализируем значения по умолчанию
+            // Инициализируем значения по умолчанию только для нового пользователя
             localStorage.setItem('availableGames', '5');
             localStorage.setItem('totalDPS', '0');
             localStorage.setItem('totalTaskEarnings', '0');
@@ -225,30 +224,40 @@ async function syncUserData() {
             if (window.Telegram?.WebApp?.sendData) {
                 window.Telegram.WebApp.sendData(startCommand);
             }
+        } else {
+            // Обновляем глобальные переменные с проверкой на undefined
+            window.totalDPS = data.balance || window.totalDPS || 0;
+            window.totalTaskEarnings = data.taskEarnings || window.totalTaskEarnings || 0;
+            window.totalGameEarnings = data.gameEarnings || window.totalGameEarnings || 0;
+            window.totalInviteEarnings = data.inviteEarnings || window.totalInviteEarnings || 0;
+            
+            // Сохраняем значения как строки
+            localStorage.setItem('totalDPS', window.totalDPS.toString());
+            localStorage.setItem('totalTaskEarnings', window.totalTaskEarnings.toString());
+            localStorage.setItem('totalGameEarnings', window.totalGameEarnings.toString());
+            localStorage.setItem('totalInviteEarnings', window.totalInviteEarnings.toString());
         }
-        
-        // Обновляем глобальные переменные с проверкой на undefined
-        window.totalDPS = data.balance || 0;
-        window.totalTaskEarnings = data.taskEarnings || 0;
-        window.totalGameEarnings = data.gameEarnings || 0;
-        window.totalInviteEarnings = data.inviteEarnings || 0;
-        
-        // Сохраняем значения как строки
-        localStorage.setItem('totalDPS', window.totalDPS.toString());
-        localStorage.setItem('totalTaskEarnings', window.totalTaskEarnings.toString());
-        localStorage.setItem('totalGameEarnings', window.totalGameEarnings.toString());
-        localStorage.setItem('totalInviteEarnings', window.totalInviteEarnings.toString());
         
         updateAllBalances();
         return data;
     } catch (error) {
         console.error('Error syncing user data:', error);
-        // Устанавливаем значения по умолчанию при ошибке
-        localStorage.setItem('availableGames', '5');
-        localStorage.setItem('totalDPS', '0');
-        localStorage.setItem('totalTaskEarnings', '0');
-        localStorage.setItem('totalGameEarnings', '0');
-        localStorage.setItem('totalInviteEarnings', '0');
+        // При ошибке используем существующие локальные данные
+        window.totalDPS = parseInt(localStorage.getItem('totalDPS')) || window.totalDPS || 0;
+        window.totalTaskEarnings = parseInt(localStorage.getItem('totalTaskEarnings')) || window.totalTaskEarnings || 0;
+        window.totalGameEarnings = parseInt(localStorage.getItem('totalGameEarnings')) || window.totalGameEarnings || 0;
+        window.totalInviteEarnings = parseInt(localStorage.getItem('totalInviteEarnings')) || window.totalInviteEarnings || 0;
+        
+        // Обновляем UI с локальными данными
+        updateAllBalances();
+        
+        // Возможно, стоит добавить уведомление о проблеме с синхронизацией
+        if (window.Telegram?.WebApp?.showPopup) {
+            window.Telegram.WebApp.showPopup({
+                title: '⚠️ Внимание',
+                message: 'Проблема с синхронизацией данных. Ваш прогресс сохранен локально и будет синхронизирован при восстановлении соединения.'
+            });
+        }
     }
 }
 async function updateServerBalance() {

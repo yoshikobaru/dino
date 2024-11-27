@@ -264,11 +264,6 @@ startButton.addEventListener('click', async () => {
         // Начисляем очки
         const gameScore = parseInt(startButton.dataset.pendingScore);
         await updateBalance(gameScore, 'game');
-
-        totalDPS += gameScore;
-        totalGameEarnings += gameScore;
-        localStorage.setItem('totalDPS', totalDPS);
-        localStorage.setItem('totalGameEarnings', totalGameEarnings);
         
         updateTotalScore();
         updateGameEarningsDisplay();
