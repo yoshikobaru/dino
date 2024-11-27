@@ -186,7 +186,10 @@ document.querySelectorAll('footer button').forEach(btn => {
 });
 // Функции синхронизации данных
 async function syncUserData() {
-    if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return;
+    if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+        console.log('No user data available yet');
+        return;
+    }
     
     const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
     try {
@@ -195,13 +198,25 @@ async function syncUserData() {
                 'X-Telegram-Init-Data': window.Telegram.WebApp.initData
             }
         });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
         
         // Если это первый запуск (пользователь только что создан)
         if (data.isNewUser) {
+            // Инициализируем значения по умолчанию
+            localStorage.setItem('availableGames', '5');
+            localStorage.setItem('totalDPS', '0');
+            localStorage.setItem('totalTaskEarnings', '0');
+            localStorage.setItem('totalGameEarnings', '0');
+            localStorage.setItem('totalInviteEarnings', '0');
+
             // Получаем параметры URL для проверки реферального кода
             const urlParams = new URLSearchParams(window.location.search);
-            const startParam = urlParams.get('start'); // Получаем реферальный код из URL если есть
+            const startParam = urlParams.get('start');
             
             // Формируем команду start с реферальным кодом если он есть
             const startCommand = startParam ? `/start ${startParam}` : '/start';
@@ -212,21 +227,28 @@ async function syncUserData() {
             }
         }
         
-        // Используем глобальные переменные
-        window.totalDPS = data.balance;
-        window.totalTaskEarnings = data.taskEarnings;
-        window.totalGameEarnings = data.gameEarnings;
-        window.totalInviteEarnings = data.inviteEarnings;
+        // Обновляем глобальные переменные с проверкой на undefined
+        window.totalDPS = data.balance || 0;
+        window.totalTaskEarnings = data.taskEarnings || 0;
+        window.totalGameEarnings = data.gameEarnings || 0;
+        window.totalInviteEarnings = data.inviteEarnings || 0;
         
-        localStorage.setItem('totalDPS', window.totalDPS);
-        localStorage.setItem('totalTaskEarnings', window.totalTaskEarnings);
-        localStorage.setItem('totalGameEarnings', window.totalGameEarnings);
-        localStorage.setItem('totalInviteEarnings', window.totalInviteEarnings);
+        // Сохраняем значения как строки
+        localStorage.setItem('totalDPS', window.totalDPS.toString());
+        localStorage.setItem('totalTaskEarnings', window.totalTaskEarnings.toString());
+        localStorage.setItem('totalGameEarnings', window.totalGameEarnings.toString());
+        localStorage.setItem('totalInviteEarnings', window.totalInviteEarnings.toString());
         
         updateAllBalances();
         return data;
     } catch (error) {
         console.error('Error syncing user data:', error);
+        // Устанавливаем значения по умолчанию при ошибке
+        localStorage.setItem('availableGames', '5');
+        localStorage.setItem('totalDPS', '0');
+        localStorage.setItem('totalTaskEarnings', '0');
+        localStorage.setItem('totalGameEarnings', '0');
+        localStorage.setItem('totalInviteEarnings', '0');
     }
 }
 async function updateServerBalance() {

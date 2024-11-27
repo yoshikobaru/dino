@@ -1,3 +1,4 @@
+import { syncUserData } from './main.js';
 function updateRewardSection() {
     // Находим элементы для обновления
     const rewardDPSText = document.querySelector('#friends-page .bg-gray-800 .text-yellow-400');
@@ -75,7 +76,7 @@ function initializeFriendsPage() {
     getReferredFriends();
 }
 
-function getReferredFriends() {
+async function getReferredFriends() {
     let telegramId;
     try {
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -83,21 +84,17 @@ function getReferredFriends() {
         } else {
             throw new Error('Telegram WebApp не инициализирован или не содержит данных пользователя');
         }
-    } catch (error) {
-        console.error('Ошибка при получении Telegram ID:', error);
-        displayReferredFriends([]); 
-        return;
-    }
+        
+        // Добавляем синхронизацию данных пользователя перед запросом рефералов
+        await syncUserData();
 
-    fetch(`https://dino-app.ru/get-referred-friends?telegramId=${telegramId}`)
-    .then(response => response.json())
-    .then(data => {
+        const response = await fetch(`https://dino-app.ru/get-referred-friends?telegramId=${telegramId}`);
+        const data = await response.json();
+
         if (data.referredFriends) {
             displayReferredFriends(data.referredFriends);
             localStorage.setItem('referredFriendsCount', data.referredFriends.length.toString());
             
-            // Удаляем проверку currentCategory, так как она вызывает ошибку
-            // Весто этого просто обновляем задачи, если нужно
             if (window.renderTasks) {
                 window.renderTasks('refs');
             }
@@ -105,11 +102,10 @@ function getReferredFriends() {
             console.error('Не удалось получить список рефералов:', data.error);
             displayReferredFriends([]);
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Ошибка при получении списка рефералов:', error);
         displayReferredFriends([]);
-    });
+    }
 }
 
 function displayReferredFriends(friends) {

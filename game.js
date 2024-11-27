@@ -2,12 +2,12 @@ import taskManager from './tasks.js';
 
 
 let availableGames = parseInt(localStorage.getItem('availableGames'));
-if (availableGames === null) {
+if (availableGames === null || isNaN(availableGames)) {
     availableGames = 5;
-    localStorage.setItem('availableGames', availableGames);
+    localStorage.setItem('availableGames', '5');
 } else if (availableGames === 0) {
     // Убедимся, что при 0 сердцах они остаются 0
-    localStorage.setItem('availableGames', 0);
+    localStorage.setItem('availableGames', '0');
 }
 let nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || 0;
 let lastHeartCheckTime = parseInt(localStorage.getItem('lastHeartCheckTime')) || Date.now();
