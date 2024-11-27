@@ -56,6 +56,10 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  highScore: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
   referralCode: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -446,6 +450,56 @@ const routes = {
         return { status: 500, body: { error: 'Failed to get user skins' } };
       }
     },
+    '/get-friends-leaderboard': async (req, res, query) => {
+        const telegramId = query.telegramId;
+        
+        if (!telegramId) {
+            return { status: 400, body: { error: 'Missing telegramId parameter' } };
+        }
+
+        try {
+            const user = await User.findOne({ where: { telegramId } });
+            if (!user) {
+                return { status: 404, body: { error: 'User not found' } };
+            }
+
+            // Получаем всех рефералов пользователя
+            const referredFriends = await User.findAll({
+                where: { referredBy: user.referralCode },
+                attributes: ['telegramId', 'username', 'highScore']
+            });
+
+            // Добавляем самого пользователя в список
+            const leaderboardData = [
+                {
+                    id: user.telegramId,
+                    username: user.username,
+                    highScore: user.highScore,
+                    isCurrentUser: true
+                },
+                ...referredFriends.map(friend => ({
+                    id: friend.telegramId,
+                    username: friend.username,
+                    highScore: friend.highScore,
+                    isCurrentUser: false
+                }))
+            ];
+
+            // Сортируем по высшему счету
+            leaderboardData.sort((a, b) => b.highScore - a.highScore);
+
+            return { 
+                status: 200, 
+                body: { 
+                    leaderboard: leaderboardData,
+                    timestamp: Date.now()
+                } 
+            };
+        } catch (error) {
+            console.error('Error getting friends leaderboard:', error);
+            return { status: 500, body: { error: 'Internal server error' } };
+        }
+    },
 '/reward': async (req, res, query) => {
     const telegramId = query.userid;
     
@@ -527,6 +581,53 @@ const routes = {
               });
           });
       },
+      '/update-high-score': async (req, res) => {
+        const authError = await authMiddleware(req, res);
+        if (authError) return authError;
+
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        
+        return new Promise((resolve) => {
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const telegramId = data.telegramId.toString();
+                    const highScore = parseInt(data.highScore);
+                    
+                    console.log('Updating high score for user:', telegramId, highScore);
+                    
+                    const user = await User.findOne({ 
+                        where: { telegramId: telegramId }
+                    });
+                    
+                    if (!user) {
+                        console.log('User not found:', telegramId);
+                        resolve({ status: 404, body: { error: 'User not found' } });
+                        return;
+                    }
+
+                    if (highScore > user.highScore) {
+                        await user.update({ highScore });
+                        console.log('High score updated successfully');
+                        resolve({
+                            status: 200,
+                            body: { success: true }
+                        });
+                    } else {
+                        console.log('New score is not higher than the current high score');
+                        resolve({
+                            status: 200,
+                            body: { success: false, message: 'Score is not a new high score' }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error updating high score:', error);
+                    resolve({ status: 500, body: { error: 'Internal server error: ' + error.message } });
+                }
+            });
+        });
+    },
       '/schedule-heart-notification': async (req, res) => {
           const authError = await authMiddleware(req, res);
           if (authError) return authError;
