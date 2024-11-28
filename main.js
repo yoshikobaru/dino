@@ -173,6 +173,40 @@ window.updateBalance = async function(amount, source) {
     }
 }
 
+function checkAndFixStuckTimer() {
+    const now = Date.now();
+    const nextHeartTime = parseInt(localStorage.getItem('nextHeartTime')) || 0;
+    const heartTimers = JSON.parse(localStorage.getItem('heartTimers')) || [];
+    const availableGames = parseInt(localStorage.getItem('availableGames')) || 0;
+    
+    // Проверяем застрявший таймер или некорректное состояние
+    // 600000 = 10 минут в миллисекундах
+    if ((nextHeartTime > 0 && now - nextHeartTime > 600000) || 
+        (availableGames === 0 && heartTimers.length === 0) ||
+        (heartTimers.some(timer => now - timer > 600000))) {
+        
+        console.log('Сброс застрявшего таймера...');
+        
+        // Сбрасываем только данные, связанные с сердцами
+        localStorage.setItem('availableGames', '5');
+        localStorage.setItem('heartTimers', '[]');
+        localStorage.setItem('nextHeartTime', '0');
+        
+        // Обновляем переменные в памяти
+        availableGames = 5;
+        heartTimers = [];
+        nextHeartTime = 0;
+        
+        // Обновляем UI без перезагрузки
+        if (document.getElementById('lives')) {
+            document.getElementById('lives').innerHTML = '❤️'.repeat(5);
+        }
+        if (document.getElementById('timer')) {
+            document.getElementById('timer').textContent = '';
+        }
+    }
+}
+
 function createSeparator() {
     const separator = document.createElement('img');
     separator.src = 'assets/Line.png';
@@ -332,6 +366,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         await syncUserData();
         initializeMainPage();
+        checkAndFixStuckTimer();
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.setHeaderColor('#000000');
