@@ -741,11 +741,24 @@ function loadGameState() {
     const savedNextHeartTime = parseInt(localStorage.getItem('nextHeartTime'));
     const now = Date.now();
 
+// Исправляем NaN в availableGames
+if (savedAvailableGames === 'NaN' || isNaN(parseInt(savedAvailableGames))) {
+    console.log('Fixing NaN availableGames value');
+    savedAvailableGames = '5';  // Сбрасываем на максимальное значение
+    localStorage.setItem('availableGames', savedAvailableGames);
+}
     // Загружаем сохраненные таймеры
     heartTimers = savedHeartTimers ? JSON.parse(savedHeartTimers) : [];
 
     if (savedAvailableGames !== null) {
         availableGames = parseInt(savedAvailableGames);
+
+        // Дополнительная проверка на корректность значения
+        if (isNaN(availableGames) || availableGames < 0 || availableGames > 5) {
+            console.log('Correcting invalid availableGames value');
+            availableGames = 0;
+            localStorage.setItem('availableGames', availableGames.toString());
+        }
         
         // Проверяем офлайн-восстановление
         if (availableGames < 5) {
