@@ -206,27 +206,45 @@ function displayLeaderboard(leaderboardData) {
         return;
     }
 
-    // Сортируем по убыванию очков
-    filteredData.sort((a, b) => b.highScore - a.highScore);
-
+    // Находим позицию текущего игрока
+    const currentUserIndex = filteredData.findIndex(player => player.isCurrentUser);
+    
     filteredData.forEach((player, index) => {
-        const playerItem = document.createElement('div');
-        playerItem.className = `bg-gray-800 rounded-lg p-3 flex justify-between items-center ${player.isCurrentUser ? 'border border-yellow-400' : ''}`;
-        
-        const medal = index < 3 ? ['🥇', '🥈', '🥉'][index] : '';
-        const username = player.username ? `@${player.username}` : `Player ${player.id}`;
-        
-        playerItem.innerHTML = `
-            <div class="flex items-center">
-                <div class="text-xl mr-2">${medal}</div>
-                <div>
-                    <div class="text-sm">${username}</div>
-                    <div class="text-xs text-yellow-400">${player.highScore} DPS</div>
+        // Показываем только топ-10 и текущего игрока, если он не в топ-10
+        if (index < 10 || player.isCurrentUser) {
+            const playerItem = document.createElement('div');
+            playerItem.className = `bg-gray-800 rounded-lg p-3 flex justify-between items-center 
+                ${player.isCurrentUser ? 'border border-yellow-400 animate-pulse' : ''} 
+                ${index === 0 ? 'bg-gradient-to-r from-yellow-400/10 to-gray-800' : ''}`;
+            
+            const medal = index < 3 ? ['👑', '🥈', '🥉'][index] : '';
+            const username = player.username ? `@${player.username}` : `Player ${player.id}`;
+            
+            // Добавляем разделитель перед текущим игроком, если он не в топ-10
+            if (index === 10 && currentUserIndex > 9) {
+                const separator = document.createElement('div');
+                separator.className = 'text-center text-gray-400 my-2';
+                separator.innerHTML = `<div class="border-t border-gray-700 my-4 relative">
+                    <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black px-4">
+                        • • •
+                    </span>
+                </div>`;
+                leaderboardContainer.appendChild(separator);
+            }
+            
+            playerItem.innerHTML = `
+                <div class="flex items-center">
+                    <div class="text-xl mr-2 ${index === 0 ? 'animate-bounce' : ''}">${medal}</div>
+                    <div>
+                        <div class="text-sm ${index === 0 ? 'text-yellow-400' : ''}">${username}</div>
+                        <div class="text-xs ${index === 0 ? 'text-yellow-300' : 'text-yellow-400'}">${player.highScore} DPS</div>
+                    </div>
                 </div>
-            </div>
-            <div class="text-xs text-gray-400">#${index + 1}</div>
-        `;
-        leaderboardContainer.appendChild(playerItem);
+                <div class="text-xs ${index === 0 ? 'text-yellow-400' : 'text-gray-400'}">#${index + 1}</div>
+            `;
+            
+            leaderboardContainer.appendChild(playerItem);
+        }
     });
 }
 document.querySelectorAll('#friends-page .flex.mb-4 button').forEach(button => {

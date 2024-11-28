@@ -451,55 +451,65 @@ const routes = {
       }
     },
     '/get-friends-leaderboard': async (req, res, query) => {
-        const telegramId = query.telegramId;
-        
-        if (!telegramId) {
-            return { status: 400, body: { error: 'Missing telegramId parameter' } };
+    const telegramId = query.telegramId;
+    
+    if (!telegramId) {
+        return { status: 400, body: { error: 'Missing telegramId parameter' } };
+    }
+
+    try {
+        // Получаем текущего пользователя
+        const currentUser = await User.findOne({ 
+            where: { telegramId },
+            attributes: ['telegramId', 'username', 'highScore']
+        });
+
+        if (!currentUser) {
+            return { status: 404, body: { error: 'User not found' } };
         }
 
-        try {
-            const user = await User.findOne({ where: { telegramId } });
-            if (!user) {
-                return { status: 404, body: { error: 'User not found' } };
-            }
+        // Получаем топ-100 игроков с наивысшими рекордами
+        const topPlayers = await User.findAll({
+          where: {
+              highScore: {
+                  [Sequelize.Op.gt]: 0
+              }
+          },
+          attributes: ['telegramId', 'username', 'highScore'],
+          order: [['highScore', 'DESC']],
+          limit: 50  // Уменьшаем лимит до 50
+      });
 
-            // Получаем всех рефералов пользователя
-            const referredFriends = await User.findAll({
-                where: { referredBy: user.referralCode },
-                attributes: ['telegramId', 'username', 'highScore']
+        // Преобразуем данные
+        const leaderboardData = topPlayers.map(player => ({
+            id: player.telegramId,
+            username: player.username,
+            highScore: player.highScore,
+            isCurrentUser: player.telegramId === telegramId
+        }));
+
+        // Если текущий пользователь не в топ-100, добавляем его отдельно
+        if (!leaderboardData.some(player => player.isCurrentUser)) {
+            leaderboardData.push({
+                id: currentUser.telegramId,
+                username: currentUser.username,
+                highScore: currentUser.highScore,
+                isCurrentUser: true
             });
-
-            // Добавляем самого пользователя в список
-            const leaderboardData = [
-                {
-                    id: user.telegramId,
-                    username: user.username,
-                    highScore: user.highScore,
-                    isCurrentUser: true
-                },
-                ...referredFriends.map(friend => ({
-                    id: friend.telegramId,
-                    username: friend.username,
-                    highScore: friend.highScore,
-                    isCurrentUser: false
-                }))
-            ];
-
-            // Сортируем по высшему счету
-            leaderboardData.sort((a, b) => b.highScore - a.highScore);
-
-            return { 
-                status: 200, 
-                body: { 
-                    leaderboard: leaderboardData,
-                    timestamp: Date.now()
-                } 
-            };
-        } catch (error) {
-            console.error('Error getting friends leaderboard:', error);
-            return { status: 500, body: { error: 'Internal server error' } };
         }
-    },
+
+        return { 
+            status: 200, 
+            body: { 
+                leaderboard: leaderboardData,
+                timestamp: Date.now()
+            } 
+        };
+    } catch (error) {
+        console.error('Error getting leaderboard:', error);
+        return { status: 500, body: { error: 'Internal server error' } };
+    }
+},
 '/reward': async (req, res, query) => {
     const telegramId = query.userid;
     
