@@ -12,7 +12,42 @@ class TaskManager {
     loadTasks() {
         const savedTasks = localStorage.getItem('tasks');
         if (savedTasks) {
-            this.tasks = JSON.parse(savedTasks);
+            const defaultTasks = {
+                daily: [
+                    { id: 'daily_bonus', icon: '🎁' },
+                    { id: 'play_5', icon: '🎮' },
+                    { id: 'play_25', icon: '🎯' },
+                    { id: 'score_500', icon: '🏃' },
+                    { id: 'score_1000', icon: '🚀' }
+                ],
+                social: [
+                    { id: 'litwin_game', icon: '🎲' },
+                    { id: 'method_game', icon: '🎲' }
+                ],
+                media: [
+                    { id: 'dino_rush_news', icon: '📰' },
+                    { id: 'method_post', icon: '📱' },
+                    { id: 'litwin_post', icon: '📱' }
+                ],
+                refs: [
+                    { id: 'invite_friends', icon: '👥' }
+                ]
+            };
+    
+            const savedTasksObj = JSON.parse(savedTasks);
+    
+            // Восстанавливаем иконки для каждой категории
+            Object.keys(savedTasksObj).forEach(category => {
+                savedTasksObj[category] = savedTasksObj[category].map(task => {
+                    const defaultTask = defaultTasks[category].find(d => d.id === task.id);
+                    return {
+                        ...task,
+                        icon: defaultTask ? defaultTask.icon : '📋'
+                    };
+                });
+            });
+    
+            this.tasks = savedTasksObj;
         } else {
             this.initializeDefaultTasks();
         }
@@ -24,6 +59,7 @@ class TaskManager {
                 {
                     id: 'daily_bonus',
                     name: "Daily Bonus",
+                    icon: '🎁',  // Подарок для ежедневного бонуса
                     dps: 150,
                     progress: 1,
                     maxProgress: 7,
@@ -34,26 +70,29 @@ class TaskManager {
                 {
                     id: 'play_5',
                     name: "Play 5 times",
+                    icon: '🎮',  // Геймпад для игровых тасков
                     dps: 350,
                     progress: 0,
                     maxProgress: 5,
                     cooldown: 0,
                     timer: 0,
                     isTimerRunning: false,
-                type: 'daily'
-            },
-            {
-                id: 'play_25',
-                name: "Play 25 times",
-                dps: 750,
-                progress: 0,  // Заменяем playedCount на progress
-                maxProgress: 25,
-                isCompleted: false,
-                type: 'daily'
-            },
+                    type: 'daily'
+                },
+                {
+                    id: 'play_25',
+                    name: "Play 25 times",
+                    icon: '🎯',  // Мишень для большего количества игр
+                    dps: 750,
+                    progress: 0,
+                    maxProgress: 25,
+                    isCompleted: false,
+                    type: 'daily'
+                },
                 {
                     id: 'score_500',
                     name: "Get 500 DPS per game",
+                    icon: '🏃',  // Бегущий человек для скорости
                     dps: 550,
                     isCompleted: false,
                     type: 'daily'
@@ -61,6 +100,7 @@ class TaskManager {
                 {
                     id: 'score_1000',
                     name: "Get 1000 DPS per game",
+                    icon: '🚀',  // Ракета для высокой скорости
                     dps: 1750,
                     isCompleted: false,
                     type: 'daily'
@@ -70,16 +110,18 @@ class TaskManager {
                 {
                     id: 'litwin_game',
                     name: "Play LITWIN",
+                    icon: '🎲',  // Игральная кость для других игр
                     dps: 350,
-                    link: "https://t.me/LITWIN_TAP_BOT?start=b8683c8c", // меняем формат ссылки
+                    link: "https://t.me/LITWIN_TAP_BOT?start=b8683c8c",
                     isCompleted: false,
                     type: 'social'
                 },
                 {
                     id: 'method_game',
                     name: "Play Method",
+                    icon: '🎲',
                     dps: 450,
-                    link: "https://t.me/MethodTon_Bot?start=p203ynnif7", // меняем формат ссылки
+                    link: "https://t.me/MethodTon_Bot?start=p203ynnif7",
                     isCompleted: false,
                     type: 'social'
                 }
@@ -88,14 +130,16 @@ class TaskManager {
                 {
                     id: 'dino_rush_news',
                     name: "Subscribe to Dino Rush News 🦖💨",
+                    icon: '📰',  // Газета для новостей
                     dps: 350,
-                    link: "https://t.me/dino_rush_news",
+                    link: "https://t.me/DinoRushNews",
                     isCompleted: false,
                     type: 'media'
                 },
                 {
                     id: 'method_post',
                     name: "Watch new post in Method Community",
+                    icon: '📱',  // Телефон для постов
                     dps: 300,
                     link: "https://t.me/method_community",
                     isCompleted: false,
@@ -104,6 +148,7 @@ class TaskManager {
                 {
                     id: 'litwin_post',
                     name: "Watch post in LITWIN Community",
+                    icon: '📱',
                     dps: 250,
                     link: "https://t.me/litwin_community",
                     isCompleted: false,
@@ -114,11 +159,12 @@ class TaskManager {
                 {
                     id: 'invite_friends',
                     name: "Invite 3 friends",
+                    icon: '👥',  // Группа людей для рефералов
                     dps: 500,
                     progress: 0,
                     maxProgress: 3,
                     isCompleted: false,
-                    type: 'refs', // Меняем 'friends' на 'refs'
+                    type: 'refs',
                     description: 'Invite friends and get bonus',
                     displayProgress: true
                 }
@@ -314,20 +360,21 @@ class TaskManager {
             }
     
             taskElement.innerHTML = `
-                <div class="flex items-center flex-grow">
-                    <div class="mr-4">
-                        <div class="text-sm">${task.name}</div>
-                        <div class="text-xs text-yellow-400">+${task.dps} DPS</div>
-                        ${progressHtml}
-                        ${timerHtml}
-                    </div>
-                </div>
-                <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold ${task.isCompleted ? 'opacity-50 cursor-not-allowed' : ''}" 
-                    ${task.isCompleted ? 'disabled' : ''} 
-                    data-task-id="${task.id}">
-                    ${task.isCompleted ? 'Completed' : 'Complete'}
-                </button>
-            `;
+    <div class="flex items-center flex-grow">
+        <div class="text-xl mr-3">${task.icon || '📋'}</div>
+        <div class="mr-4">
+            <div class="text-sm">${task.name}</div>
+            <div class="text-xs text-yellow-400">+${task.dps} DPS</div>
+            ${progressHtml}
+            ${timerHtml}
+        </div>
+    </div>
+    <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold ${task.isCompleted ? 'opacity-50 cursor-not-allowed' : ''}" 
+        ${task.isCompleted ? 'disabled' : ''} 
+        data-task-id="${task.id}">
+        ${task.isCompleted ? 'Completed' : 'Complete'}
+    </button>
+`;
     
             const button = taskElement.querySelector('button');
             if (button && !task.isCompleted) {
