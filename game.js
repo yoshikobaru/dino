@@ -261,16 +261,15 @@ startButton.addEventListener('click', async () => {
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
         }
-        // Начисляем очки
         const gameScore = parseInt(startButton.dataset.pendingScore);
-        // Обновляем high score перед начислением награды
         const currentHighScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+
+        // Сначала обновляем рекорд, если нужно
         if (gameScore > currentHighScore) {
             localStorage.setItem('project.github.chrome_dino.high_score', gameScore.toString());
             
-            // Отправляем новый рекорд на сервер
             try {
-                console.log('Sending high score to server:', gameScore);
+                console.log('Отправка рекорда на сервер:', gameScore);
                 const response = await fetch('/update-high-score', {
                     method: 'POST',
                     headers: {
@@ -284,14 +283,19 @@ startButton.addEventListener('click', async () => {
                 });
 
                 const data = await response.json();
-                console.log('Server response:', data);
+                console.log('Ответ сервера при обновлении рекорда:', data);
                 
                 if (!response.ok) {
                     throw new Error('Failed to update high score');
                 }
             } catch (error) {
-                console.error('Error updating high score:', error);
+                console.error('Ошибка при обновлении рекорда:', error);
             }
+        }
+
+        // Затем обновляем баланс и остальное
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
         }
         
         await updateBalance(gameScore, 'game');
