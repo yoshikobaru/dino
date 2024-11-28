@@ -266,31 +266,7 @@ startButton.addEventListener('click', async () => {
 
         // Сначала обновляем рекорд, если нужно
         if (gameScore > currentHighScore) {
-            localStorage.setItem('project.github.chrome_dino.high_score', gameScore.toString());
-            
-            try {
-                console.log('Отправка рекорда на сервер:', gameScore);
-                const response = await fetch('/update-high-score', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Telegram-Init-Data': window.Telegram.WebApp.initData
-                    },
-                    body: JSON.stringify({
-                        telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
-                        highScore: gameScore
-                    })
-                });
-
-                const data = await response.json();
-                console.log('Ответ сервера при обновлении рекорда:', data);
-                
-                if (!response.ok) {
-                    throw new Error('Failed to update high score');
-                }
-            } catch (error) {
-                console.error('Ошибка при обновлении рекорда:', error);
-            }
+            localStorage.setItem('project.github.chrome_dino.high_score', gameScore.toString());   
         }
 
         // Затем обновляем баланс и остальное
@@ -682,25 +658,19 @@ window.addEventListener('message', async (event) => {
             if (score > highScore) {
                 localStorage.setItem('project.github.chrome_dino.high_score', score.toString());
                  // Добавляем отправку рекорда на сервер
-            try {
-                console.log('Отправка рекорда на сервер:', score);
-                const response = await fetch('/update-high-score', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Telegram-Init-Data': window.Telegram.WebApp.initData
-                    },
-                    body: JSON.stringify({
-                        telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
-                        highScore: score
-                    })
-                });
-
-                const data = await response.json();
-                console.log('Ответ сервера при обновлении рекорда:', data);
-            } catch (error) {
-                console.error('Ошибка при обновлении рекорда:', error);
-            }
+           // Отправляем текущий рекорд из localStorage на сервер
+    const currentHighScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score'));
+    fetch('/update-high-score', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': window.Telegram.WebApp.initData
+        },
+        body: JSON.stringify({
+            telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
+            highScore: currentHighScore
+        })
+    }).catch(error => console.error('Ошибка при отправке рекорда:', error));
                 // Проверяем достижение 500 и 1000 DPS
                 if (score >= 1000) {
                     const record1000DPSCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
