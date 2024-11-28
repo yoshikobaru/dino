@@ -43,20 +43,20 @@ function handleRewardClick() {
             .then(() => {
                 // Обновляем отображение после успешного начисления
                 updateRewardSection();
-                window.showPopup(`Вы получили ${rewardAmount} DPS!`, 5000);
+                window.showPopup(`You earned ${rewardAmount} DPS!`, 5000);
             })
             .catch(error => {
-                console.error('Ошибка при начислении награды:', error);
-                window.showPopup('Произошла ошибка при получении награды', 5000);
+                console.error('Error awarding reward:', error);
+                window.showPopup('An error occurred while receiving the reward', 5000);
             });
     } else {
-        console.error('Функция updateBalance не найдена');
-        window.showPopup('Произошла ошибка при получении награды', 5000);
+        console.error('updateBalance function not found');
+        window.showPopup('An error occurred while receiving the reward', 5000);
     }
 }
 
 function initializeFriendsPage() {
-    console.log('Инициализация страницы друзей');
+    console.log('Friends page initialization');
     const inviteButton = document.getElementById('inviteButton');
     const rewardButton = document.querySelector('#friends-page .bg-gray-800 button');
     // Добавляем кнопку обновления рядом с заголовком
@@ -85,7 +85,7 @@ function initializeFriendsPage() {
         headerContainer.appendChild(refreshButton);
     }
     if (inviteButton) {
-        console.log('Кнопка приглашения найдена, добавляем обработчик');
+        console.log('Invite button found, adding handler');
         inviteButton.addEventListener('click', handleShareLinkButtonClick);
     }
     
@@ -106,7 +106,7 @@ async function getReferredFriends() {
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
             telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
         } else {
-            throw new Error('Telegram WebApp не инициализирован или не содержит данных пользователя');
+            throw new Error('Telegram WebApp not initialized or does not contain user data');
         }
         
         // Добавляем синхронизацию данных пользователя перед запросом рефералов
@@ -123,11 +123,11 @@ async function getReferredFriends() {
                 window.renderTasks('refs');
             }
         } else {
-            console.error('Не удалось получить список рефералов:', data.error);
+            console.error('Failed to get referral list:', data.error);
             displayReferredFriends([]);
         }
     } catch (error) {
-        console.error('Ошибка при получении списка рефералов:', error);
+        console.error('Error getting referral list:', error);
         displayReferredFriends([]);
     }
 }
@@ -137,13 +137,13 @@ function displayReferredFriends(friends) {
     if (friendsList) {
         friendsList.innerHTML = '';
         if (friends.length === 0) {
-            friendsList.innerHTML = '<p class="text-center text-gray-400">У вас пока нет приглашенных друзей</p>';
+            friendsList.innerHTML = '<p class="text-center text-gray-400">You have no invited friends yet</p>';
         } else {
             friends.forEach(friend => {
                 const friendItem = document.createElement('div');
                 friendItem.className = 'bg-gray-800 rounded-lg p-3 flex justify-between items-center';
                 
-                const friendName = friend.username ? `@${friend.username}` : `Пользователь ${friend.id}`;
+                const friendName = friend.username ? `@${friend.username}` : `User ${friend.id}`;
                 
                 friendItem.innerHTML = `
                     <div>
@@ -198,24 +198,30 @@ function displayLeaderboard(leaderboardData) {
 
     leaderboardContainer.innerHTML = '';
     
-    if (leaderboardData.length === 0) {
-        leaderboardContainer.innerHTML = '<p class="text-center text-gray-400">Нет данных для отображения</p>';
+    // Фильтруем игроков с нулевым счетом
+    const filteredData = leaderboardData.filter(player => player.highScore > 0);
+    
+    if (filteredData.length === 0) {
+        leaderboardContainer.innerHTML = '<p class="text-center text-gray-400">No players in leaderboard yet</p>';
         return;
     }
 
-    leaderboardData.forEach((player, index) => {
+    // Сортируем по убыванию очков
+    filteredData.sort((a, b) => b.highScore - a.highScore);
+
+    filteredData.forEach((player, index) => {
         const playerItem = document.createElement('div');
         playerItem.className = `bg-gray-800 rounded-lg p-3 flex justify-between items-center ${player.isCurrentUser ? 'border border-yellow-400' : ''}`;
         
         const medal = index < 3 ? ['🥇', '🥈', '🥉'][index] : '';
-        const username = player.username ? `@${player.username}` : `Игрок ${player.id}`;
+        const username = player.username ? `@${player.username}` : `Player ${player.id}`;
         
         playerItem.innerHTML = `
             <div class="flex items-center">
                 <div class="text-xl mr-2">${medal}</div>
                 <div>
                     <div class="text-sm">${username}</div>
-                    <div class="text-xs text-yellow-400">${player.highScore} очков</div>
+                    <div class="text-xs text-yellow-400">${player.highScore} DPS</div>
                 </div>
             </div>
             <div class="text-xs text-gray-400">#${index + 1}</div>
@@ -251,8 +257,8 @@ document.querySelectorAll('#friends-page .flex.mb-4 button').forEach(button => {
         }
         
         if (!window.Telegram || !window.Telegram.WebApp) {
-            console.error('Telegram WebApp не доступен');
-            window.showPopup('Ошибка', 'Telegram WebApp не доступен', 5000);
+            console.error('Telegram WebApp not available');
+            window.showPopup('Error', 'Telegram WebApp not available', 5000);
             return;
         }
         
@@ -263,14 +269,14 @@ document.querySelectorAll('#friends-page .flex.mb-4 button').forEach(button => {
             telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
             console.log('Telegram ID:', telegramId);
         } catch (error) {
-            console.error('Не удалось получить Telegram ID:', error);
-            window.showPopup('Ошибка', 'Не удалось получить информацию о пользователе', 5000);
+            console.error('Failed to get Telegram ID:', error);
+            window.showPopup('Error', 'Failed to get user information', 5000);
             return;
         }
     
         if (!telegramId) {
-            console.error('Telegram ID не определен');
-            window.showPopup('Ошибка', 'Не удалось получить информацию о пользователе', 5000);
+            console.error('Telegram ID not defined');
+            window.showPopup('Error', 'Failed to get user information', 5000);
             return;
         }
     
@@ -297,24 +303,24 @@ document.querySelectorAll('#friends-page .flex.mb-4 button').forEach(button => {
                     const successful = document.execCommand('copy');
                     if (successful) {
                         console.log('Ссылка скопирована в буфер бмена');
-                        window.showPopup('Успех', 'Реферальная ссылка скопирована в буфер обмена. Отправьте её друзьям!', 5000);
+                        window.showPopup('Success', 'Referral link copied to clipboard. Send it to your friends!', 5000);
                     } else {
-                        throw new Error('Копирование не удалось');
+                        throw new Error('Copying failed');
                     }
                 } catch (err) {
-                    console.error('Не удалось скопировать ссылку:', err);
-                    window.showPopup('Внимание', `Не удалось скопировать ссылку. Пожалуйста, скопируйте её вручную: ${data.inviteLink}`, 5000);
+                    console.error('Failed to copy link:', err);
+                    window.showPopup('Attention', `Failed to copy link. Please copy it manually: ${data.inviteLink}`, 5000);
                 }
     
                 document.body.removeChild(tempInput);
             } else {
-                console.error('Ссылка не получена:', data);
-                window.showPopup('Ошибка', 'Не удалось получить реферальную ссылку. Попробуйте позже.', 5000);
+                console.error('Link not received:', data);
+                window.showPopup('Error', 'Failed to get referral link. Please try again later.', 5000);
             }
         })
         .catch(error => {
-            console.error('Ошибка:', error);
-            window.showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.', 5000);
+            console.error('Error:', error);
+            window.showPopup('Error', 'An error occurred while receiving the referral link. Please try again later.', 5000);
         });
     }
     function handleShareLinkButtonClick(event) {
@@ -326,8 +332,8 @@ document.querySelectorAll('#friends-page .flex.mb-4 button').forEach(button => {
         }
         
         if (!window.Telegram || !window.Telegram.WebApp) {
-            console.error('Telegram WebApp не доступен');
-            window.showPopup('Ошибка', 'Telegram WebApp не доступен', 5000);
+            console.error('Telegram WebApp not available');
+            window.showPopup('Error', 'Telegram WebApp not available', 5000);
             return;
         }
         
@@ -336,14 +342,14 @@ document.querySelectorAll('#friends-page .flex.mb-4 button').forEach(button => {
             telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
             console.log('Telegram ID:', telegramId);
         } catch (error) {
-            console.error('Не удалось получить Telegram ID:', error);
-            window.showPopup('Ошибка', 'Не удалось получить информацию о пользователе', 5000);
+            console.error('Failed to get Telegram ID:', error);
+            window.showPopup('Error', 'Failed to get user information', 5000);
             return;
         }
     
         if (!telegramId) {
-            console.error('Telegram ID не определен');
-            window.showPopup('Ошибка', 'Не удалось получить информацию о пользователе', 5000);
+            console.error('Telegram ID not defined');
+            window.showPopup('Error', 'Failed to get user information', 5000);
             return;
         }
     
@@ -351,22 +357,22 @@ document.querySelectorAll('#friends-page .flex.mb-4 button').forEach(button => {
         .then(response => response.json())
         .then(data => {
             if (data.inviteLink) {
-                const message = "Присоединяйся к Dino вместе со мной!";
+                const message = "Join Dino Rush 🦖💨 with me!";
                 const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(message)}&url=${encodeURIComponent(data.inviteLink)}`;
                 
                 if (window.Telegram && window.Telegram.WebApp) {
                     Telegram.WebApp.openTelegramLink(shareUrl);
                 } else {
                     window.open(shareUrl, "_blank");
-                }
+                }   
             } else {
-                console.error('Ссылка не получена:', data);
-                window.showPopup('Ошибка', 'Не удалось получить реферальную ссылку. Попробуйте позже.', 5000);
+                console.error('Link not received:', data);
+                window.showPopup('Error', 'Failed to get referral link. Please try again later.', 5000);
             }
         })
         .catch(error => {
-            console.error('Ошибка:', error);
-            window.showPopup('Ошибка', 'Произошла ошибка при получении реферальной ссылки. Попробуйте позже.', 5000);
+            console.error('Error:', error);
+            window.showPopup('Error', 'An error occurred while receiving the referral link. Please try again later.', 5000);
         });
     }
 
