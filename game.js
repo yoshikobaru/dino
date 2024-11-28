@@ -681,6 +681,26 @@ window.addEventListener('message', async (event) => {
             const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
             if (score > highScore) {
                 localStorage.setItem('project.github.chrome_dino.high_score', score.toString());
+                 // Добавляем отправку рекорда на сервер
+            try {
+                console.log('Отправка рекорда на сервер:', score);
+                const response = await fetch('/update-high-score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-Init-Data': window.Telegram.WebApp.initData
+                    },
+                    body: JSON.stringify({
+                        telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
+                        highScore: score
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Ответ сервера при обновлении рекорда:', data);
+            } catch (error) {
+                console.error('Ошибка при обновлении рекорда:', error);
+            }
                 // Проверяем достижение 500 и 1000 DPS
                 if (score >= 1000) {
                     const record1000DPSCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
