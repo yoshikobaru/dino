@@ -658,12 +658,10 @@ window.addEventListener('message', async (event) => {
             const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
             console.log('Текущий рекорд:', highScore);
             console.log('Полученный счет:', score);
-            if (score > highScore) {
+            if (score >= highScore) {
                 console.log('Новый рекорд! Обновляем...');
                 localStorage.setItem('project.github.chrome_dino.high_score', score.toString());
                  // Добавляем отправку рекорда на сервер
-           // Отправляем текущий рекорд из localStorage на сервер
-     // Отправляем на сервер
      console.log('Отправляем рекорд на сервер...');
      try {
          const response = await fetch('/update-high-score', {
