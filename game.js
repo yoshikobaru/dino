@@ -608,6 +608,7 @@ function updateStartButtonState() {
 
 window.addEventListener('message', async (event) => {
     if (event.data.type === 'gameOver') {
+        console.log('Получено событие gameOver');
         // Показываем обратно все элементы
         const elementsToShow = [
             document.querySelector('h1'),
@@ -655,37 +656,36 @@ window.addEventListener('message', async (event) => {
 
             // Проверяем рекорды
             const highScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) || 0;
+            console.log('Текущий рекорд:', highScore);
+            console.log('Полученный счет:', score);
             if (score > highScore) {
+                console.log('Новый рекорд! Обновляем...');
                 localStorage.setItem('project.github.chrome_dino.high_score', score.toString());
                  // Добавляем отправку рекорда на сервер
            // Отправляем текущий рекорд из localStorage на сервер
-    const currentHighScore = parseInt(localStorage.getItem('project.github.chrome_dino.high_score'));
-    fetch('/update-high-score', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': window.Telegram.WebApp.initData
-        },
-        body: JSON.stringify({
-            telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
-            highScore: currentHighScore
-        })
-    }).catch(error => console.error('Ошибка при отправке рекорда:', error));
-                // Проверяем достижение 500 и 1000 DPS
-                if (score >= 1000) {
-                    const record1000DPSCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
-                    if (!record1000DPSCompleted) {
-                        showPopup('Congratulations! You scored 1000 DPS per game. Get a reward in tasks!');
-                    }
-                } else if (score >= 500) {
-                    const record500DPSCompleted = localStorage.getItem('record500DPSCompleted') === 'true';
-                    if (!record500DPSCompleted) {
-                        showPopup('Congratulations! You scored 500 DPS per game. Get a reward in tasks!');
-                    }
-                }
-                
-                taskManager.updateGameProgress(score);
-            }
+     // Отправляем на сервер
+     console.log('Отправляем рекорд на сервер...');
+     try {
+         const response = await fetch('/update-high-score', {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json',
+                 'X-Telegram-Init-Data': window.Telegram.WebApp.initData
+             },
+             body: JSON.stringify({
+                 telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
+                 highScore: score
+             })
+         });
+         
+         const data = await response.json();
+         console.log('Ответ сервера:', data);
+     } catch (error) {
+         console.error('Ошибка при отправке рекорда:', error);
+     }
+ } else {
+     console.log('Рекорд не побит');
+ }
         }
         
         // Обновляем отображение сердец
