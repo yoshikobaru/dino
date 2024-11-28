@@ -616,7 +616,8 @@ const routes = {
                         resolve({ status: 404, body: { error: 'User not found' } });
                         return;
                     }
-
+                    console.log('Current DB high score:', user.highScore);
+                    console.log('New high score:', highScore);
                     if (highScore > user.highScore) {
                         await user.update({ highScore });
                         console.log('High score updated successfully');

@@ -647,26 +647,32 @@ window.addEventListener('message', async (event) => {
             if (score > highScore) {
                 localStorage.setItem('project.github.chrome_dino.high_score', score.toString());
                 // Отправляем новый рекорд на сервер
-            try {
-                const response = await fetch('/update-high-score', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Telegram-Init-Data': window.Telegram.WebApp.initData
-                    },
-                    body: JSON.stringify({
-                        telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
-                        highScore: score
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to update high score');
+                try {
+                    const response = await fetch('/update-high-score', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Telegram-Init-Data': window.Telegram.WebApp.initData
+                        },
+                        body: JSON.stringify({
+                            telegramId: window.Telegram.WebApp.initDataUnsafe.user.id,
+                            highScore: parseInt(localStorage.getItem('project.github.chrome_dino.high_score')) // Берем значение из правильного ключа
+                        })
+                    });
+            
+                    if (!response.ok) {
+                        throw new Error('Failed to update high score');
+                    }
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('High score updated successfully:', score);
+                    } else {
+                        console.log('High score not updated:', data.message);
+                    }
+                } catch (error) {
+                    console.error('Error updating high score:', error);
                 }
-                console.log('High score updated successfully');
-            } catch (error) {
-                console.error('Error updating high score:', error);
-            }
                 // Проверяем достижение 500 и 1000 DPS
                 if (score >= 1000) {
                     const record1000DPSCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
