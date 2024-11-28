@@ -86,6 +86,14 @@ class TaskManager {
             ],
             media: [
                 {
+                    id: 'dino_rush_news',
+                    name: "Subscribe to Dino Rush News 🦖💨",
+                    dps: 350,
+                    link: "https://t.me/dino_rush_news",
+                    isCompleted: false,
+                    type: 'media'
+                },
+                {
                     id: 'method_post',
                     name: "Watch new post in Method Community",
                     dps: 300,
