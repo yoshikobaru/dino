@@ -23,7 +23,7 @@ class TaskManager {
             daily: [
                 {
                     id: 'daily_bonus',
-                    name: "Ежедневный бонус",
+                    name: "Daily Bonus",
                     dps: 150,
                     progress: 1,
                     maxProgress: 7,
@@ -33,18 +33,18 @@ class TaskManager {
                 },
                 {
                     id: 'play_5',
-                name: "Сыграть 5 раз",
-                dps: 350,
-                progress: 0,
-                maxProgress: 5,
-                cooldown: 0,
-                timer: 0,
-                isTimerRunning: false,
+                    name: "Play 5 times",
+                    dps: 350,
+                    progress: 0,
+                    maxProgress: 5,
+                    cooldown: 0,
+                    timer: 0,
+                    isTimerRunning: false,
                 type: 'daily'
             },
             {
                 id: 'play_25',
-                name: "Сыграть 25 раз",
+                name: "Play 25 times",
                 dps: 750,
                 progress: 0,  // Заменяем playedCount на progress
                 maxProgress: 25,
@@ -53,14 +53,14 @@ class TaskManager {
             },
                 {
                     id: 'score_500',
-                    name: "Набрать 500 DPS за игру",
+                    name: "Get 500 DPS per game",
                     dps: 550,
                     isCompleted: false,
                     type: 'daily'
                 },
                 {
                     id: 'score_1000',
-                    name: "Набрать 1000 DPS за игру",
+                    name: "Get 1000 DPS per game",
                     dps: 1750,
                     isCompleted: false,
                     type: 'daily'
@@ -69,7 +69,7 @@ class TaskManager {
             social: [
                 {
                     id: 'litwin_game',
-                    name: "Сыграть в LITWIN",
+                    name: "Play LITWIN",
                     dps: 350,
                     link: "https://t.me/LITWIN_TAP_BOT?start=b8683c8c", // меняем формат ссылки
                     isCompleted: false,
@@ -77,7 +77,7 @@ class TaskManager {
                 },
                 {
                     id: 'method_game',
-                    name: "Сыграть в Method",
+                    name: "Play Method",
                     dps: 450,
                     link: "https://t.me/MethodTon_Bot?start=p203ynnif7", // меняем формат ссылки
                     isCompleted: false,
@@ -87,7 +87,7 @@ class TaskManager {
             media: [
                 {
                     id: 'method_post',
-                    name: "Посмотреть новый пост в method",
+                    name: "Watch new post in Method Community",
                     dps: 300,
                     link: "https://t.me/method_community",
                     isCompleted: false,
@@ -95,7 +95,7 @@ class TaskManager {
                 },
                 {
                     id: 'litwin_post',
-                    name: "Посмотреть пост в LITWIN",
+                    name: "Watch post in LITWIN Community",
                     dps: 250,
                     link: "https://t.me/litwin_community",
                     isCompleted: false,
@@ -105,13 +105,13 @@ class TaskManager {
             refs: [
                 {
                     id: 'invite_friends',
-                    name: "Пригласить 3 друзей",
+                    name: "Invite 3 friends",
                     dps: 500,
                     progress: 0,
                     maxProgress: 3,
                     isCompleted: false,
                     type: 'refs', // Меняем 'friends' на 'refs'
-                    description: 'Пригласите друзей и получите бонус',
+                    description: 'Invite friends and get bonus',
                     displayProgress: true
                 }
             ]
@@ -350,7 +350,7 @@ class TaskManager {
             task.progress = friendsCount; // Обновляем прогресс таска
             
             if (friendsCount < task.maxProgress) {
-                window.showPopup(`У вас недостаточно друзей, ваше текущее количество - ${friendsCount} из ${task.maxProgress}`);
+                window.showPopup(`Invite more friends, your current number of friends is ${friendsCount} from ${task.maxProgress}`);
                 return;
             }
     
@@ -358,7 +358,7 @@ class TaskManager {
             task.isCompleted = true;
             await this.handleTaskCompletion(task);
             this.saveTasks();
-            window.showPopup('Поздравляем! Вы выполнили задание по приглашению друзей!');
+            window.showPopup('Congratulations! You have completed the referral task!');
         }
     }
     async handleDailyTask(task) {
@@ -378,8 +378,8 @@ class TaskManager {
     
             if (dailyPlayCount < requiredGames) {
                 window.showPopup(
-                    `Вы сыграли ${dailyPlayCount} из ${requiredGames} раз\n` +
-                    'Продолжайте играть, чтобы выполнить задание!'
+                    `You played ${dailyPlayCount} from ${requiredGames} times\n` +
+                    'Continue playing to complete the task!'
                 );
                 return;
             }
@@ -393,15 +393,15 @@ class TaskManager {
             if (task.id === 'score_1000') {
                 const score500Task = this.tasks.daily.find(t => t.id === 'score_500');
                 if (!score500Task.isCompleted) {
-                    window.showPopup('Сначала выполните задание "Набрать 500 DPS за игру"!');
+                    window.showPopup('First complete the "Get 500 DPS per game" task!');
                     return;
                 }
             }
     
             if (highScore < requiredScore) {
                 window.showPopup(
-                    `Ваш текущий рекорд: ${highScore} DPS\n` +
-                    `Продолжайте играть, чтобы достичь ${requiredScore} DPS!`
+                    `Your current high score: ${highScore} DPS\n` +
+                    `Continue playing to reach ${requiredScore} DPS!`
                 );
                 return;
             }

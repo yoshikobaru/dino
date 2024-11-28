@@ -254,8 +254,8 @@ async function syncUserData() {
         // Возможно, стоит добавить уведомление о проблеме с синхронизацией
         if (window.Telegram?.WebApp?.showPopup) {
             window.Telegram.WebApp.showPopup({
-                title: '⚠️ Внимание',
-                message: 'Проблема с синхронизацией данных. Ваш прогресс сохранен локально и будет синхронизирован при восстановлении соединения.'
+                title: '⚠️ Attention',
+                message: 'Problem with data synchronization. Your progress is saved locally and will be synchronized when the connection is restored.'
             });
         }
     }
@@ -324,7 +324,7 @@ function showPage(pageName) {
         const timerElement = document.getElementById('timer');
         if (timerElement) {
             timerElement.textContent = timerData.availableGames < 5 ? 
-                `Следующее сердце через: ${timerData.time}` : '';
+                `Next heart through: ${timerData.time}` : '';
         }
     }
 }

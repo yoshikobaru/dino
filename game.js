@@ -65,7 +65,7 @@ let timerInterval = setInterval(() => {
     const timerData = updateTimer();
     
     if (document.getElementById('timer')) {
-        document.getElementById('timer').textContent = availableGames < 5 ? `Следующее сердце через: ${timerData.time}` : '';
+        document.getElementById('timer').textContent = availableGames < 5 ? `Next heart through: ${timerData.time}` : '';
     }
     if (document.getElementById('lives')) {
         document.getElementById('lives').innerHTML = '❤️'.repeat(timerData.availableGames) + '🖤'.repeat(5 - timerData.availableGames);
@@ -154,7 +154,7 @@ function updateAvailableGamesDisplay() {
     // Обновляем таймер
     if (timerDisplay) {
         if (timerData.availableGames < 5) {
-            timerDisplay.textContent = `Следующее сердце через: ${timerData.time}`;
+            timerDisplay.textContent = `Next heart through: ${timerData.time}`;
             timerDisplay.style.display = 'block';
         } else {
             timerDisplay.style.display = 'none';
@@ -275,7 +275,7 @@ startButton.addEventListener('click', async () => {
             window.updateAllBalances();
         }
         
-        showPopup(`Вы заработали ${gameScore} DPS! Ваш новый баланс: ${totalDPS} DPS`);
+        showPopup(`You earned ${gameScore} DPS! Your new balance: ${totalDPS} DPS`);
         
         // Отправляем сообщение в iframe для удаления кнопки рекламы
         if (gameIframe && gameIframe.contentWindow) {
@@ -382,24 +382,24 @@ const ACHIEVEMENTS = {
     // COMMON (зеленые)
     FIRST_HUNDRED: {
         id: 'first_hundred',
-        name: 'Первая сотня',
-        description: 'Набрать 100 очков',
+        name: 'First hundred',
+        description: 'Get 100 points',
         icon: '💯',
         rarity: 'common',
         condition: (score) => score >= 100
     },
     MASTER_JUMPER: {
         id: 'master_jumper',
-        name: 'Мастер прыжков',
-        description: 'Сделать 5 прыжков подряд',
+        name: 'Master jumper',
+        description: 'Make 5 jumps in a row',
         icon: '🦘',
         rarity: 'common',
         condition: (_, combo) => combo >= 5
     },
     FIRST_MINUTE: {
         id: 'first_minute',
-        name: 'Первая минута',
-        description: 'Продержаться 1 минуту',
+        name: 'First minute',
+        description: 'Stay alive for 1 minute',
         icon: '⏱️',
         rarity: 'common',
         condition: (_, __, timeAlive) => timeAlive >= 60
@@ -408,16 +408,16 @@ const ACHIEVEMENTS = {
     // RARE (синие)
     SPEED_MASTER: {
         id: 'speed_master',
-        name: 'Скоростной мастер',
-        description: 'Набрать 300 очков',
+        name: 'Speed master',
+        description: 'Get 300 points',
         icon: '🏃',
         rarity: 'rare',
         condition: (score) => score >= 300
     },
     COMBO_KING: {
         id: 'combo_king',
-        name: 'Король комбо',
-        description: 'Сделать 10 прыжков подряд',
+        name: 'Combo king',
+        description: 'Make 10 jumps in a row',
         icon: '👑',
         rarity: 'rare',
         condition: (_, combo) => combo >= 10
@@ -426,16 +426,16 @@ const ACHIEVEMENTS = {
     // EPIC (фиолетовые)
     NIGHT_RUNNER: {
         id: 'night_runner',
-        name: 'Ночной бегун',
-        description: 'Набрать 200 очков в ночном режиме',
+        name: 'Night runner',
+        description: 'Get 200 points in night mode',
         icon: '🌙',
         rarity: 'epic',
         condition: (score, _, __, theme) => score >= 200 && theme === 2
     },
     SURVIVOR: {
         id: 'survivor',
-        name: 'Выживший',
-        description: 'Играть 5 минут без смерти',
+        name: 'Survivor',
+        description: 'Play 5 minutes without dying',
         icon: '⭐️',
         rarity: 'epic',
         condition: (_, __, timeAlive) => timeAlive >= 300
@@ -578,7 +578,7 @@ function updateStartButtonState() {
         // Если нет сердец и кнопка не в режиме claim
         startButton.classList.remove('bg-yellow-400', 'text-black');
         startButton.classList.add('bg-gray-200', 'text-gray-600', 'opacity-80');
-        startButton.innerHTML = 'Недостаточно сердец';
+        startButton.innerHTML = 'Not enough hearts';
         startButton.disabled = true;
     } else if (startButton.classList.contains('claim-mode')) {
         // Если кнопка в режиме claim
@@ -671,12 +671,12 @@ window.addEventListener('message', async (event) => {
                 if (score >= 1000) {
                     const record1000DPSCompleted = localStorage.getItem('record1000DPSCompleted') === 'true';
                     if (!record1000DPSCompleted) {
-                        showPopup('Поздравляем! Вы набрали 1000 DPS за игру. Получите награду в заданиях!');
+                        showPopup('Congratulations! You scored 1000 DPS per game. Get a reward in tasks!');
                     }
                 } else if (score >= 500) {
                     const record500DPSCompleted = localStorage.getItem('record500DPSCompleted') === 'true';
                     if (!record500DPSCompleted) {
-                        showPopup('Поздравляем! Вы набрали 500 DPS за игру. Получите награду в заданиях!');
+                        showPopup('Congratulations! You scored 500 DPS per game. Get a reward in tasks!');
                     }
                 }
                 
@@ -686,7 +686,7 @@ window.addEventListener('message', async (event) => {
         
         // Обновляем отображение сердец
         if (availableGames === 0) {
-            livesDisplay.innerHTML = 'Игры закончились';
+            livesDisplay.innerHTML = 'Lives are over';
         }
         updateAvailableGamesDisplay();
         updateStartButtonState();
@@ -800,7 +800,7 @@ document.addEventListener('visibilitychange', () => {
 });
 // Доавьте эту функцию в начало файла
 function updateGameTaskProgress() {
-    const gameTask = taskManager.tasks.daily.find(task => task.name === "Сыграть 5 раз");
+    const gameTask = taskManager.tasks.daily.find(task => task.name === "Play 5 times");
     if (gameTask && gameTask.cooldown <= 0) {
         if (!gameTask.isTimerRunning) {
             startGameTaskTimer();
@@ -817,7 +817,7 @@ function updateGameTaskProgress() {
 }
 
 function startGameTaskTimer() {
-    const gameTask = taskManager.tasks.daily.find(task => task.name === "Сыграть 5 раз");
+    const gameTask = taskManager.tasks.daily.find(task => task.name === "Play 5 times");
     if (gameTask && !gameTask.isTimerRunning) {
         gameTask.isTimerRunning = true;
         gameTask.timerStartTime = Date.now();
@@ -838,7 +838,7 @@ function renderTasks(category) {
 // Добавьте новую функцию:
 function updatePlayedCountTask() {
     const dailyTasks = taskManager.getTasks('daily');
-    const play25Task = dailyTasks.find(task => task.name === "Сыграть 25 раз");
+    const play25Task = dailyTasks.find(task => task.name === "Play 25 times");
     if (play25Task && !play25Task.isCompleted) {
         const dailyPlayCount = parseInt(localStorage.getItem('dailyPlayCount')) || 0;
         play25Task.progress = Math.min(dailyPlayCount, play25Task.maxProgress);
@@ -870,10 +870,10 @@ let AdController;
 async function initAdsgram() {
     try {
         await loadAdsgramScript();
-        console.log('Adsgram SDK загружен успешно');
+        console.log('Adsgram SDK loaded successfully');
         AdController = window.Adsgram.init({ blockId: "5315" }); 
     } catch (error) {
-        console.error('Ошибка загрузки Adsgram SDK:', error);
+        console.error('Error loading Adsgram SDK:', error);
     }
 }
 
@@ -890,7 +890,7 @@ window.addEventListener('message', async (event) => {
     
         try {
             const result = await AdController.show();
-            console.log('Пользователь посмотрел рекламу', result);
+            console.log('User watched the ad', result);
             
             // Начисляем очки с множителем x3 после просмотра рекламы
             const currentScore = event.data.currentScore;
@@ -904,7 +904,7 @@ window.addEventListener('message', async (event) => {
                 window.updateTaskStatuses('daily');
             }
             
-            showPopup(`Вы заработали ${gameScore} DPS (x3)! Ваш новый баланс: ${window.totalDPS} DPS`);
+            showPopup(`You earned ${gameScore} DPS (x3)! Your new balance: ${window.totalDPS} DPS`);
             
             // Отправляем сообщение в iframe о том, что реклама просмотрена
             if (gameIframe && gameIframe.contentWindow) {
@@ -920,7 +920,7 @@ window.addEventListener('message', async (event) => {
             delete startButton.dataset.pendingScore; // Удаляем сохраненный счет
             
         } catch (error) {
-            console.error('Ошибка при показе рекламы:', error);
+            console.error('Error showing the ad:', error);
         }
     }
 });
@@ -1116,14 +1116,14 @@ window.Telegram.WebApp.onEvent('invoiceClosed', async (data) => {
                 selectSkin(skinData.skinName);
                 
                 window.Telegram.WebApp.showPopup({
-                    title: '✨ Успех!',
-                    message: 'Скин успешно приобретен!'
+                    title: '✨ Success!',
+                    message: 'Skin purchased successfully!'
                 });
                 
                 updateShopButtons();
             }
         } catch (error) {
-            console.error('Ошибка при активации скина:', error);
+            console.error('Error activating the skin:', error);
         } finally {
             localStorage.removeItem('pendingSkin');
         }
@@ -1153,7 +1153,7 @@ window.selectSkin = function(skinName) {
         }
         
         updateShopButtons();
-        showPopup('Скин успешно выбран!');
+        showPopup('Skin selected successfully!');
     }
 }
 document.addEventListener('visibilitychange', () => {

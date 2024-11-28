@@ -157,10 +157,10 @@ bot.command('start', async (ctx) => {
       }
     }
 
-    ctx.reply('🦖 Добро пожаловать в игру "Dinosaur"!\n\n' + 
-      '🎮 Помоги динозаврику преодолеть препятствия и установи новый рекорд!\n' +
-      '🏆 Соревнуйся с друзьями и поднимайся в таблице лидеров.\n\n' +
-      '👇 Нажми кнопку ниже, чтобы начать приключение:', {
+    ctx.reply('🦖 Welcome to Dino Rush 🦖💨!\n\n' + 
+      '🎮 Help the dinosaur overcome obstacles and set a new record!\n' +
+      '🏆 Compete with friends and climb the leaderboard.\n\n' +
+      '👇 Click the button below to start the adventure:', {
       reply_markup: {
         resize_keyboard: true
       }
@@ -168,7 +168,7 @@ bot.command('start', async (ctx) => {
 
   } catch (error) {
     console.error('Error in start command:', error);
-    ctx.reply('Произошла ошибка. Пожалуйста, попробуйте позже.');
+    ctx.reply('An error occurred. Please try again later.');
   }
 });
 
@@ -199,7 +199,7 @@ bot.on('successful_payment', async (ctx) => {
       const updatedSkins = [...new Set([...user.skins, skinName])];
       await user.update({ skins: updatedSkins });
 
-      await ctx.reply('✨ Скин успешно приобретен! Теперь вы можете выбрать его в игре.');
+      await ctx.reply('✨ Skin purchased successfully! Now you can select it in the game.');
     }
   } catch (error) {
     console.error('Error in successful_payment:', error);
@@ -335,14 +335,14 @@ const routes = {
   }
 
   try {
-    console.log('Поиск рефералов для пользователя с telegramId:', telegramId);
+    console.log('Searching for referred friends for user with telegramId:', telegramId);
     const user = await User.findOne({ where: { telegramId } });
     if (user) {
       const referredFriends = await User.findAll({
         where: { referredBy: user.referralCode },
         attributes: ['telegramId', 'username']
       });
-      console.log('Найдено рефералов:', referredFriends.length);
+      console.log('Found referred friends:', referredFriends.length);
       return { 
         status: 200, 
         body: { 
@@ -353,11 +353,11 @@ const routes = {
         } 
       };
     } else {
-      console.log('Пользователь не найден');
+      console.log('User not found');
       return { status: 404, body: { error: 'User not found' } };
     }
   } catch (error) {
-    console.error('Ошибка при обработке запроса:', error);
+    console.error('Error processing request:', error);
     return { status: 500, body: { error: 'Internal server error' } };
   }
 },
@@ -379,13 +379,13 @@ const routes = {
         }
 
         const invoice = await bot.telegram.createInvoiceLink({
-            title: 'Покупка скина динозавра',
-            description: `${skinName === 'red' ? 'Красный' : 'Зеленый'} скин для вашего динозавра`,
+            title: 'Purchase of a Dino skin',
+            description: `${skinName === 'red' ? 'Red' : 'Green'} skin for your dinosaur`,
             payload: `skin_${telegramId}_${skinName}`,
             provider_token: "",
             currency: 'XTR',
             prices: [{
-                label: '⭐️ Скин',
+                label: '⭐️ Skin',
                 amount: parseInt(stars)
             }]
         });
@@ -750,7 +750,7 @@ schedule.scheduleJob('*/1 * * * *', async () => {
       // Отправляем уведомление
       await bot.telegram.sendMessage(
         telegramId,
-        '🦖 Все сердца восстановились!\n\nПора вернуться в игру и установить новый рекорд! 🏆'
+        '🦖 All hearts have been restored!\n\nIt\'s time to return to the game and set a new record! 🏆'
       );
       
       // Удаляем отправленное уведомление
