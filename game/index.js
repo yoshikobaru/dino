@@ -117,12 +117,12 @@ const handleJump = () => {
 function initialize() {
     gameStartTime = Date.now();
     currentCombo = 0;
-    lastJumpTime = Date.now(); // Сбрасываем lastJumpTime при инициализации
+    lastJumpTime = Date.now();
     current_theme = themes.classic;
     cumulative_velocity = new Velocity(0, 0);
     
+    // Инициализируем скорость до создания объектов
     initSkinAbilities();
-
     game_over = false;
     game_score = 0;
     game_hi_score = parseInt(localStorage.getItem("project.github.chrome_dino.high_score")) || 0;
@@ -530,9 +530,17 @@ function initSkinAbilities() {
     const skinName = localStorage.getItem('currentDinoSkin') || 'default';
     const abilities = SKIN_ABILITIES[skinName];
     
+    // Базовая скорость
     gameSpeed = abilities.speed;
-    FLOOR_VELOCITY.y = -3.5 * gameSpeed;
-    step_velocity.y = -0.05 * gameSpeed;
+    
+    // Корректируем скорость для iOS
+    if (window.navigator.platform.match(/iPhone|iPod|iPad/i)) {
+        FLOOR_VELOCITY.y = -3.5;  // Фиксированная базовая скорость для iOS
+        step_velocity.y = -0.05;
+    } else {
+        FLOOR_VELOCITY.y = -3.5 * gameSpeed;
+        step_velocity.y = -0.05 * gameSpeed;
+    }
     
     currentArmor = abilities.armor;
 }
