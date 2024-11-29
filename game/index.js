@@ -1,19 +1,20 @@
 const canvas = document.getElementById("board");
 const canvas_ctx = canvas.getContext('2d');
+let lastFrameTime = Date.now();
 
 const CELL_SIZE = 2;
 const ROWS = 300;
 let COLUMNS = 1000;
-const ENVIRONMENT_GRAVITY = new Velocity(-0.6, 0);
-
+// база
 const BASE_FLOOR_VELOCITY = -3.5;
 const BASE_STEP_VELOCITY = -0.05;
 const BASE_INITIAL_TRUST = -11;
-
+const BASE_GRAVITY = -0.6;
+//фикс для устройств
 const FLOOR_VELOCITY = new Velocity(0, BASE_FLOOR_VELOCITY);
 const DINO_INITIAL_TRUST = new Velocity(BASE_INITIAL_TRUST, 0);
+const ENVIRONMENT_GRAVITY = new Velocity(BASE_GRAVITY, 0);
 let step_velocity = new Velocity(0, BASE_STEP_VELOCITY);
-
 
 let CACTUS_MIN_GAP = 80;
 let currentCombo = 0;
@@ -235,7 +236,6 @@ function hideGameOver() {
     gameOverScreen.style.display = 'none';
 }
 
-let lastFrameTime = Date.now();
 function event_loop(gravity) {
     const currentTime = Date.now();
     const deltaTime = Math.min((currentTime - lastFrameTime) / 16.67, 2); // Ограничиваем максимальную дельту

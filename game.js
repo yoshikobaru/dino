@@ -1079,29 +1079,18 @@ function initializeGame() {
     const gameContainer = document.getElementById('game-container');
     
     if (isMobile) {
-        // Настраиваем размеры для мобильных устройств
-        const viewportWidth = window.innerWidth;
+        const viewportWidth = Math.min(window.innerWidth, 1000); // Ограничиваем максимальную ширину
         const viewportHeight = window.innerHeight;
         
         if (canvas) {
-            // Устанавливаем фиксированные размеры canvas без учета devicePixelRatio
+            // Сохраняем пропорции игры
+            const gameAspectRatio = 300/1000; // ROWS/COLUMNS
+            const gameHeight = viewportWidth * gameAspectRatio;
+            
             canvas.style.width = `${viewportWidth}px`;
-            canvas.style.height = `${viewportHeight * 0.6}px`;
-            
-            // Используем фиксированные размеры для самого canvas
-            canvas.width = viewportWidth;
-            canvas.height = viewportHeight * 0.6;
-            
-            // Отключаем масштабирование по devicePixelRatio
-            canvas_ctx.setTransform(1, 0, 0, 1, 0, 0);
-        }
-        
-        if (gameContainer) {
-            gameContainer.style.width = '100%';
-            gameContainer.style.height = '60vh';
-            gameContainer.style.position = 'fixed';
-            gameContainer.style.top = '0';
-            gameContainer.style.left = '0';
+            canvas.style.height = `${gameHeight}px`;
+            canvas.width = 1000; // Фиксированная игровая ширина
+            canvas.height = 300; // Фиксированная игровая высота
         }
     }
 }
