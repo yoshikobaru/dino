@@ -1084,13 +1084,16 @@ function initializeGame() {
         const viewportHeight = window.innerHeight;
         
         if (canvas) {
+            // Устанавливаем фиксированные размеры canvas без учета devicePixelRatio
             canvas.style.width = `${viewportWidth}px`;
             canvas.style.height = `${viewportHeight * 0.6}px`;
-            canvas.width = viewportWidth * window.devicePixelRatio;
-            canvas.height = (viewportHeight * 0.6) * window.devicePixelRatio;
             
-            // Масштабируем контекст для сохранения качества
-            canvas_ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            // Используем фиксированные размеры для самого canvas
+            canvas.width = viewportWidth;
+            canvas.height = viewportHeight * 0.6;
+            
+            // Отключаем масштабирование по devicePixelRatio
+            canvas_ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
         
         if (gameContainer) {

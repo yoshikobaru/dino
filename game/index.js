@@ -5,16 +5,18 @@ const CELL_SIZE = 2;
 const ROWS = 300;
 let COLUMNS = 1000;
 const FLOOR_VELOCITY = new Velocity(0, -3.5);
+const DINO_INITIAL_TRUST = new Velocity(-11, 0);
+const ENVIRONMENT_GRAVITY = new Velocity(-0.6, 0);
+let step_velocity = new Velocity(0, -0.05);
+
 let CACTUS_MIN_GAP = 80;
 let currentCombo = 0;
 let lastJumpTime = Date.now(); // Инициализируем lastJumpTime
 let gameStartTime = Date.now(); // Добавляем gameStartTime здесь
 if (screen.width < COLUMNS) {
-    COLUMNS = screen.width;
+    COLUMNS = Math.min(screen.width, 1000); // Ограничиваем максимальную ширину
 }
 
-const DINO_INITIAL_TRUST = new Velocity(-11, 0);
-const ENVIRONMENT_GRAVITY = new Velocity(-0.6, 0);
 const DINO_FLOOR_INITIAL_POSITION = new Position(200, 10);
 let dino_current_trust = new Velocity(0, 0);
 let dino_ready_to_jump = true;
@@ -23,7 +25,6 @@ let is_first_time = true;
 let game_score = 0;
 let game_score_step = 0;
 let game_hi_score = null;
-let step_velocity = new Velocity(0, -0.05);
 let cumulative_velocity = null;
 let current_theme = null;
 
@@ -123,6 +124,13 @@ function initialize() {
     
     // Инициализируем скорость до создания объектов
     initSkinAbilities();
+    
+    // Устанавливаем canvas с учетом devicePixelRatio
+    const dpr = 1; // Устанавливаем dpr в 1 для одинаковой скорости
+    canvas.width = COLUMNS * dpr;
+    canvas.height = ROWS * dpr;
+    canvas_ctx.scale(dpr, dpr);
+
     game_over = false;
     game_score = 0;
     game_hi_score = parseInt(localStorage.getItem("project.github.chrome_dino.high_score")) || 0;
@@ -530,17 +538,10 @@ function initSkinAbilities() {
     const skinName = localStorage.getItem('currentDinoSkin') || 'default';
     const abilities = SKIN_ABILITIES[skinName];
     
-    // Базовая скорость
+    // Устанавливаем фиксированную скорость для всех устройств
     gameSpeed = abilities.speed;
-    
-    // Корректируем скорость для iOS
-    if (window.navigator.platform.match(/iPhone|iPod|iPad/i)) {
-        FLOOR_VELOCITY.y = -3.5;  // Фиксированная базовая скорость для iOS
-        step_velocity.y = -0.05;
-    } else {
-        FLOOR_VELOCITY.y = -3.5 * gameSpeed;
-        step_velocity.y = -0.05 * gameSpeed;
-    }
+    FLOOR_VELOCITY.y = -3.5 * gameSpeed;
+    step_velocity.y = -0.05 * gameSpeed;
     
     currentArmor = abilities.armor;
 }
