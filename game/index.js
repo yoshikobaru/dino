@@ -4,10 +4,16 @@ const canvas_ctx = canvas.getContext('2d');
 const CELL_SIZE = 2;
 const ROWS = 300;
 let COLUMNS = 1000;
-const FLOOR_VELOCITY = new Velocity(0, -3.5);
-const DINO_INITIAL_TRUST = new Velocity(-11, 0);
 const ENVIRONMENT_GRAVITY = new Velocity(-0.6, 0);
-let step_velocity = new Velocity(0, -0.05);
+
+const BASE_FLOOR_VELOCITY = -3.5;
+const BASE_STEP_VELOCITY = -0.05;
+const BASE_INITIAL_TRUST = -11;
+
+const FLOOR_VELOCITY = new Velocity(0, BASE_FLOOR_VELOCITY);
+const DINO_INITIAL_TRUST = new Velocity(BASE_INITIAL_TRUST, 0);
+let step_velocity = new Velocity(0, BASE_STEP_VELOCITY);
+
 
 let CACTUS_MIN_GAP = 80;
 let currentCombo = 0;
@@ -125,8 +131,8 @@ function initialize() {
     // Инициализируем скорость до создания объектов
     initSkinAbilities();
     
-    // Устанавливаем canvas с учетом devicePixelRatio
-    const dpr = 1; // Устанавливаем dpr в 1 для одинаковой скорости
+    // Устанавливаем фиксированный devicePixelRatio
+    const dpr = 1;
     canvas.width = COLUMNS * dpr;
     canvas.height = ROWS * dpr;
     canvas_ctx.scale(dpr, dpr);
@@ -229,8 +235,12 @@ function hideGameOver() {
     gameOverScreen.style.display = 'none';
 }
 
+let lastFrameTime = Date.now();
 function event_loop(gravity) {
-    game_score_step += 0.1;
+    const currentTime = Date.now();
+    const deltaTime = Math.min((currentTime - lastFrameTime) / 16.67, 2); // Ограничиваем максимальную дельту
+    lastFrameTime = currentTime;
+    game_score_step += 0.1 * deltaTime;
 
     if (game_score_step > 1) {
         game_score_step -= 1;
@@ -538,10 +548,12 @@ function initSkinAbilities() {
     const skinName = localStorage.getItem('currentDinoSkin') || 'default';
     const abilities = SKIN_ABILITIES[skinName];
     
-    // Устанавливаем фиксированную скорость для всех устройств
     gameSpeed = abilities.speed;
-    FLOOR_VELOCITY.y = -3.5 * gameSpeed;
-    step_velocity.y = -0.05 * gameSpeed;
+    
+    // Устанавливаем скорости с учетом способностей скина
+    FLOOR_VELOCITY.y = BASE_FLOOR_VELOCITY * gameSpeed;
+    step_velocity.y = BASE_STEP_VELOCITY * gameSpeed;
+    DINO_INITIAL_TRUST.x = BASE_INITIAL_TRUST * gameSpeed;
     
     currentArmor = abilities.armor;
 }
