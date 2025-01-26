@@ -470,21 +470,17 @@ window.addEventListener('message', async function(event) {
             const data = await response.json();
             
             if (data.inviteLink) {
-                // Создаем параметры для истории
-                const storyParams = {
-                    url: 'https://dino-app.ru/assets/icon.png', // Путь к вашей иконке
-                    text: `🦖 ${username}\n\n⭐️ Scored ${event.data.score} DPS\nin Dino Rush!\n\n🎯 Can you beat this?`,
-                    widget_link: {
-                        url: data.inviteLink,
-                        name: 'Play Dino Rush'
+                // Используем shareToStory как в примере с пандой
+                window.Telegram.WebApp.shareToStory(
+                    'https://dino-app.ru/assets/icon.png',
+                    {
+                        text: `🦖 ${username} scored ${event.data.score} DPS in Dino Rush!\n\n🎯 Can you beat this score?`,
+                        widget_link: {
+                            url: data.inviteLink,
+                            name: 'Play Dino Rush'
+                        }
                     }
-                };
-                
-                // Создаем URL для истории
-                const storyUrl = `https://t.me/share/story?${new URLSearchParams(storyParams).toString()}`;
-                
-                // Открываем историю через WebApp
-                window.Telegram.WebApp.openLink(storyUrl);
+                );
                 
                 if (window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
