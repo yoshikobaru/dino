@@ -354,10 +354,13 @@ class TaskManager {
             taskElement.className = 'bg-gray-800 rounded-lg p-4 flex items-center justify-between';
             
             // Определяем текст кнопки в зависимости от состояния
-            let buttonText = task.isCompleted && task.type === 'media' ? 'Go' : 
+            let buttonText = task.isCompleted && (task.id === 'dino_rush_news' || task.id === 'root_community' || task.id === 'timber_panda') ? 'Go' : 
                             task.isCompleted ? 'Completed' :
                             (task.isChecking && (task.id === 'dino_rush_news' || task.id === 'root_community' || task.id === 'timber_panda')) ? 'Check Subscription' : 
                             'Complete';
+            
+            // Определяем, должна ли кнопка быть неактивной
+            const isDisabled = task.isCompleted && !['dino_rush_news', 'root_community', 'timber_panda'].includes(task.id);
             
             taskElement.innerHTML = `
     <div class="flex items-center flex-grow">
@@ -365,11 +368,11 @@ class TaskManager {
         <div class="mr-4">
             <div class="text-sm">${task.name}</div>
             <div class="text-xs text-yellow-400">+${task.dps} DPS</div>
-            ${task.displayProgress ? `<div class="text-sm text-gray-400">${task.progress}/${task.maxProgress}</div>` : ''}
+            ${task.progress !== undefined ? `<div class="text-sm text-gray-400">${task.progress}/${task.maxProgress}</div>` : ''}
         </div>
     </div>
-    <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold ${task.isCompleted ? 'opacity-50 cursor-not-allowed' : ''}" 
-        ${task.isCompleted ? 'disabled' : ''} 
+    <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" 
+        ${isDisabled ? 'disabled' : ''} 
         data-task-id="${task.id}">
         ${buttonText}
     </button>
