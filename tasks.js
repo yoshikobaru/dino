@@ -38,7 +38,7 @@ class TaskManager {
     
             const savedTasksObj = JSON.parse(savedTasks);
     
-            // Восстанавливаем иконки для каждой категории
+            // Восстанавливаем иконки и состояния для каждой категории
             Object.keys(savedTasksObj).forEach(category => {
                 savedTasksObj[category] = savedTasksObj[category].map(task => {
                     const defaultTask = defaultTasks[category].find(d => d.id === task.id);
@@ -46,7 +46,12 @@ class TaskManager {
                         ...task,
                         icon: defaultTask ? defaultTask.icon : '📋',
                         isCompleted: task.isCompleted || false,
-                        isChecking: task.isChecking || false
+                        isChecking: task.isChecking || false,
+                        progress: task.progress || 0,
+                        timer: task.timer || 0,
+                        isTimerRunning: task.isTimerRunning || false,
+                        cooldown: task.cooldown || 0,
+                        bonusTime: task.bonusTime || 0
                     };
                 });
             });
