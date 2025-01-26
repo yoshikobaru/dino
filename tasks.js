@@ -488,12 +488,22 @@ class TaskManager {
         const task = this.findTaskById(taskId);
         if (!task) return null;
 
-        // Для социальных заданий открываем прямо в Telegram
-        if (task.type === 'social') {
-            window.Telegram.WebApp.openTelegramLink(task.link);
+        // Добавляем проверку для новых социальных заданий
+        if (['root_game', 'panda_game'].includes(task.id)) {
+            const buttonState = this.getSocialTaskButtonState(task.id);
+            
+            if (buttonState === 'go') {
+                // Если уже выполнено, просто открываем бота
+                window.Telegram.WebApp.openTelegramLink(task.link);
+                return null;
+            }
+            
+            // Если первый раз
             task.isCompleted = true;
+            this.setSocialTaskButtonState(task.id, 'go');
             this.handleTaskCompletion(task);
             this.saveTasks();
+            window.Telegram.WebApp.openTelegramLink(task.link);
             return null;
         }
 
@@ -586,6 +596,15 @@ class TaskManager {
 
     getTaskButtonState(taskId) {
         return localStorage.getItem(`button_state_${taskId}`);
+    }
+
+    // Добавляем новые методы для социальных заданий
+    setSocialTaskButtonState(taskId, state) {
+        localStorage.setItem(`social_button_${taskId}`, state);
+    }
+
+    getSocialTaskButtonState(taskId) {
+        return localStorage.getItem(`social_button_${taskId}`);
     }
 }
 
