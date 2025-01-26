@@ -478,7 +478,9 @@ class TaskManager {
             if (!task.isChecking) {
                 task.isChecking = true;
                 this.saveTasks();
-                return task.link;
+                // Используем прямую ссылку на канал в Telegram
+                window.Telegram.WebApp.openTelegramLink('https://t.me/DinoRushNews');
+                return null; // Возвращаем null, так как открытие происходит через WebApp
             } else {
                 this.checkChannelSubscription(task);
                 return null;
