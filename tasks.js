@@ -38,28 +38,32 @@ class TaskManager {
     
             const savedTasksObj = JSON.parse(savedTasks);
     
-            // Восстанавливаем иконки и состояния для каждой категории
-            Object.keys(savedTasksObj).forEach(category => {
-                savedTasksObj[category] = savedTasksObj[category].map(task => {
-                    const defaultTask = defaultTasks[category].find(d => d.id === task.id);
+            // Восстанавливаем состояния для daily заданий
+            if (savedTasksObj.daily) {
+                savedTasksObj.daily = savedTasksObj.daily.map(task => {
+                    const defaultTask = defaultTasks.daily.find(d => d.id === task.id);
                     return {
                         ...task,
                         icon: defaultTask ? defaultTask.icon : '📋',
                         isCompleted: task.isCompleted || false,
-                        isChecking: task.isChecking || false,
                         progress: task.progress || 0,
+                        maxProgress: task.maxProgress || 0,
+                        cooldown: task.cooldown || 0,
                         timer: task.timer || 0,
                         isTimerRunning: task.isTimerRunning || false,
-                        cooldown: task.cooldown || 0,
-                        bonusTime: task.bonusTime || 0
+                        bonusTime: task.bonusTime || 0,
+                        type: 'daily'
                     };
                 });
-            });
+            }
     
             this.tasks = savedTasksObj;
         } else {
             this.initializeDefaultTasks();
         }
+        
+        // Принудительно сохраняем после загрузки
+        this.saveTasks();
     }
 
     initializeDefaultTasks() {
@@ -190,7 +194,23 @@ class TaskManager {
     }
 
     saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(this.tasks));
+        // Убедимся, что все поля сохраняются
+        const tasksToSave = {
+            ...this.tasks,
+            daily: this.tasks.daily.map(task => ({
+                ...task,
+                isCompleted: task.isCompleted || false,
+                progress: task.progress || 0,
+                maxProgress: task.maxProgress || 0,
+                cooldown: task.cooldown || 0,
+                timer: task.timer || 0,
+                isTimerRunning: task.isTimerRunning || false,
+                bonusTime: task.bonusTime || 0,
+                type: 'daily'
+            }))
+        };
+        
+        localStorage.setItem('tasks', JSON.stringify(tasksToSave));
     }
 
     getTasks(category) {
