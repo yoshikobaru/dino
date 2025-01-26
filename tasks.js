@@ -354,10 +354,16 @@ class TaskManager {
             taskElement.className = 'bg-gray-800 rounded-lg p-4 flex items-center justify-between';
             
             // Определяем текст кнопки в зависимости от состояния
-            let buttonText = task.isCompleted && (task.id === 'dino_rush_news' || task.id === 'root_community' || task.id === 'timber_panda') ? 'Go' : 
-                            task.isCompleted ? 'Completed' :
+            let buttonText;
+            const buttonState = this.getTaskButtonState(task.id);
+
+            if (buttonState === 'go' && ['dino_rush_news', 'root_community', 'timber_panda'].includes(task.id)) {
+                buttonText = 'Go';
+            } else {
+                buttonText = task.isCompleted ? 'Completed' :
                             (task.isChecking && (task.id === 'dino_rush_news' || task.id === 'root_community' || task.id === 'timber_panda')) ? 'Check Subscription' : 
                             'Complete';
+            }
             
             // Определяем, должна ли кнопка быть неактивной
             const isDisabled = task.isCompleted && !['dino_rush_news', 'root_community', 'timber_panda'].includes(task.id);
@@ -483,17 +489,17 @@ class TaskManager {
         if (!task) return null;
 
         if (['dino_rush_news', 'root_community', 'timber_panda'].includes(task.id)) {
-            // Проверяем, выполнено ли задание
-            if (task.isCompleted) {
-                // Если да, просто открываем ссылку без проверок
+            const buttonState = this.getTaskButtonState(task.id);
+            
+            if (buttonState === 'go') {
+                // Если кнопка в состоянии 'go', просто открываем ссылку
                 window.Telegram.WebApp.openTelegramLink(task.link);
                 return null;
             }
             
-            // Остальная логика для невыполненных заданий
             if (!task.isChecking) {
                 task.isChecking = true;
-                this.saveTasks(); // Сохраняем состояние
+                this.saveTasks();
                 window.Telegram.WebApp.openTelegramLink(task.link);
                 return null;
             } else {
@@ -520,8 +526,10 @@ class TaskManager {
             if (data.isSubscribed) {
                 task.isCompleted = true;
                 task.isChecking = false;
+                // Сохраняем состояние кнопки как 'go'
+                this.setTaskButtonState(task.id, 'go');
                 await this.handleTaskCompletion(task);
-                this.saveTasks(); // Сохраняем в localStorage
+                this.saveTasks();
                 window.showPopup('Subscription verified! Reward added to your balance.');
             } else {
                 task.isChecking = false;
@@ -559,6 +567,15 @@ class TaskManager {
             if (task) return task;
         }
         return null;
+    }
+
+    // В начале класса TaskManager добавляем метод для работы с состоянием кнопок
+    setTaskButtonState(taskId, state) {
+        localStorage.setItem(`button_state_${taskId}`, state);
+    }
+
+    getTaskButtonState(taskId) {
+        return localStorage.getItem(`button_state_${taskId}`);
     }
 }
 
