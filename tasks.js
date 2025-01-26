@@ -349,30 +349,24 @@ class TaskManager {
             const taskElement = document.createElement('div');
             taskElement.className = 'bg-gray-800 rounded-lg p-4 flex items-center justify-between';
             
-            let progressHtml = '';
-            if (task.displayProgress) {
-                progressHtml = `<div class="text-sm text-gray-400">${task.progress}/${task.maxProgress}</div>`;
-            }
-    
-            let timerHtml = '';
-            if (task.timer && task.isTimerRunning) {
-                timerHtml = `<div class="timer text-sm text-gray-400">⏱️ ${Math.ceil((60000 - (Date.now() - task.timer)) / 1000)}s</div>`;
-            }
-    
+            // Определяем текст кнопки в зависимости от состояния
+            let buttonText = task.isCompleted ? 'Completed' : 
+                            (task.isChecking && task.id === 'dino_rush_news') ? 'Check Subscription' : 
+                            'Complete';
+            
             taskElement.innerHTML = `
     <div class="flex items-center flex-grow">
         <div class="text-xl mr-3">${task.icon || '📋'}</div>
         <div class="mr-4">
             <div class="text-sm">${task.name}</div>
             <div class="text-xs text-yellow-400">+${task.dps} DPS</div>
-            ${progressHtml}
-            ${timerHtml}
+            ${task.displayProgress ? `<div class="text-sm text-gray-400">${task.progress}/${task.maxProgress}</div>` : ''}
         </div>
     </div>
     <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold ${task.isCompleted ? 'opacity-50 cursor-not-allowed' : ''}" 
         ${task.isCompleted ? 'disabled' : ''} 
         data-task-id="${task.id}">
-        ${task.isCompleted ? 'Completed' : 'Complete'}
+        ${buttonText}
     </button>
 `;
     
@@ -477,31 +471,52 @@ class TaskManager {
     }
     // Метод для обработки социальных действий
     handleSocialAction(taskId) {
-        const task = this.tasks.social.find(t => t.id === taskId) || 
-                    this.tasks.media.find(t => t.id === taskId);
-        
-        if (task && !task.isCompleted) {
-            if (window.Telegram?.WebApp?.ready) {
-                try {
-                    // Дожидаемся готовности WebApp
-                    window.Telegram.WebApp.ready();
-                    // Используем openLink для всех ссылок
-                    window.Telegram.WebApp.openLink(task.link);
-                    
-                    task.isCompleted = true;
-                    this.handleTaskCompletion(task);
-                    this.saveTasks();
-                } catch (error) {
-                    console.error('Error opening link:', error);
-                    // В случае ошибки просто открываем ссылку в новом окне
-                    window.open(task.link, '_blank');
-                }
+        const task = this.findTaskById(taskId);
+        if (!task) return null;
+
+        if (task.id === 'dino_rush_news') {
+            // Если задание еще не проверялось, открываем канал и меняем кнопку
+            if (!task.isChecking) {
+                task.isChecking = true;
+                this.saveTasks();
+                return task.link;
             } else {
-                // Если WebApp не готов, используем обычное открытие ссылки
-                window.open(task.link, '_blank');
+                // Проверяем подписку через API бота
+                this.checkChannelSubscription(task);
+                return null;
             }
         }
-        return null;
+
+        return task.link;
+    }
+
+    async checkChannelSubscription(task) {
+        try {
+            const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
+            const response = await fetch(`https://dino-app.ru/check-subscription?telegramId=${telegramId}&channelId=@DinoRushNews`);
+            const data = await response.json();
+
+            if (data.isSubscribed) {
+                task.isCompleted = true;
+                task.isChecking = false;
+                await this.handleTaskCompletion(task);
+                window.showPopup('Subscription verified! Reward added to your balance.');
+            } else {
+                task.isChecking = false;
+                window.showPopup('Please subscribe to Dino Rush News to complete this task!');
+            }
+            this.saveTasks();
+            
+            // Обновляем отображение задания
+            if (window.updateTaskStatuses) {
+                window.updateTaskStatuses('media');
+            }
+        } catch (error) {
+            console.error('Error checking subscription:', error);
+            task.isChecking = false;
+            this.saveTasks();
+            window.showPopup('Error checking subscription. Please try again.');
+        }
     }
 
     // Метод для обновления реферальных заданий

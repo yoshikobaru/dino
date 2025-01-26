@@ -537,7 +537,38 @@ const routes = {
         console.error('Error in reward endpoint:', error);
         return { status: 500, body: { error: 'Internal server error' } };
     }
-    }
+    },
+    '/check-subscription': async (req, res, query) => {
+        console.log('Получен запрос на /check-subscription');
+        const telegramId = query.telegramId;
+        const channelId = '@DinoRushNews';
+        
+        if (!telegramId) {
+            console.log('Отсутствует telegramId');
+            return { status: 400, body: { error: 'Missing telegramId parameter' } };
+        }
+
+        try {
+            console.log('Проверка подписки для пользователя:', telegramId);
+            // Проверяем статус участника в канале через API Telegram
+            const chatMember = await bot.telegram.getChatMember(channelId, telegramId);
+            
+            // Проверяем статус: member, administrator, creator
+            const isSubscribed = ['member', 'administrator', 'creator'].includes(chatMember.status);
+            
+            console.log('Статус подписки:', isSubscribed);
+            return { 
+                status: 200, 
+                body: { 
+                    isSubscribed,
+                    status: chatMember.status 
+                } 
+            };
+        } catch (error) {
+            console.error('Ошибка при проверке подписки:', error);
+            return { status: 500, body: { error: 'Internal server error' } };
+        }
+    },
   },
     POST: {
       '/update-balance': async (req, res) => {
