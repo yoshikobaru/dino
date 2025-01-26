@@ -469,36 +469,21 @@ window.addEventListener('message', async function(event) {
             const data = await response.json();
             
             if (data.inviteLink) {
-                // Создаем параметры для всплывающего окна в точности как на скриншоте
-                const popupParams = {
-                    title: 'Share Story',
-                    message: 'Do you want to share your score in Telegram Story?',
-                    buttons: [
-                        {
-                            type: 'default',
-                            text: 'Share Story 📱'
-                        },
-                        {
-                            type: 'cancel',
-                            text: 'Отмена'
-                        }
-                    ]
-                };
-
-                // Показываем всплывающее окно
-                window.Telegram.WebApp.showPopup(popupParams, (buttonId) => {
-                    if (buttonId === 'default') {
-                        const storyParams = {
-                            text: `🦖 I scored ${event.data.score} DPS in Dino Rush!\n\nCan you beat my score? Join now and let's compete! 🏃‍♂️💨`,
-                            widget_link: {
-                                url: data.inviteLink,
-                                name: "Play Dino Rush 🎮"
-                            }
-                        };
-                        
-                        window.Telegram.WebApp.showStory(storyParams);
+                // Создаем параметры для истории согласно StoryShareParams
+                const storyParams = {
+                    text: `🦖 I scored ${event.data.score} DPS in Dino Rush!\n\nCan you beat my score? Join now and let's compete! 🏃‍♂️💨`,
+                    widget_link: {
+                        url: data.inviteLink,
+                        name: "Play Dino Rush 🎮"
                     }
-                });
+                };
+                
+                // Открываем редактор историй напрямую
+                window.Telegram.WebApp.openStoryCreator(storyParams);
+                
+                if (window.Telegram.WebApp.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                }
             }
         } catch (error) {
             console.error('Error sharing story:', error);
