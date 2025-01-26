@@ -228,6 +228,7 @@ function showGameOver(score) {
                 const data = await response.json();
                 
                 if (data.inviteLink) {
+                    // Создаем параметры для истории
                     const storyParams = {
                         text: `🦖 I scored ${Math.floor(score)} DPS in Dino Rush!\n\nCan you beat my score? Join now and let's compete! 🏃‍♂️💨`,
                         widget_link: {
@@ -236,12 +237,21 @@ function showGameOver(score) {
                         }
                     };
                     
-                    window.Telegram.WebApp.switchInlineQuery('share_story', storyParams);
+                    // Используем правильный метод для открытия редактора историй
+                    window.Telegram.WebApp.openStoryCreator(storyParams);
+                    
+                    // Добавляем вибрацию при нажатии
+                    if (window.Telegram.WebApp.HapticFeedback) {
+                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                    }
                 }
             } catch (error) {
                 console.error('Error sharing story:', error);
                 window.showPopup('Error', 'Failed to share story. Please try again.', 5000);
             }
+        } else {
+            console.error('Telegram WebApp not available');
+            window.showPopup('Error', 'Telegram WebApp not available', 5000);
         }
     });
 
