@@ -112,20 +112,20 @@ class TaskManager {
             ],
             social: [
                 {
-                    id: 'litwin_game',
-                    name: "Play LITWIN",
-                    icon: '🎲',  // Игральная кость для других игр
+                    id: 'root_game',
+                    name: "Play Root",
+                    icon: '🎲',
                     dps: 350,
-                    link: "https://t.me/LITWIN_TAP_BOT?start=b8683c8c",
+                    link: "https://t.me/RootBTC_bot",
                     isCompleted: false,
                     type: 'social'
                 },
                 {
-                    id: 'method_game',
-                    name: "Play Method",
+                    id: 'panda_game',
+                    name: "Play Panda",
                     icon: '🎲',
                     dps: 450,
-                    link: "https://t.me/MethodTon_Bot?start=p203ynnif7",
+                    link: "https://t.me/pandapp_gamebot",
                     isCompleted: false,
                     type: 'social'
                 }
