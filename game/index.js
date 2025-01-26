@@ -185,45 +185,80 @@ function paint_layout(character_layout, character_position) {
 
 // Обновляем функцию showGameOver
 function showGameOver(score) {
-     // Проверяем достижения в конце игры
-     window.parent.postMessage({
+    // Проверяем достижения в конце игры
+    window.parent.postMessage({
         type: 'checkAchievements',
         score: game_score,
         combo: currentCombo,
         timeAlive: (Date.now() - gameStartTime) / 1000,
         theme: current_theme.id
     }, '*');
-     // Добавляем сильную вибрацию при смерти
-     if (window.parent && window.parent.Telegram && window.parent.Telegram.WebApp) {
+    
+    // Добавляем сильную вибрацию при смерти
+    if (window.parent && window.parent.Telegram && window.parent.Telegram.WebApp) {
         window.parent.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
     }
+    
     const gameOverScreen = document.getElementById('game-over');
     const finalScoreElement = document.getElementById('final-score');
     
     // Сначала удаляем все существующие кнопки рекламы
-    const existingButtons = gameOverScreen.querySelectorAll('#watch-ad-button');
+    const existingButtons = gameOverScreen.querySelectorAll('#watch-ad-button, #share-story-button');
     existingButtons.forEach(button => button.remove());
     
-    // Создаем новую кнопку рекламы
+    // Создаем кнопку рекламы
     const watchAdButton = document.createElement('button');
     watchAdButton.id = 'watch-ad-button';
-    watchAdButton.innerHTML = '<span>Watch <span class="yellow-text">ad</span> for x3 DPS</span>';
+    watchAdButton.className = 'w-full bg-gray-800/80 hover:bg-gray-700/80 text-white px-4 py-3 rounded-lg text-sm font-bold transition-all duration-300 mb-2';
+    watchAdButton.innerHTML = '<span>Watch <span class="text-yellow-400">ad</span> for x3 DPS</span>';
     
-    // Добавляем обработчик клика
-    watchAdButton.addEventListener('click', () => {
-        window.parent.postMessage({
-            type: 'showAd',
-            currentScore: game_score
-        }, '*');
-        // Сразу удаляем кнопку после клика
-        watchAdButton.remove();
+    // Создаем кнопку Share Story
+    const shareStoryButton = document.createElement('button');
+    shareStoryButton.id = 'share-story-button';
+    shareStoryButton.className = 'w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2';
+    shareStoryButton.innerHTML = '<span>Share Story</span><span class="text-xl">📱</span>';
+    
+    // Добавляем обработчик для Share Story
+    shareStoryButton.addEventListener('click', async () => {
+        if (window.Telegram && window.Telegram.WebApp) {
+            try {
+                const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
+                const response = await fetch(`https://dino-app.ru/get-referral-link?telegramId=${telegramId}`);
+                const data = await response.json();
+                
+                if (data.inviteLink) {
+                    const storyParams = {
+                        text: `🦖 I scored ${Math.floor(score)} DPS in Dino Rush!\n\nCan you beat my score? Join now and let's compete! 🏃‍♂️💨`,
+                        widget_link: {
+                            url: data.inviteLink,
+                            name: "Play Dino Rush 🎮"
+                        }
+                    };
+                    
+                    window.Telegram.WebApp.switchInlineQuery('share_story', storyParams);
+                }
+            } catch (error) {
+                console.error('Error sharing story:', error);
+                window.showPopup('Error', 'Failed to share story. Please try again.', 5000);
+            }
+        }
     });
     
     finalScoreElement.textContent = `+${Math.floor(score)} DPS`;
     gameOverScreen.style.display = 'block';
     
-    // Добавляем новую кнопку
+    // Добавляем кнопки
     gameOverScreen.appendChild(watchAdButton);
+    gameOverScreen.appendChild(shareStoryButton);
+    
+    // Добавляем обработчик клика для рекламы
+    watchAdButton.addEventListener('click', () => {
+        window.parent.postMessage({
+            type: 'showAd',
+            currentScore: game_score
+        }, '*');
+        watchAdButton.remove();
+    });
     
     window.parent.postMessage({
         type: 'gameOver',
