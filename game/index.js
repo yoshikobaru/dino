@@ -446,7 +446,7 @@ document.getElementById('watch-ad-button').addEventListener('click', () => {
         currentScore: game_score
     }, '*');
 });
-
+//
 // Слушаем сообщения от родительского окна
 window.addEventListener('message', (event) => {
     if (event.data.type === 'adWatched') {
