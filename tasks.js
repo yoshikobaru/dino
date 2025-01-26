@@ -130,27 +130,27 @@ class TaskManager {
                 {
                     id: 'dino_rush_news',
                     name: "Subscribe to Dino Rush News 🦖💨",
-                    icon: '📰',  // Газета для новостей
+                    icon: '📰',
                     dps: 350,
                     link: "https://t.me/DinoRushNews",
                     isCompleted: false,
                     type: 'media'
                 },
                 {
-                    id: 'method_post',
-                    name: "Watch new post in Method Community",
-                    icon: '📱',  // Телефон для постов
-                    dps: 300,
-                    link: "https://t.me/method_community",
+                    id: 'root_community',
+                    name: "Subscribe to Root Community 🌳",
+                    icon: '📱',
+                    dps: 450,
+                    link: "https://t.me/rootcommunity",
                     isCompleted: false,
                     type: 'media'
                 },
                 {
-                    id: 'litwin_post',
-                    name: "Watch post in LITWIN Community",
+                    id: 'timber_panda',
+                    name: "Subscribe to Timber Panda 🐼",
                     icon: '📱',
-                    dps: 250,
-                    link: "https://t.me/litwin_community",
+                    dps: 400,
+                    link: "https://t.me/timberpanda",
                     isCompleted: false,
                     type: 'media'
                 }
@@ -474,13 +474,12 @@ class TaskManager {
         const task = this.findTaskById(taskId);
         if (!task) return null;
 
-        if (task.id === 'dino_rush_news') {
+        if (['dino_rush_news', 'root_community', 'timber_panda'].includes(task.id)) {
             if (!task.isChecking) {
                 task.isChecking = true;
                 this.saveTasks();
-                // Используем прямую ссылку на канал в Telegram
-                window.Telegram.WebApp.openTelegramLink('https://t.me/DinoRushNews');
-                return null; // Возвращаем null, так как открытие происходит через WebApp
+                window.Telegram.WebApp.openTelegramLink(task.link);
+                return null;
             } else {
                 this.checkChannelSubscription(task);
                 return null;
@@ -493,7 +492,13 @@ class TaskManager {
     async checkChannelSubscription(task) {
         try {
             const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
-            const response = await fetch(`https://dino-app.ru/check-subscription?telegramId=${telegramId}&channelId=@DinoRushNews`);
+            const channelId = {
+                'dino_rush_news': '@DinoRushNews',
+                'root_community': '@rootcommunity',
+                'timber_panda': '@timberpanda'
+            }[task.id];
+
+            const response = await fetch(`https://dino-app.ru/check-subscription?telegramId=${telegramId}&channelId=${channelId}`);
             const data = await response.json();
 
             if (data.isSubscribed) {
@@ -503,11 +508,10 @@ class TaskManager {
                 window.showPopup('Subscription verified! Reward added to your balance.');
             } else {
                 task.isChecking = false;
-                window.showPopup('Please subscribe to Dino Rush News to complete this task!');
+                window.showPopup(`Please subscribe to ${task.name.split(' ').slice(2).join(' ')} to complete this task!`);
             }
             this.saveTasks();
             
-            // Обновляем отображение задания
             if (window.updateTaskStatuses) {
                 window.updateTaskStatuses('media');
             }
