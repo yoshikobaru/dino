@@ -465,21 +465,26 @@ window.addEventListener('message', async function(event) {
     if (event.data.type === 'shareStory') {
         try {
             const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
+            const username = window.Telegram.WebApp.initDataUnsafe.user.username || 'Player';
             const response = await fetch(`https://dino-app.ru/get-referral-link?telegramId=${telegramId}`);
             const data = await response.json();
             
             if (data.inviteLink) {
-                // Создаем параметры для истории согласно StoryShareParams
+                // Создаем параметры для истории
                 const storyParams = {
-                    text: `🦖 I scored ${event.data.score} DPS in Dino Rush!\n\nCan you beat my score? Join now and let's compete! 🏃‍♂️💨`,
+                    url: 'https://dino-app.ru/assets/icon.png', // Путь к вашей иконке
+                    text: `🦖 ${username}\n\n⭐️ Scored ${event.data.score} DPS\nin Dino Rush!\n\n🎯 Can you beat this?`,
                     widget_link: {
                         url: data.inviteLink,
-                        name: "Play Dino Rush 🎮"
+                        name: 'Play Dino Rush'
                     }
                 };
                 
-                // Открываем редактор историй напрямую
-                window.Telegram.WebApp.openStoryCreator(storyParams);
+                // Создаем URL для истории
+                const storyUrl = `https://t.me/share/story?${new URLSearchParams(storyParams).toString()}`;
+                
+                // Открываем историю через WebApp
+                window.Telegram.WebApp.openLink(storyUrl);
                 
                 if (window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
