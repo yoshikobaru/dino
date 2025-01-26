@@ -352,8 +352,9 @@ class TaskManager {
             taskElement.className = 'bg-gray-800 rounded-lg p-4 flex items-center justify-between';
             
             // Определяем текст кнопки в зависимости от состояния
-            let buttonText = task.isCompleted ? 'Completed' : 
-                            (task.isChecking && task.id === 'dino_rush_news') ? 'Check Subscription' : 
+            let buttonText = task.isCompleted && task.type === 'media' ? 'Go' : 
+                            task.isCompleted ? 'Completed' :
+                            (task.isChecking && (task.id === 'dino_rush_news' || task.id === 'root_community' || task.id === 'timber_panda')) ? 'Check Subscription' : 
                             'Complete';
             
             taskElement.innerHTML = `
@@ -508,13 +509,12 @@ class TaskManager {
                 task.isCompleted = true;
                 task.isChecking = false;
                 await this.handleTaskCompletion(task);
+                this.saveTasks(); // Сохраняем в localStorage
                 window.showPopup('Subscription verified! Reward added to your balance.');
             } else {
                 task.isChecking = false;
                 window.showPopup(`Please subscribe to ${task.name.split(' ').slice(2).join(' ')} to complete this task!`);
             }
-            
-            this.saveTasks(); // Сохраняем состояние после проверки
             
             if (window.updateTaskStatuses) {
                 window.updateTaskStatuses('media');
@@ -522,7 +522,7 @@ class TaskManager {
         } catch (error) {
             console.error('Error checking subscription:', error);
             task.isChecking = false;
-            this.saveTasks(); // Сохраняем состояние при ошибке
+            this.saveTasks();
             window.showPopup('Error checking subscription. Please try again.');
         }
     }
