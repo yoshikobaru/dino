@@ -488,6 +488,16 @@ class TaskManager {
         const task = this.findTaskById(taskId);
         if (!task) return null;
 
+        // Для социальных заданий открываем прямо в Telegram
+        if (task.type === 'social') {
+            window.Telegram.WebApp.openTelegramLink(task.link);
+            task.isCompleted = true;
+            this.handleTaskCompletion(task);
+            this.saveTasks();
+            return null;
+        }
+
+        // Остальная логика остается без изменений
         if (['dino_rush_news', 'root_community', 'timber_panda'].includes(task.id)) {
             const buttonState = this.getTaskButtonState(task.id);
             
