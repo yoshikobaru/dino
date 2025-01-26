@@ -476,10 +476,11 @@ class TaskManager {
         const task = this.findTaskById(taskId);
         if (!task) return null;
 
+        // Добавляем все медиа-таски в проверку
         if (['dino_rush_news', 'root_community', 'timber_panda'].includes(task.id)) {
             if (!task.isChecking) {
                 task.isChecking = true;
-                this.saveTasks();
+                this.saveTasks(); // Сохраняем состояние
                 window.Telegram.WebApp.openTelegramLink(task.link);
                 return null;
             } else {
@@ -512,7 +513,8 @@ class TaskManager {
                 task.isChecking = false;
                 window.showPopup(`Please subscribe to ${task.name.split(' ').slice(2).join(' ')} to complete this task!`);
             }
-            this.saveTasks();
+            
+            this.saveTasks(); // Сохраняем состояние после проверки
             
             if (window.updateTaskStatuses) {
                 window.updateTaskStatuses('media');
@@ -520,7 +522,7 @@ class TaskManager {
         } catch (error) {
             console.error('Error checking subscription:', error);
             task.isChecking = false;
-            this.saveTasks();
+            this.saveTasks(); // Сохраняем состояние при ошибке
             window.showPopup('Error checking subscription. Please try again.');
         }
     }
