@@ -541,7 +541,7 @@ const routes = {
     '/check-subscription': async (req, res, query) => {
         console.log('Получен запрос на /check-subscription');
         const telegramId = query.telegramId;
-        const channelId = query.channelId; // Получаем channelId из запроса
+        const channelId = query.channelId;
         
         if (!telegramId || !channelId) {
             console.log('Отсутствует telegramId или channelId');
@@ -550,10 +550,8 @@ const routes = {
 
         try {
             console.log('Проверка подписки для пользователя:', telegramId, 'на канал:', channelId);
-            // Проверяем статус участника в канале через API Telegram
             const chatMember = await bot.telegram.getChatMember(channelId, telegramId);
             
-            // Проверяем статус: member, administrator, creator
             const isSubscribed = ['member', 'administrator', 'creator'].includes(chatMember.status);
             
             console.log('Статус подписки:', isSubscribed);
@@ -566,6 +564,18 @@ const routes = {
             };
         } catch (error) {
             console.error('Ошибка при проверке подписки:', error);
+            
+            // Добавляем специальное сообщение для этой ошибки
+            if (error.message.includes('member list is inaccessible')) {
+                return { 
+                    status: 400, 
+                    body: { 
+                        error: 'Bot needs admin rights in the channel',
+                        details: 'Please contact administrator to fix this issue'
+                    } 
+                };
+            }
+            
             return { status: 500, body: { error: 'Internal server error' } };
         }
     },
