@@ -479,8 +479,8 @@ window.addEventListener('message', async function(event) {
                     }
                 };
                 
-                // Используем createStory для создания истории
-                window.Telegram.WebApp.createStory(storyParams);
+                // Используем правильный метод showStory
+                window.Telegram.WebApp.showStory(storyParams);
                 
                 if (window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
