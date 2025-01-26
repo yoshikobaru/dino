@@ -44,7 +44,9 @@ class TaskManager {
                     const defaultTask = defaultTasks[category].find(d => d.id === task.id);
                     return {
                         ...task,
-                        icon: defaultTask ? defaultTask.icon : '📋'
+                        icon: defaultTask ? defaultTask.icon : '📋',
+                        isCompleted: task.isCompleted || false,
+                        isChecking: task.isChecking || false
                     };
                 });
             });
@@ -477,8 +479,15 @@ class TaskManager {
         const task = this.findTaskById(taskId);
         if (!task) return null;
 
-        // Добавляем все медиа-таски в проверку
         if (['dino_rush_news', 'root_community', 'timber_panda'].includes(task.id)) {
+            // Проверяем, выполнено ли задание
+            if (task.isCompleted) {
+                // Если да, просто открываем ссылку без проверок
+                window.Telegram.WebApp.openTelegramLink(task.link);
+                return null;
+            }
+            
+            // Остальная логика для невыполненных заданий
             if (!task.isChecking) {
                 task.isChecking = true;
                 this.saveTasks(); // Сохраняем состояние
