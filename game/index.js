@@ -593,4 +593,4 @@ window.addEventListener('message', (event) => {
             dino_current_trust = DINO_INITIAL_TRUST.clone();
         }
     }
-}, false);
+}, false);//
