@@ -6,6 +6,8 @@ class TaskManager {
             media: [],
             refs: []
         };
+        // Принудительно обновляем задания
+        localStorage.removeItem('tasks');
         this.loadTasks();
     }
 
