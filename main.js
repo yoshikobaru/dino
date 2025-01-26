@@ -461,6 +461,37 @@ function updateAllBalances() {
     updateInviteEarningsDisplay();
 }
 
+window.addEventListener('message', async function(event) {
+    // ... existing message handlers ...
+    
+    if (event.data.type === 'shareStory') {
+        try {
+            const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
+            const response = await fetch(`https://dino-app.ru/get-referral-link?telegramId=${telegramId}`);
+            const data = await response.json();
+            
+            if (data.inviteLink) {
+                const storyParams = {
+                    text: `🦖 I scored ${event.data.score} DPS in Dino Rush!\n\nCan you beat my score? Join now and let's compete! 🏃‍♂️💨`,
+                    widget_link: {
+                        url: data.inviteLink,
+                        name: "Play Dino Rush 🎮"
+                    }
+                };
+                
+                window.Telegram.WebApp.openStoryCreator(storyParams);
+                
+                if (window.Telegram.WebApp.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                }
+            }
+        } catch (error) {
+            console.error('Error sharing story:', error);
+            showPopup('Error', 'Failed to share story. Please try again.', 5000);
+        }
+    }
+});
+
 export { 
     syncUserData, 
     updateServerBalance, 

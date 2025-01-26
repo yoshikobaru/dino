@@ -221,37 +221,14 @@ function showGameOver(score) {
 
     // Добавляем обработчик для Share Story
     shareStoryButton.addEventListener('click', async () => {
-        if (window.Telegram && window.Telegram.WebApp) {
-            try {
-                const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
-                const response = await fetch(`https://dino-app.ru/get-referral-link?telegramId=${telegramId}`);
-                const data = await response.json();
-                
-                if (data.inviteLink) {
-                    // Создаем параметры для истории
-                    const storyParams = {
-                        text: `🦖 I scored ${Math.floor(score)} DPS in Dino Rush!\n\nCan you beat my score? Join now and let's compete! 🏃‍♂️💨`,
-                        widget_link: {
-                            url: data.inviteLink,
-                            name: "Play Dino Rush 🎮"
-                        }
-                    };
-                    
-                    // Используем правильный метод для открытия редактора историй
-                    window.Telegram.WebApp.openStoryCreator(storyParams);
-                    
-                    // Добавляем вибрацию при нажатии
-                    if (window.Telegram.WebApp.HapticFeedback) {
-                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-                    }
-                }
-            } catch (error) {
-                console.error('Error sharing story:', error);
-                window.showPopup('Error', 'Failed to share story. Please try again.', 5000);
-            }
-        } else {
-            console.error('Telegram WebApp not available');
-            window.showPopup('Error', 'Telegram WebApp not available', 5000);
+        try {
+            // Отправляем сообщение родительскому окну для получения данных пользователя
+            window.parent.postMessage({
+                type: 'shareStory',
+                score: Math.floor(score)
+            }, '*');
+        } catch (error) {
+            console.error('Error sharing story:', error);
         }
     });
 
