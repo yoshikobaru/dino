@@ -57,12 +57,6 @@ class TaskManager {
                 });
             }
     
-            // Восстанавливаем прогресс для daily_bonus
-            const dailyBonusTask = savedTasksObj.daily.find(t => t.id === 'daily_bonus');
-            if (dailyBonusTask) {
-                dailyBonusTask.progress = parseInt(localStorage.getItem('daily_bonus_progress')) || 0;
-            }
-    
             this.tasks = savedTasksObj;
         } else {
             this.initializeDefaultTasks();
@@ -459,22 +453,10 @@ class TaskManager {
         if (task.isCompleted) return;
      // Специальная обработка для ежедневного бонуса
      if (task.id === 'daily_bonus') {
+        // Сразу отмечаем как выполненное и начисляем награду
         task.isCompleted = true;
-        
-        // Сохраняем прогресс в localStorage
-        const currentProgress = parseInt(localStorage.getItem('daily_bonus_progress')) || 0;
-        const newProgress = currentProgress + 1;
-        localStorage.setItem('daily_bonus_progress', newProgress);
-        
-        // Обновляем прогресс в задании
-        task.progress = newProgress;
-        
-        // Начисляем награду
         await this.handleTaskCompletion(task);
         this.saveTasks();
-        
-        // Сохраняем время последнего получения
-        localStorage.setItem('daily_bonus_last_claim', Date.now().toString());
         return;
     }
         // Специальная обработка для тасков на количество игр
