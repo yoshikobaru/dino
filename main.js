@@ -462,8 +462,6 @@ function updateAllBalances() {
 }
 
 window.addEventListener('message', async function(event) {
-    // ... existing message handlers ...
-    
     if (event.data.type === 'shareStory') {
         try {
             const telegramId = window.Telegram.WebApp.initDataUnsafe.user.id;
@@ -471,26 +469,25 @@ window.addEventListener('message', async function(event) {
             const data = await response.json();
             
             if (data.inviteLink) {
-                // Создаем параметры для всплывающего окна
+                // Создаем параметры для всплывающего окна в точности как на скриншоте
                 const popupParams = {
                     title: 'Share Story',
                     message: 'Do you want to share your score in Telegram Story?',
                     buttons: [
                         {
-                            id: 'share',
                             type: 'default',
                             text: 'Share Story 📱'
                         },
                         {
-                            id: 'cancel',
-                            type: 'cancel'
+                            type: 'cancel',
+                            text: 'Отмена'
                         }
                     ]
                 };
 
                 // Показываем всплывающее окно
                 window.Telegram.WebApp.showPopup(popupParams, (buttonId) => {
-                    if (buttonId === 'share') {
+                    if (buttonId === 'default') {
                         const storyParams = {
                             text: `🦖 I scored ${event.data.score} DPS in Dino Rush!\n\nCan you beat my score? Join now and let's compete! 🏃‍♂️💨`,
                             widget_link: {
@@ -500,10 +497,6 @@ window.addEventListener('message', async function(event) {
                         };
                         
                         window.Telegram.WebApp.showStory(storyParams);
-                        
-                        if (window.Telegram.WebApp.HapticFeedback) {
-                            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-                        }
                     }
                 });
             }
@@ -512,11 +505,9 @@ window.addEventListener('message', async function(event) {
             window.Telegram.WebApp.showPopup({
                 title: 'Error',
                 message: 'Failed to share story. Please try again.',
-                buttons: [
-                    {
-                        type: 'ok'
-                    }
-                ]
+                buttons: [{
+                    type: 'close'
+                }]
             });
         }
     }
