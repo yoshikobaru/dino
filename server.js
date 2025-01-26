@@ -541,15 +541,15 @@ const routes = {
     '/check-subscription': async (req, res, query) => {
         console.log('Получен запрос на /check-subscription');
         const telegramId = query.telegramId;
-        const channelId = '@DinoRushNews';
+        const channelId = query.channelId; // Получаем channelId из запроса
         
-        if (!telegramId) {
-            console.log('Отсутствует telegramId');
-            return { status: 400, body: { error: 'Missing telegramId parameter' } };
+        if (!telegramId || !channelId) {
+            console.log('Отсутствует telegramId или channelId');
+            return { status: 400, body: { error: 'Missing required parameters' } };
         }
 
         try {
-            console.log('Проверка подписки для пользователя:', telegramId);
+            console.log('Проверка подписки для пользователя:', telegramId, 'на канал:', channelId);
             // Проверяем статус участника в канале через API Telegram
             const chatMember = await bot.telegram.getChatMember(channelId, telegramId);
             
