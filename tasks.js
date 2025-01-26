@@ -475,13 +475,11 @@ class TaskManager {
         if (!task) return null;
 
         if (task.id === 'dino_rush_news') {
-            // Если задание еще не проверялось, открываем канал и меняем кнопку
             if (!task.isChecking) {
                 task.isChecking = true;
                 this.saveTasks();
                 return task.link;
             } else {
-                // Проверяем подписку через API бота
                 this.checkChannelSubscription(task);
                 return null;
             }
@@ -529,6 +527,16 @@ class TaskManager {
             }
             this.saveTasks();
         }
+    }
+
+    // Добавляем метод findTaskById
+    findTaskById(taskId) {
+        // Ищем задание по всем категориям
+        for (const category of Object.values(this.tasks)) {
+            const task = category.find(t => t.id === taskId);
+            if (task) return task;
+        }
+        return null;
     }
 }
 
