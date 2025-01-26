@@ -185,6 +185,8 @@ function paint_layout(character_layout, character_position) {
 
 // Обновляем функцию showGameOver
 function showGameOver(score) {
+    game_over = true;
+    
     // Проверяем достижения в конце игры
     window.parent.postMessage({
         type: 'checkAchievements',
@@ -193,31 +195,30 @@ function showGameOver(score) {
         timeAlive: (Date.now() - gameStartTime) / 1000,
         theme: current_theme.id
     }, '*');
-    
-    // Добавляем сильную вибрацию при смерти
+
+    // Добавляем вибрацию при смерти
     if (window.parent && window.parent.Telegram && window.parent.Telegram.WebApp) {
         window.parent.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
     }
-    
+
     const gameOverScreen = document.getElementById('game-over');
-    const finalScoreElement = document.getElementById('final-score');
-    
-    // Сначала удаляем все существующие кнопки рекламы
-    const existingButtons = gameOverScreen.querySelectorAll('#watch-ad-button, #share-story-button');
-    existingButtons.forEach(button => button.remove());
-    
+    const finalScoreElement = document.createElement('div');
+    finalScoreElement.className = 'bg-gray-800/80 p-4 rounded-lg mb-4';
+    finalScoreElement.innerHTML = `
+        <p class="text-gray-400 text-sm mb-1">SCORE</p>
+        <p class="text-yellow-400 text-2xl">+${Math.floor(score)} DPS</p>
+    `;
+
     // Создаем кнопку рекламы
     const watchAdButton = document.createElement('button');
-    watchAdButton.id = 'watch-ad-button';
     watchAdButton.className = 'w-full bg-gray-800/80 hover:bg-gray-700/80 text-white px-4 py-3 rounded-lg text-sm font-bold transition-all duration-300 mb-2';
     watchAdButton.innerHTML = '<span>Watch <span class="text-yellow-400">ad</span> for x3 DPS</span>';
-    
+
     // Создаем кнопку Share Story
     const shareStoryButton = document.createElement('button');
-    shareStoryButton.id = 'share-story-button';
     shareStoryButton.className = 'w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2';
     shareStoryButton.innerHTML = '<span>Share Story</span><span class="text-xl">📱</span>';
-    
+
     // Добавляем обработчик для Share Story
     shareStoryButton.addEventListener('click', async () => {
         if (window.Telegram && window.Telegram.WebApp) {
@@ -243,15 +244,14 @@ function showGameOver(score) {
             }
         }
     });
-    
-    finalScoreElement.textContent = `+${Math.floor(score)} DPS`;
-    gameOverScreen.style.display = 'block';
-    
-    // Добавляем кнопки
+
+    // Очищаем и добавляем элементы
+    gameOverScreen.innerHTML = '';
+    gameOverScreen.appendChild(finalScoreElement);
     gameOverScreen.appendChild(watchAdButton);
     gameOverScreen.appendChild(shareStoryButton);
-    
-    // Добавляем обработчик клика для рекламы
+
+    // Добавляем обработчик для рекламы
     watchAdButton.addEventListener('click', () => {
         window.parent.postMessage({
             type: 'showAd',
@@ -259,7 +259,9 @@ function showGameOver(score) {
         }, '*');
         watchAdButton.remove();
     });
-    
+
+    gameOverScreen.style.display = 'block';
+
     window.parent.postMessage({
         type: 'gameOver',
         score: Math.floor(score)
