@@ -6,8 +6,6 @@ class TaskManager {
             media: [],
             refs: []
         };
-        // Принудительно обновляем задания
-        localStorage.removeItem('tasks');
         this.loadTasks();
     }
 
@@ -23,13 +21,13 @@ class TaskManager {
                     { id: 'score_1000', icon: '🚀' }
                 ],
                 social: [
-                    { id: 'litwin_game', icon: '🎲' },
-                    { id: 'method_game', icon: '🎲' }
+                    { id: 'root_game', icon: '🎲' },
+                    { id: 'panda_game', icon: '🎲' }
                 ],
                 media: [
                     { id: 'dino_rush_news', icon: '📰' },
-                    { id: 'method_post', icon: '📱' },
-                    { id: 'litwin_post', icon: '📱' }
+                    { id: 'root_community', icon: '📱' },
+                    { id: 'timber_panda', icon: '📱' }
                 ],
                 refs: [
                     { id: 'invite_friends', icon: '👥' }
@@ -38,30 +36,40 @@ class TaskManager {
     
             const savedTasksObj = JSON.parse(savedTasks);
     
-            // Восстанавливаем состояния для daily заданий
-            if (savedTasksObj.daily) {
-                savedTasksObj.daily = savedTasksObj.daily.map(task => {
-                    const defaultTask = defaultTasks.daily.find(d => d.id === task.id);
-                    return {
-                        ...task,
-                        icon: defaultTask ? defaultTask.icon : '📋',
-                        isCompleted: task.isCompleted || false,
-                        progress: task.progress || 0,
-                        maxProgress: task.maxProgress || 0,
-                        cooldown: task.cooldown || 0,
-                        timer: task.timer || 0,
-                        isTimerRunning: task.isTimerRunning || false,
-                        bonusTime: task.bonusTime || 0,
-                        type: 'daily'
-                    };
-                });
-            }
+            // Восстанавливаем состояния для всех категорий
+            ['daily', 'social', 'media', 'refs'].forEach(category => {
+                if (savedTasksObj[category]) {
+                    savedTasksObj[category] = savedTasksObj[category].map(task => {
+                        const defaultTask = defaultTasks[category].find(d => d.id === task.id);
+                        return {
+                            ...task,
+                            icon: defaultTask ? defaultTask.icon : '📋',
+                            isCompleted: task.isCompleted || false,
+                            progress: task.progress || 0,
+                            maxProgress: task.maxProgress || 0,
+                            cooldown: task.cooldown || 0,
+                            timer: task.timer || 0,
+                            isTimerRunning: task.isTimerRunning || false,
+                            bonusTime: task.bonusTime || 0,
+                            type: category
+                        };
+                    });
+                }
+            });
     
             this.tasks = savedTasksObj;
         } else {
             this.initializeDefaultTasks();
         }
         
+        // Проверяем и инициализируем счетчик игр
+        if (!localStorage.getItem('dailyPlayCount')) {
+            localStorage.setItem('dailyPlayCount', '0');
+        }
+        if (!localStorage.getItem('lastPlayCountResetDate')) {
+            localStorage.setItem('lastPlayCountResetDate', new Date().toDateString());
+        }
+    
         // Принудительно сохраняем после загрузки
         this.saveTasks();
     }
@@ -196,7 +204,6 @@ class TaskManager {
     saveTasks() {
         // Убедимся, что все поля сохраняются
         const tasksToSave = {
-            ...this.tasks,
             daily: this.tasks.daily.map(task => ({
                 ...task,
                 isCompleted: task.isCompleted || false,
@@ -206,7 +213,24 @@ class TaskManager {
                 timer: task.timer || 0,
                 isTimerRunning: task.isTimerRunning || false,
                 bonusTime: task.bonusTime || 0,
-                type: 'daily'
+                type: task.type
+            })),
+            social: this.tasks.social.map(task => ({
+                ...task,
+                isCompleted: task.isCompleted || false,
+                type: task.type
+            })),
+            media: this.tasks.media.map(task => ({
+                ...task,
+                isCompleted: task.isCompleted || false,
+                type: task.type
+            })),
+            refs: this.tasks.refs.map(task => ({
+                ...task,
+                isCompleted: task.isCompleted || false,
+                progress: task.progress || 0,
+                maxProgress: task.maxProgress || 0,
+                type: task.type
             }))
         };
         
@@ -246,22 +270,28 @@ class TaskManager {
         }
     }
     async handleTaskCompletion(task) {
-        if (!task.isCompleted) return;
+        if (!task || task.isCompleted === undefined) return;
         
-        await window.updateBalance(task.dps, task.type === 'friends' ? 'invite' : 'task');
-        
-        switch(task.type) {
-            case 'daily':
-                if (task.timer) {
-                    task.isTimerRunning = false;
-                    task.timer = 0;
+        if (task.isCompleted) {
+            try {
+                await window.updateBalance(task.dps, task.type === 'friends' ? 'invite' : 'task');
+                
+                switch(task.type) {
+                    case 'daily':
+                        if (task.timer) {
+                            task.isTimerRunning = false;
+                            task.timer = 0;
+                        }
+                        break;
+                    case 'friends':
+                        localStorage.setItem('referralRewardClaimed', 'true');
+                        break;
                 }
-                break;
-            case 'friends':
-                localStorage.setItem('referralRewardClaimed', 'true');
-                break;
+                this.saveTasks();
+            } catch (error) {
+                console.error('Error in handleTaskCompletion:', error);
+            }
         }
-        this.saveTasks();
     }
 
     checkTaskCompletion(taskId) {
@@ -321,47 +351,48 @@ class TaskManager {
 
     // Метод для обновления количества игр
     updatePlayCount() {
-        const play5Task = this.tasks.daily.find(t => t.id === 'play_5');
-        const play25Task = this.tasks.daily.find(t => t.id === 'play_25');
-        
-        // Проверяем, был ли сброс сегодня
         const lastResetDate = localStorage.getItem('lastPlayCountResetDate');
         const today = new Date().toDateString();
         
-        // Если сегодня ещё не было сброса, делаем его
         if (lastResetDate !== today) {
             console.log('Resetting all daily tasks');
-            this.resetDailyTasks(); // Вызываем полный сброс всех daily тасков
+            this.resetDailyTasks();
             localStorage.setItem('lastPlayCountResetDate', today);
             localStorage.setItem('dailyPlayCount', '0');
         }
     
-        // Получаем текущий счетчик
-        const dailyPlayCount = parseInt(localStorage.getItem('dailyPlayCount') || '0');
+        // Получаем и увеличиваем счетчик
+        let dailyPlayCount = parseInt(localStorage.getItem('dailyPlayCount') || '0');
+        dailyPlayCount++;
+        localStorage.setItem('dailyPlayCount', dailyPlayCount.toString());
         console.log('Current dailyPlayCount:', dailyPlayCount);
         
         // Обновляем прогресс обоих заданий используя dailyPlayCount
-        if (play5Task && !play5Task.isCompleted) {
-            play5Task.progress = Math.min(dailyPlayCount, play5Task.maxProgress);
-            console.log('Updating play5Task progress:', play5Task.progress);
-            if (play5Task.progress >= play5Task.maxProgress) {
-                play5Task.isCompleted = true;
-                this.handleTaskCompletion(play5Task);
+        if (this.tasks && this.tasks.daily) {  // Добавляем проверку
+            const play5Task = this.tasks.daily.find(t => t.id === 'play_5');
+            const play25Task = this.tasks.daily.find(t => t.id === 'play_25');
+        
+            if (play5Task && !play5Task.isCompleted) {
+                play5Task.progress = Math.min(dailyPlayCount, play5Task.maxProgress);
+                console.log('Updating play5Task progress:', play5Task.progress);
+                if (play5Task.progress >= play5Task.maxProgress) {
+                    play5Task.isCompleted = true;
+                    this.handleTaskCompletion(play5Task);
+                }
             }
-        }
-    
-        if (play25Task && !play25Task.isCompleted) {
-            play25Task.progress = Math.min(dailyPlayCount, play25Task.maxProgress);
-            console.log('Updating play25Task progress:', play25Task.progress);
-            if (play25Task.progress >= play25Task.maxProgress) {
-                play25Task.isCompleted = true;
-                this.handleTaskCompletion(play25Task);
+        
+            if (play25Task && !play25Task.isCompleted) {
+                play25Task.progress = Math.min(dailyPlayCount, play25Task.maxProgress);
+                console.log('Updating play25Task progress:', play25Task.progress);
+                if (play25Task.progress >= play25Task.maxProgress) {
+                    play25Task.isCompleted = true;
+                    this.handleTaskCompletion(play25Task);
+                }
             }
         }
     
         this.saveTasks();
         
-        // Принудительно обновляем отображение
         if (window.updateTaskStatuses) {
             window.updateTaskStatuses('daily');
         }

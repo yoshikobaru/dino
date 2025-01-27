@@ -209,16 +209,29 @@ function showGameOver(score) {
         <p class="text-yellow-400 text-2xl">+${Math.floor(score)} DPS</p>
     `;
 
-    // Создаем кнопку рекламы
-    const watchAdButton = document.createElement('button');
-    watchAdButton.className = 'w-full bg-gray-800/80 hover:bg-gray-700/80 text-white px-4 py-3 rounded-lg text-sm font-bold transition-all duration-300 mb-2';
-    watchAdButton.innerHTML = '<span>Watch <span class="text-yellow-400">ad</span> for x3 DPS</span>';
+// Создаем кнопку рекламы
+const watchAdButton = document.createElement('button');
+watchAdButton.className = 'game-over-button';
+watchAdButton.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M6.5 5.5L10.5 8L6.5 10.5V5.5Z" fill="currentColor"/>
+    </svg>
+    <span>WATCH  <span class="yellow-text">ad</span>  for x3 DPS</span>
+`;
 
-    // Создаем кнопку Share Story
-    const shareStoryButton = document.createElement('button');
-    shareStoryButton.className = 'w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2';
-    shareStoryButton.innerHTML = '<span>Share Story</span><span class="text-xl">📱</span>';
-
+// Создаем кнопку Share Story
+const shareStoryButton = document.createElement('button');
+shareStoryButton.className = 'game-over-button';
+shareStoryButton.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="12" cy="4" r="2" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M6 7L10 5M6 9L10 11" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <span>Share Story</span>
+`;
     // Добавляем обработчик для Share Story
     shareStoryButton.addEventListener('click', async () => {
         try {
