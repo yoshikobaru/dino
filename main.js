@@ -1,5 +1,12 @@
+import telegramAnalytics from '@telegram-apps/analytics';
 import taskManager from './tasks.js';
 import { loadGame, updateAvailableGamesDisplay, updateTimer } from './game.js';
+
+// Инициализация аналитики до рендеринга
+telegramAnalytics.init({
+  token: 'eyJhcHBfbmFtZSI6ImRpbm8iLCJhcHBfdXJsIjoiaHR0cHM6Ly90Lm1lL0Rpbm9zYXVyX0dhbWVib3QiLCJhcHBfZG9tYWluIjoiaHR0cHM6Ly9kaW5vLWFwcC5ydS8ifQ==!SlwDHzBT0t/RmfT0jdz+J7idl60NEUcDTtGSYrfy1PE=',
+  appName: 'dino'
+});
 
 // Глобальные переменные через window
 window.totalDPS = parseInt(localStorage.getItem('totalDPS')) || 0;
