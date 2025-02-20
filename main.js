@@ -90,8 +90,16 @@ function createTaskElement(task) {
     const taskDiv = document.createElement('div');
     taskDiv.className = 'bg-gray-800 rounded-lg p-4 flex justify-between items-center';
     
+    // Добавляем проверку на isMaxLevel
+    const buttonText = task.isMaxLevel ? 'Max Level' : 
+                      task.isCompleted ? 'Completed' : 
+                      'Complete';
+    
+    const buttonDisabled = task.isMaxLevel || task.isCompleted;
+    
     taskDiv.innerHTML = `
         <div class="flex items-center">
+            <span class="text-2xl mr-3">${task.icon}</span>
             <div class="ml-3">
                 <div class="text-sm font-medium">${task.name}</div>
                 ${task.progress !== undefined ? 
@@ -102,9 +110,9 @@ function createTaskElement(task) {
         <div class="flex items-center">
             <div class="text-yellow-400 text-sm font-bold mr-3">+${task.dps} DPS</div>
             <button class="bg-yellow-400 text-black px-4 py-2 rounded-full text-sm font-bold ${
-                task.isCompleted ? 'opacity-50 cursor-not-allowed' : ''
-            }" ${task.isCompleted ? 'disabled' : ''} onclick="handleTaskClick('${task.id}')">
-                ${task.isCompleted ? 'Completed' : 'Complete'}
+                buttonDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            }" ${buttonDisabled ? 'disabled' : ''} onclick="handleTaskClick('${task.id}')">
+                ${buttonText}
             </button>
         </div>
     `;
@@ -363,6 +371,13 @@ function showPage(pageName) {
     }
 }
 document.addEventListener('DOMContentLoaded', async function() {
+    // Очищаем старые данные заданий при первом запуске
+    if (!localStorage.getItem('gameLevel')) {
+        localStorage.removeItem('tasks');
+        localStorage.setItem('gameLevel', '1');
+        localStorage.setItem('gameLevelProgress', '0');
+    }
+    
     try {
         await syncUserData();
         initializeMainPage();

@@ -7,6 +7,17 @@ class TaskManager {
             refs: []
         };
         this.loadTasks();
+        this.initializeGameLevelTask();
+    }
+
+    initializeGameLevelTask() {
+        // Инициализация уровня и прогресса, если их нет
+        if (!localStorage.getItem('gameLevelProgress')) {
+            localStorage.setItem('gameLevelProgress', '0');
+        }
+        if (!localStorage.getItem('gameLevel')) {
+            localStorage.setItem('gameLevel', '1');
+        }
     }
 
     loadTasks() {
@@ -14,9 +25,7 @@ class TaskManager {
         if (savedTasks) {
             const defaultTasks = {
                 daily: [
-                    { id: 'daily_bonus', icon: '🎁' },
-                    { id: 'play_5', icon: '🎮' },
-                    { id: 'play_25', icon: '🎯' },
+                    { id: 'game_level', icon: '🎮' },
                     { id: 'score_500', icon: '🏃' },
                     { id: 'score_1000', icon: '🚀' }
                 ],
@@ -78,42 +87,21 @@ class TaskManager {
         this.tasks = {
             daily: [
                 {
-                    id: 'daily_bonus',
-                    name: "Daily Bonus",
-                    icon: '🎁',  // Подарок для ежедневного бонуса
-                    dps: 150,
-                    progress: 1,
-                    maxProgress: 7,
-                    cooldown: 0,
-                    bonusTime: 0,
-                    type: 'daily'
-                },
-                {
-                    id: 'play_5',
-                    name: "Play 5 times",
-                    icon: '🎮',  // Геймпад для игровых тасков
-                    dps: 350,
+                    id: 'game_level',
+                    name: "Play 5 times (Level 1)",
+                    icon: '🎮',
+                    dps: 250,
                     progress: 0,
                     maxProgress: 5,
-                    cooldown: 0,
-                    timer: 0,
-                    isTimerRunning: false,
-                    type: 'daily'
-                },
-                {
-                    id: 'play_25',
-                    name: "Play 25 times",
-                    icon: '🎯',  // Мишень для большего количества игр
-                    dps: 750,
-                    progress: 0,
-                    maxProgress: 25,
                     isCompleted: false,
-                    type: 'daily'
+                    type: 'daily',
+                    level: 1,
+                    isMaxLevel: false
                 },
                 {
                     id: 'score_500',
                     name: "Get 500 DPS per game",
-                    icon: '🏃',  // Бегущий человек для скорости
+                    icon: '🏃',
                     dps: 550,
                     isCompleted: false,
                     type: 'daily'
@@ -121,7 +109,7 @@ class TaskManager {
                 {
                     id: 'score_1000',
                     name: "Get 1000 DPS per game",
-                    icon: '🚀',  // Ракета для высокой скорости
+                    icon: '🚀',
                     dps: 1750,
                     isCompleted: false,
                     type: 'daily'
@@ -199,6 +187,38 @@ class TaskManager {
         localStorage.setItem('lastPlayCountResetDate', new Date().toDateString());
     }
         this.saveTasks();
+    }
+
+    createGameLevelTask() {
+        const level = parseInt(localStorage.getItem('gameLevel')) || 1;
+        const progress = parseInt(localStorage.getItem('gameLevelProgress')) || 0;
+        
+        const levelConfig = {
+            1: { required: 5, reward: 250 },
+            2: { required: 10, reward: 350 },
+            3: { required: 20, reward: 450 },
+            4: { required: 40, reward: 550 },
+            5: { required: 60, reward: 750 },
+            6: { required: 100, reward: 1000 },
+            7: { required: 150, reward: 1250 },
+            8: { required: 200, reward: 2000 }
+        };
+
+        const config = levelConfig[level] || levelConfig[8];
+        const isMaxLevel = level >= 8;
+
+        return {
+            id: 'game_level',
+            name: isMaxLevel ? "Max Level Reached!" : `Play ${config.required} times (Level ${level})`,
+            icon: '🎮',
+            dps: config.reward,
+            progress: progress,
+            maxProgress: config.required,
+            isCompleted: false,
+            type: 'daily',
+            level: level,
+            isMaxLevel: isMaxLevel
+        };
     }
 
     saveTasks() {
@@ -351,48 +371,22 @@ class TaskManager {
 
     // Метод для обновления количества игр
     updatePlayCount() {
-        const lastResetDate = localStorage.getItem('lastPlayCountResetDate');
-        const today = new Date().toDateString();
-        
-        if (lastResetDate !== today) {
-            console.log('Resetting all daily tasks');
-            this.resetDailyTasks();
-            localStorage.setItem('lastPlayCountResetDate', today);
-            localStorage.setItem('dailyPlayCount', '0');
+        // Обновляем прогресс уровневого задания
+        const currentProgress = parseInt(localStorage.getItem('gameLevelProgress')) || 0;
+        const newProgress = currentProgress + 1;
+        localStorage.setItem('gameLevelProgress', newProgress.toString());
+
+        // Обновляем отображение задания
+        const gameLevelTask = this.tasks.daily.find(t => t.id === 'game_level');
+        if (gameLevelTask) {
+            gameLevelTask.progress = newProgress;
+            // Убираем автоматическую пометку о выполнении
+            // if (gameLevelTask.progress >= gameLevelTask.maxProgress && !gameLevelTask.isCompleted) {
+            //     gameLevelTask.isCompleted = true;
+            // }
+            this.saveTasks();
         }
-    
-        // Получаем и увеличиваем счетчик
-        let dailyPlayCount = parseInt(localStorage.getItem('dailyPlayCount') || '0');
-        dailyPlayCount++;
-        localStorage.setItem('dailyPlayCount', dailyPlayCount.toString());
-        console.log('Current dailyPlayCount:', dailyPlayCount);
-        
-        // Обновляем прогресс обоих заданий используя dailyPlayCount
-        if (this.tasks && this.tasks.daily) {  // Добавляем проверку
-            const play5Task = this.tasks.daily.find(t => t.id === 'play_5');
-            const play25Task = this.tasks.daily.find(t => t.id === 'play_25');
-        
-            if (play5Task && !play5Task.isCompleted) {
-                play5Task.progress = Math.min(dailyPlayCount, play5Task.maxProgress);
-                console.log('Updating play5Task progress:', play5Task.progress);
-                if (play5Task.progress >= play5Task.maxProgress) {
-                    play5Task.isCompleted = true;
-                    this.handleTaskCompletion(play5Task);
-                }
-            }
-        
-            if (play25Task && !play25Task.isCompleted) {
-                play25Task.progress = Math.min(dailyPlayCount, play25Task.maxProgress);
-                console.log('Updating play25Task progress:', play25Task.progress);
-                if (play25Task.progress >= play25Task.maxProgress) {
-                    play25Task.isCompleted = true;
-                    this.handleTaskCompletion(play25Task);
-                }
-            }
-        }
-    
-        this.saveTasks();
-        
+
         if (window.updateTaskStatuses) {
             window.updateTaskStatuses('daily');
         }
@@ -481,6 +475,9 @@ class TaskManager {
         }
     }
     async handleDailyTask(task) {
+        if (task.id === 'game_level') {
+            return this.handleGameLevelTask(task);
+        }
         if (task.isCompleted) return;
      // Специальная обработка для ежедневного бонуса
      if (task.id === 'daily_bonus') {
@@ -538,6 +535,34 @@ class TaskManager {
             await this.handleTaskCompletion(task);
         }
         this.saveTasks();
+    }
+    async handleGameLevelTask(task) {
+        if (task.isMaxLevel) {
+            window.showPopup('Maximum level reached!');
+            return;
+        }
+
+        const currentProgress = parseInt(localStorage.getItem('gameLevelProgress')) || 0;
+        const currentLevel = parseInt(localStorage.getItem('gameLevel')) || 1;
+
+        if (currentProgress >= task.maxProgress) {
+            // Начисляем награду
+            await window.updateBalance(task.dps, 'task');
+            
+            // Увеличиваем уровень
+            const newLevel = Math.min(currentLevel + 1, 8);
+            localStorage.setItem('gameLevel', newLevel.toString());
+            localStorage.setItem('gameLevelProgress', '0');
+
+            // Обновляем задание
+            const newTask = this.createGameLevelTask();
+            Object.assign(task, newTask);
+            
+            this.saveTasks();
+            window.showPopup(`Level ${currentLevel} completed! Reward: +${task.dps} DPS`);
+        } else {
+            window.showPopup(`Progress: ${currentProgress}/${task.maxProgress}`);
+        }
     }
     // Метод для обработки социальных действий
     handleSocialAction(taskId) {

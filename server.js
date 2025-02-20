@@ -799,20 +799,38 @@ schedule.scheduleJob('*/1 * * * *', async () => {
     const notifications = await redis.zrangebyscore('heart_notifications', 0, now);
     
     for (const telegramId of notifications) {
-      // Отправляем уведомление
-      await bot.telegram.sendMessage(
-        telegramId,
-        '🦖 All hearts have been restored!\n\nIt\'s time to return to the game and set a new record! 🏆'
-      );
+      try {
+        // Отправляем уведомление
+        await bot.telegram.sendMessage(
+          telegramId,
+          '🦖 All hearts have been restored!\n\nIt\'s time to return to the game and set a new record! 🏆'
+        );
+      } catch (error) {
+        // Обрабатываем ошибки отправки сообщений
+        if (error.response && (
+          error.response.error_code === 403 || // Бот заблокирован
+          error.response.error_code === 400 || // Чат не найден
+          error.response.description.includes('chat not found') ||
+          error.response.description.includes('blocked') ||
+          error.response.description.includes('deactivated')
+        )) {
+          console.log(`User ${telegramId} has blocked the bot or deleted the chat. Removing notification.`);
+        } else {
+          // Логируем неожиданные ошибки
+          console.error(`Unexpected error sending notification to ${telegramId}:`, error.message);
+        }
+      }
       
-      // Удаляем отправленное уведомление
-      await redis.zrem('heart_notifications', telegramId);
-      
-      // Обновляем статус уведомления в БД
-      await User.update(
-        { lastHeartNotification: null },
-        { where: { telegramId } }
-      );
+      // В любом случае удаляем уведомление из Redis и обновляем статус
+      try {
+        await redis.zrem('heart_notifications', telegramId);
+        await User.update(
+          { lastHeartNotification: null },
+          { where: { telegramId } }
+        );
+      } catch (dbError) {
+        console.error('Error updating notification status:', dbError);
+      }
     }
   } catch (error) {
     console.error('Error processing heart notifications:', error);

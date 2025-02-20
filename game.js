@@ -1045,7 +1045,7 @@ window.purchaseSkin = async function(skinName, price) {
         }
         
         const data = await response.json();
-        console.log('Invoice data received:', data); // Отладо��ный лог
+        console.log('Invoice data received:', data); // Отладочный лог
         
         if (!data.slug) {
             throw new Error('No slug received from server');
