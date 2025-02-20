@@ -7,7 +7,17 @@
     <title>Dino Rush 🦖💨</title>
     <link href="/dist/output.css" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
+
+    <!-- Определяем функцию инициализации аналитики -->
+    <script>
+        function initAnalytics() {
+            window.telegramAnalytics.init({
+                token: 'eyJhcHBfbmFtZSI6ImRpbm8iLCJhcHBfdXJsIjoiaHR0cHM6Ly90Lm1lL0Rpbm9zYXVyX0dhbWVib3QiLCJhcHBfZG9tYWluIjoiaHR0cHM6Ly9kaW5vLWFwcC5ydS8ifQ==!SlwDHzBT0t/RmfT0jdz+J7idl60NEUcDTtGSYrfy1PE=',
+                appName: 'dino'
+            });
+        }
+    </script>
+
     <!-- Добавляем скрипт Telegram Analytics -->
     <script 
         async 
