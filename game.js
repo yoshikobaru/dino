@@ -944,7 +944,7 @@ let availableSkins = JSON.parse(localStorage.getItem('availableSkins')) || {
     default: true,
     ninja: false,
     robot: false,
-    wizard: false
+    wizard: true  // Изменяем на true для тестирования
 };
 // Создаем модальное окно магазина
 function createShopModal() {
@@ -955,33 +955,69 @@ function createShopModal() {
     const content = document.createElement('div');
     content.className = 'bg-black rounded-lg p-6 max-w-md w-full mx-4 border border-yellow-400/50 shadow-lg';
     content.innerHTML = `
+        <style>
+            @keyframes float {
+                0% { transform: translateX(0) rotate(0deg); }
+                25% { transform: translateX(-3px) rotate(-1deg); }
+                75% { transform: translateX(3px) rotate(1deg); }
+                100% { transform: translateX(0) rotate(0deg); }
+            }
+            
+            @keyframes shimmer {
+                0% { background-position: -200% center; }
+                100% { background-position: 200% center; }
+            }
+            
+            .skin-card {
+                animation: float 6s ease-in-out infinite;
+                background: linear-gradient(
+                    110deg,
+                    rgba(255, 215, 0, 0.05) 0%,
+                    rgba(255, 215, 0, 0.1) 25%,
+                    rgba(255, 215, 0, 0.05) 50%,
+                    rgba(255, 215, 0, 0.1) 75%,
+                    rgba(255, 215, 0, 0.05) 100%
+                );
+                background-size: 200% 100%;
+                animation: float 6s ease-in-out infinite, shimmer 8s linear infinite;
+                transition: all 0.3s ease;
+            }
+            
+            .skin-card:hover {
+                transform: translateY(-5px);
+                border-color: rgba(255, 215, 0, 0.8);
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            }
+            
+            .skin-card:nth-child(2) { animation-delay: 1.5s; }
+            .skin-card:nth-child(3) { animation-delay: 3s; }
+            .skin-card:nth-child(4) { animation-delay: 4.5s; }
+        </style>
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold text-yellow-400">Skins</h2>
             <button class="w-8 h-8 rounded-full border border-yellow-400/50 text-yellow-400 flex items-center justify-center hover:bg-yellow-400/10 transition-colors" onclick="closeShopModal()">✕</button>
         </div>
         <div class="grid grid-cols-2 gap-4">
-            <div class="border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
+            <div class="skin-card border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
                 <img src="assets/dino-default.jpg" alt="Default Dino" class="w-16 h-16 mx-auto mb-2 rounded-lg">
                 <div class="font-bold text-yellow-400">Default</div>
                 <p class="text-gray-400 text-sm mb-4">Standard speed and protection</p>
                 <button data-skin="default" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 text-yellow-400 bg-black hover:bg-yellow-400/10 transition-all"></button>
             </div>
-            <div class="border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
+            <div class="skin-card border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
                 <img src="assets/ninja.jpg" alt="Ninja Dino" class="w-16 h-16 mx-auto mb-2 rounded-lg">
                 <div class="font-bold text-yellow-400">Ninja</div>
                 <p class="text-gray-400 text-sm mb-4">🕒 Slows time by 30%</p>
                 <button data-skin="ninja" data-price="100" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 bg-black text-yellow-400 hover:bg-yellow-400/10 transition-all"></button>
             </div>
-            <div class="border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
+            <div class="skin-card border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
                 <img src="assets/robot.jpg" alt="Robot Dino" class="w-16 h-16 mx-auto mb-2 rounded-lg">
                 <div class="font-bold text-yellow-400">Robot</div>
                 <p class="text-gray-400 text-sm mb-4">🛡️ One-hit protection</p>
                 <button data-skin="robot" data-price="100" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 bg-black text-yellow-400 hover:bg-yellow-400/10 transition-all"></button>
             </div>
-             <div class="border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
-                <div class="w-16 h-16 mx-auto mb-2 rounded-lg bg-black flex items-center justify-center">
-                    <canvas class="dino-preview" data-skin="wizard" width="42" height="42"></canvas>
-                </div>
+            <div class="skin-card border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
+                <img src="assets/wizard.jpg" alt="Wizard Dino" class="w-16 h-16 mx-auto mb-2 rounded-lg">
                 <div class="font-bold text-yellow-400">Wizard</div>
                 <p class="text-gray-400 text-sm mb-4">✨ +20% score bonus</p>
                 <button data-skin="wizard" data-price="150" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 bg-black text-yellow-400 hover:bg-yellow-400/10 transition-all"></button>
