@@ -943,7 +943,8 @@ let currentSkin = localStorage.getItem('currentDinoSkin') || 'default';
 let availableSkins = JSON.parse(localStorage.getItem('availableSkins')) || {
     default: true,
     ninja: false,
-    robot: false
+    robot: false,
+    wizard: false
 };
 // Создаем модальное окно магазина
 function createShopModal() {
@@ -976,6 +977,14 @@ function createShopModal() {
                 <div class="font-bold text-yellow-400">Robot</div>
                 <p class="text-gray-400 text-sm mb-4">🛡️ One-hit protection</p>
                 <button data-skin="robot" data-price="100" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 bg-black text-yellow-400 hover:bg-yellow-400/10 transition-all"></button>
+            </div>
+             <div class="border border-yellow-400/30 rounded-lg p-4 text-center bg-black hover:border-yellow-400/50 transition-colors">
+                <div class="w-16 h-16 mx-auto mb-2 rounded-lg bg-black flex items-center justify-center">
+                    <canvas class="dino-preview" data-skin="wizard" width="42" height="42"></canvas>
+                </div>
+                <div class="font-bold text-yellow-400">Wizard</div>
+                <p class="text-gray-400 text-sm mb-4">✨ +20% score bonus</p>
+                <button data-skin="wizard" data-price="150" class="w-full px-4 py-2 rounded-lg border border-yellow-400/50 bg-black text-yellow-400 hover:bg-yellow-400/10 transition-all"></button>
             </div>
         </div>
     `;

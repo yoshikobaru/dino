@@ -66,12 +66,38 @@ const DINO_ROBOT = [
     [0, 0, 0, 1, 1, 5, 1, 1, 1, 1, 5, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 1, 1, 5, 5, 1, 1, 1, 5, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
-
+const DINO_WIZARD = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 4, 4, 4, 2, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0],
+    [2, 1, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 0, 0],
+    [2, 1, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0],
+    [2, 2, 1, 0, 0, 1, 2, 2, 2, 4, 4, 4, 2, 2, 2, 2, 1, 0, 0, 0, 0],
+    [2, 2, 2, 1, 1, 2, 2, 2, 4, 2, 4, 2, 4, 2, 1, 2, 1, 0, 0, 0, 0],
+    [2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 2, 1, 1, 1, 0, 0, 0, 0],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0],
+    [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 2, 2, 2, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 2, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+];
 // Создаем версии для бега с правильным копированием массивов
 const DINO_NINJA_LEFT_LEG_UP = DINO_NINJA.map(row => [...row]);
 const DINO_NINJA_RIGHT_LEG_UP = DINO_NINJA.map(row => [...row]);
 const DINO_ROBOT_LEFT_LEG_UP = DINO_ROBOT.map(row => [...row]);
 const DINO_ROBOT_RIGHT_LEG_UP = DINO_ROBOT.map(row => [...row]);
+
+const DINO_WIZARD_LEFT_LEG_UP = DINO_WIZARD.map(row => [...row]);
+const DINO_WIZARD_RIGHT_LEG_UP = DINO_WIZARD.map(row => [...row]);
+
 
 // Модифицируем ноги для бега ниндзя
 DINO_NINJA_LEFT_LEG_UP[19][5] = 0;
@@ -95,13 +121,30 @@ DINO_ROBOT_RIGHT_LEG_UP[19][11] = 0;
 DINO_ROBOT_RIGHT_LEG_UP[20][10] = 0;
 DINO_ROBOT_RIGHT_LEG_UP[20][11] = 0;
 
+DINO_WIZARD_LEFT_LEG_UP[19][5] = 0;
+DINO_WIZARD_LEFT_LEG_UP[19][6] = 0;
+DINO_WIZARD_LEFT_LEG_UP[20][5] = 0;
+DINO_WIZARD_LEFT_LEG_UP[20][6] = 0;
+
+DINO_WIZARD_RIGHT_LEG_UP[19][10] = 0;
+DINO_WIZARD_RIGHT_LEG_UP[19][11] = 0;
+DINO_WIZARD_RIGHT_LEG_UP[20][10] = 0;
+DINO_WIZARD_RIGHT_LEG_UP[20][11] = 0;
+
 // Создаем версии для смерти
 const DINO_NINJA_DEAD = DINO_NINJA.map(row => [...row]);
 const DINO_ROBOT_DEAD = DINO_ROBOT.map(row => [...row]);
 
+// Создаем версию для смерти
+const DINO_WIZARD_DEAD = DINO_WIZARD.map(row => [...row]);
+
+
 // Модифицируем глаза для версий DEAD
 DINO_NINJA_DEAD[3][12] = DINO_NINJA_DEAD[3][13] = 2; // Закрываем красные глаза
 DINO_ROBOT_DEAD[3][12] = DINO_ROBOT_DEAD[3][13] = 5; // Выключаем светящиеся глаза
+
+// Модифицируем глаза для версии DEAD
+DINO_WIZARD_DEAD[3][12] = DINO_WIZARD_DEAD[3][13] = 2;
 
 const DINO_STAND = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -477,6 +520,12 @@ const dino_skins = {
         dead: DINO_ROBOT_DEAD,
         run: [DINO_ROBOT_LEFT_LEG_UP, DINO_ROBOT_RIGHT_LEG_UP],
         jump: DINO_ROBOT
+    },
+    wizard: {
+        stand: DINO_WIZARD,
+        dead: DINO_WIZARD_DEAD,
+        run: [DINO_WIZARD_LEFT_LEG_UP, DINO_WIZARD_RIGHT_LEG_UP],
+        jump: DINO_WIZARD
     }
 };
 
@@ -516,7 +565,7 @@ const gameLayouts = {
             id: 1,
             background: "transparent",
             road: "#535353",
-            score_text: "#747474",
+            score_text:  "#747474",
             info_text: "#535353",
             layout: [
                 false, 
@@ -526,7 +575,9 @@ const gameLayouts = {
                 "#4169E1",    // Синий (для повязки ниндзя и сюрикена)
                 "#C0C0C0",    // Серебряный (для робота)
                 "#00FF00",    // Зеленый (для глаз робота)
-                "#FFD700"     // Золотой (для механической гривы)
+                "#FFD700",    // Золотой (для механической гривы)
+                "#8A2BE2",    // Фиолетовый (для мантии волшебника)
+                "#FF69B4"     // Розовый (для магических эффектов)
             ],
             cloud: [
                 false,
@@ -550,10 +601,12 @@ const gameLayouts = {
                 "transparent", 
                 "#acacac",    // Базовый цвет
                 "#FF0000",    // Красный (для глаз)
-                "#4169E1",    // Синий (для повязки ниндзя и сюрикена)
+                "#4169E1",    // Синий (для повязки ниндзя)
                 "#E8E8E8",    // Серебряный (для робота)
                 "#00FF00",    // Зеленый (для глаз робота)
-                "#FFD700"     // Золотой (для механической гривы)
+                "#FFD700",    // Золотой (для механической гривы)
+                "#9370DB",    // Фиолетовый (для мантии волшебника)
+                "#FF69B4"     // Розовый (для магических эффектов)
             ],
             cloud: [
                 false,
@@ -570,6 +623,7 @@ const gameLayouts = {
 };
 window.dino_skins = dino_skins;
 window.gameLayouts = gameLayouts;
+
 window.stone_layout = gameLayouts.stone_layout;
 window.cloud_layout = gameLayouts.cloud_layout;
 window.pit_layout = gameLayouts.pit_layout;

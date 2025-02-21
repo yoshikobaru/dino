@@ -573,6 +573,12 @@ const SKIN_ABILITIES = {
         speed: 1,
         armor: 1,
         description: "Имеет защитную броню от одного столкновения"
+    },
+    wizard: {
+        speed: 1,
+        armor: 0,
+        scoreMultiplier: 1.2, // 20% бонус к очкам
+        description: "+20% score bonus"
     }
 };
 
