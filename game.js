@@ -943,8 +943,8 @@ let currentSkin = localStorage.getItem('currentDinoSkin') || 'default';
 let availableSkins = JSON.parse(localStorage.getItem('availableSkins')) || {
     default: true,
     ninja: false,
-    robot: true,
-    wizard: true  // Изменяем на true для тестирования
+    robot: false,
+    wizard: false  // Изменяем на true для тестирования
 };
 // Создаем модальное окно магазина
 function createShopModal() {
