@@ -8,32 +8,6 @@ require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
 
-const MIME_TYPES = {
-  '.html': 'text/html',
-  '.js': 'text/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.wasm': 'application/wasm'
-};
-
-// Функция для проверки статических запросов
-const isStaticRequest = (pathname) => {
-  const ext = path.extname(pathname).toLowerCase();
-  return MIME_TYPES[ext] !== undefined;
-};
-
-// Функция для проверки хешированных ассетов
-const isHashedAsset = (pathname) => {
-  return pathname.startsWith('/assets/') && pathname.match(/[-_][a-zA-Z0-9]{8,}\./);
-};
-
 // Редис для уведомлений
 const ADMIN_ID = process.env.ADMIN_TELEGRAM_ID;
 const Redis = require('ioredis');
@@ -967,9 +941,6 @@ const serveStaticFile = (filePath, res) => {
     '.jpg': 'image/jpg',
     '.gif': 'image/gif',
     '.svg': 'image/svg+xml',
-    '.webp': 'image/webp',
-    '.ico': 'image/x-icon',     
-    '.wasm': 'application/wasm' 
   }[extname] || 'application/octet-stream';
 
   fs.readFile(filePath, (error, content) => {
@@ -1101,33 +1072,18 @@ const server = https.createServer(options, async (req, res) => {
   const method = req.method;
 
   // Проверяем rate limit только для определенных эндпоинтов
-  if (LIMITED_ENDPOINTS.includes(pathname)) {
-    const rateLimitError = await rateLimitMiddleware(req);
-    if (rateLimitError) {
-      res.writeHead(rateLimitError.status, { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data'
-      });
-      res.end(JSON.stringify(rateLimitError.body));
-      return;
-    }
-  }
-  // Обработка статических файлов
-  if (isStaticRequest(pathname)) {
-    let filePath = path.join(__dirname, 'dino', pathname);
-    
-    // Кешируем только хешированные ассеты
-    if (isHashedAsset(pathname)) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    } else {
-      res.setHeader('Cache-Control', 'no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-    }
-    
-    serveStaticFile(filePath, res);
+if (LIMITED_ENDPOINTS.includes(pathname)) {
+  const rateLimitError = await rateLimitMiddleware(req);
+  if (rateLimitError) {
+    res.writeHead(rateLimitError.status, { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data'
+    });
+    res.end(JSON.stringify(rateLimitError.body));
     return;
   }
+}
 
   if (routes[method] && routes[method][pathname]) {
     const handler = routes[method][pathname];
