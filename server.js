@@ -385,7 +385,6 @@ const routes = {
       }
     },
     '/get-referral-link': async (req, res, query) => {
-      console.log('Получен запрос на /get-referral-link');
       const telegramId = query.telegramId;
       
       if (!telegramId) {
@@ -394,11 +393,9 @@ const routes = {
       }
 
       try {
-        console.log('Поиск пользователя с telegramId:', telegramId);
         const user = await User.findOne({ where: { telegramId } });
         if (user) {
           const inviteLink = `https://t.me/Dinosaur_Gamebot?start=${user.referralCode}`;
-          console.log('Сгенерирована ссылка:', inviteLink);
           return { status: 200, body: { inviteLink } };
         } else {
           console.log('Пользователь не найден');
@@ -410,7 +407,6 @@ const routes = {
       }
     },
     '/get-referred-friends': async (req, res, query) => {
-  console.log('Получен запрос на /get-referred-friends');
   const telegramId = query.telegramId;
   
   if (!telegramId) {
@@ -419,7 +415,6 @@ const routes = {
   }
 
   try {
-    console.log('Searching for referred friends for user with telegramId:', telegramId);
     const user = await User.findOne({ where: { telegramId } });
     if (user) {
       const referredFriends = await User.findAll({
@@ -517,8 +512,6 @@ const routes = {
     },
 
     '/get-user-skins': async (req, res, query) => {
-      const authError = await authMiddleware(req, res);
-      if (authError) return authError;
 
       const { telegramId } = query;
       
@@ -632,7 +625,6 @@ const routes = {
     }
     },
     '/check-subscription': async (req, res, query) => {
-        console.log('Получен запрос на /check-subscription');
         const telegramId = query.telegramId;
         const channelId = query.channelId;
         
@@ -642,12 +634,10 @@ const routes = {
         }
 
         try {
-            console.log('Проверка подписки для пользователя:', telegramId, 'на канал:', channelId);
             const chatMember = await bot.telegram.getChatMember(channelId, telegramId);
             
             const isSubscribed = ['member', 'administrator', 'creator'].includes(chatMember.status);
             
-            console.log('Статус подписки:', isSubscribed);
             return { 
                 status: 200, 
                 body: { 
