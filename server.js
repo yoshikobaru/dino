@@ -8,6 +8,31 @@ require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const url = require('url');
 
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.wasm': 'application/wasm'
+};
+
+// Функция для проверки статических запросов
+const isStaticRequest = (pathname) => {
+  const ext = path.extname(pathname).toLowerCase();
+  return MIME_TYPES[ext] !== undefined;
+};
+
+// Функция для проверки хешированных ассетов
+const isHashedAsset = (pathname) => {
+  return pathname.startsWith('/assets/') && pathname.match(/[-_][a-zA-Z0-9]{8,}\./);
+};
 
 // Редис для уведомлений
 const ADMIN_ID = process.env.ADMIN_TELEGRAM_ID;
@@ -41,16 +66,69 @@ const sequelize = new Sequelize(
   process.env.DB_PASSWORD, 
   {
       host: process.env.DB_HOST,
-      dialect: process.env.DB_DIALECT
-  }
-);
+      dialect: process.env.DB_DIALECT,
+      logging: false,
+      logQueryParameters: false,
+      benchmark: false,
+      // Настраиваем кастомный logger
+      logger: {
+        error: (err) => {
+          // Логируем ошибки БД
+          if (err.original) { // Ошибки базы данных
+            console.error('Database Error:', {
+              message: err.original.message,
+              code: err.original.code,
+              timestamp: new Date().toISOString()
+            });
+          } else if (err.name === 'SequelizeValidationError') { // Ошибки валидации
+            console.error('Validation Error:', {
+              message: err.message,
+              errors: err.errors.map(e => e.message),
+              timestamp: new Date().toISOString()
+            });
+          } else { // Другие ошибки запросов
+            console.error('Query Error:', {
+              message: err.message,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+      },
+      pool: {
+        max: 50,
+        min: 10,
+        acquire: 30000,
+        idle: 10000
+      }
+    }
+  );
+  sequelize.authenticate()
+    .then(() => {
+      console.log('Database connection has been established successfully.');
+    })
+    .catch(err => {
+      console.error('Unable to connect to the database:', err);
+    });
+  
+  // Если нужно отслеживать отключение:
+  process.on('SIGINT', async () => {
+    try {
+      await sequelize.close();
+      console.log('Database connection closed.');
+      process.exit(0);
+    } catch (err) {
+      console.error('Error closing database connection:', err);
+      process.exit(1);
+    }
+  });
 
 // Определяем модель User
 const User = sequelize.define('User', {
   telegramId: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true
+    unique: true,
+    index: true
   },
   username: {
     type: DataTypes.STRING,
@@ -58,16 +136,19 @@ const User = sequelize.define('User', {
   },
   highScore: {
     type: DataTypes.INTEGER,
-    defaultValue: 0
+    defaultValue: 0,
+    index: true
   },
   referralCode: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true
+    unique: true,
+    index: true
   },
   referredBy: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    index: true
   },
   balance: {
     type: DataTypes.INTEGER,
@@ -152,7 +233,6 @@ bot.command('start', async (ctx) => {
         const referrer = await User.findOne({ where: { referralCode } });
         if (referrer && referrer.telegramId !== telegramId) { // Проверяем что это не самореферал
           await user.update({ referredBy: referralCode });
-          console.log(`Existing user ${telegramId} was referred by ${referrer.telegramId}`);
         }
       }
     }
@@ -169,6 +249,15 @@ bot.command('start', async (ctx) => {
   } catch (error) {
     console.error('Error in start command:', error);
     ctx.reply('An error occurred. Please try again later.');
+  }
+});
+
+// Добавляем обработчик команды /paysupport
+bot.command('paysupport', async (ctx) => {
+  try {
+    await ctx.reply('If you have any issues or questions, please contact our moderator:\n@mirror_of_callandra\n\nWith ❤️,\nDino Rush Team.');
+  } catch (error) {
+    console.error('Error in paysupport command:', error);
   }
 });
 
@@ -250,6 +339,22 @@ async function authMiddleware(req, res) {
   return null;
 }
 
+const getRequestBody = (req) => {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+};
+
 const routes = {
   GET: {
     '/sync-user-data': async (req, res, query) => {
@@ -277,7 +382,12 @@ const routes = {
             referralCode: newReferralCode,
             referredBy: null
           });
+          // Логируем нового пользователя
+          console.log('\x1b[32m%s\x1b[0m', `🎉 New user joined: ${username} (${telegramId})`);
         } else {
+          // Логируем возвращение существующего пользователя
+          console.log('\x1b[36m%s\x1b[0m', `👋 User returned: ${username} (${telegramId})`);
+          
           // Обновляем username если он изменился
           if (user.username !== username) {
             await user.update({ username });
@@ -362,6 +472,9 @@ const routes = {
   }
 },
 '/create-skin-invoice': async (req, res, query) => {
+  const authError = await authMiddleware(req, res);
+      if (authError) return authError;
+
     const { telegramId, stars, skinName } = query;
     
     if (!telegramId || !skinName || !stars) {
@@ -397,6 +510,9 @@ const routes = {
     }
 },
     '/update-user-skins': async (req, res, query) => {
+      const authError = await authMiddleware(req, res);
+      if (authError) return authError;
+
       const { telegramId, skinName } = query;
       
       if (!telegramId || !skinName) {
@@ -427,6 +543,9 @@ const routes = {
     },
 
     '/get-user-skins': async (req, res, query) => {
+      const authError = await authMiddleware(req, res);
+      if (authError) return authError;
+
       const { telegramId } = query;
       
       if (!telegramId) {
@@ -848,6 +967,9 @@ const serveStaticFile = (filePath, res) => {
     '.jpg': 'image/jpg',
     '.gif': 'image/gif',
     '.svg': 'image/svg+xml',
+    '.webp': 'image/webp',
+    '.ico': 'image/x-icon',     
+    '.wasm': 'application/wasm' 
   }[extname] || 'application/octet-stream';
 
   fs.readFile(filePath, (error, content) => {
@@ -878,10 +1000,134 @@ const options = {
     cert: fs.readFileSync('/etc/letsencrypt/live/dino-app.ru/fullchain.pem')
 };
 
+// Функция очистки с мониторингом памяти
+const cleanupRequestData = () => {
+  try {
+    // Записываем состояние памяти до очистки
+    const beforeClean = process.memoryUsage();
+    
+    // Очищаем временные данные
+    global.gc && global.gc();
+    
+    // Очищаем кэш Redis для rate-limit
+    redis.keys('user-ratelimit:*').then(keys => {
+      if (keys.length) redis.del(...keys);
+    });
+
+    // Проверяем результат очистки
+    const afterClean = process.memoryUsage();
+    const freedMemory = Math.round((beforeClean.heapUsed - afterClean.heapUsed) / 1024 / 1024);
+    
+    if (freedMemory > 0) {
+      console.log(`Memory cleaned: ${freedMemory}MB freed`);
+    }
+    
+  } catch (error) {
+    console.error('Cleanup error:', error);
+  }
+};
+
+// Запускаем очистку каждый час
+const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 час
+const cleanup = setInterval(cleanupRequestData, CLEANUP_INTERVAL);
+
+// Запускаем первую очистку сразу
+cleanupRequestData();
+
+const LIMITED_ENDPOINTS = [
+  '/sync-user-data',
+  '/get-referral-link',
+  '/get-referred-friends',
+  '/get-user-skins',
+  '/reward',
+  '/update-high-score',
+  '/update-user-skins',
+];
+
+const checkUserRateLimit = async (userId) => {
+  const key = `user-ratelimit:${userId}`;
+  const limit = 50; // 20 запросов
+  const window = 1; // за 1 секунду
+  
+  try {
+    const current = await redis.incr(key);
+    if (current === 1) {
+      await redis.expire(key, window);
+    }
+    return current <= limit;
+  } catch (error) {
+    console.error('Rate limit check failed:', error);
+    return true; // В случае ошибки пропускаем запрос
+  }
+};
+
+const rateLimitMiddleware = async (req) => {
+  const pathname = new URL(req.url, 'https://dino-app.ru').pathname;
+  
+  // Проверяем только указанные эндпоинты
+  if (!LIMITED_ENDPOINTS.includes(pathname)) {
+    return null;
+  }
+
+  // Получаем Telegram ID пользователя
+  const initData = req.headers['x-telegram-init-data'];
+  let userId;
+
+  try {
+    const params = new URLSearchParams(initData);
+    const user = JSON.parse(params.get('user'));
+    userId = user.id.toString();
+  } catch (e) {
+    return null; // Если не удалось получить ID, пропускаем запрос
+  }
+
+  const allowed = await checkUserRateLimit(userId);
+  if (!allowed) {
+    return {
+      status: 429,
+      body: {
+        error: 'Too Many Requests',
+        message: 'Please slow down your requests.'
+      }
+    };
+  }
+
+  return null;
+};
+
 const server = https.createServer(options, async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const method = req.method;
+
+  // Проверяем rate limit только для определенных эндпоинтов
+  if (LIMITED_ENDPOINTS.includes(pathname)) {
+    const rateLimitError = await rateLimitMiddleware(req);
+    if (rateLimitError) {
+      res.writeHead(rateLimitError.status, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data'
+      });
+      res.end(JSON.stringify(rateLimitError.body));
+      return;
+    }
+  }
+  // Обработка статических файлов
+  if (isStaticRequest(pathname)) {
+    let filePath = path.join(__dirname, 'dino', pathname);
+    
+    // Кешируем только хешированные ассеты
+    if (isHashedAsset(pathname)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      res.setHeader('Cache-Control', 'no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+    }
+    
+    serveStaticFile(filePath, res);
+    return;
+  }
 
   if (routes[method] && routes[method][pathname]) {
     const handler = routes[method][pathname];
@@ -912,5 +1158,12 @@ http.createServer((req, res) => {
 });
 
 // Graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once('SIGINT', () => {
+  clearInterval(cleanup);  // Очищаем таймер
+  bot.stop('SIGINT');     // Останавливаем бота
+});
+
+process.once('SIGTERM', () => {
+  clearInterval(cleanup);  // Очищаем таймер
+  bot.stop('SIGTERM');    // Останавливаем бота
+});
